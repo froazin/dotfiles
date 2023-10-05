@@ -1,3 +1,5 @@
+#! /usr/bin/env bash
+
 for file in $(ls -f .private/*.sh); do
     source $file
 done
@@ -11,18 +13,20 @@ username=$(git config --global user.name)
 email=$(git config --global user.email)
 
 # rsync files in current directory
-write_log $INFO "Running git configuration..."
+write_log $INFO "Synchronizing git config."
 rsync --exclude install.sh \
     --exclude bootstrap.sh \
     -avz --no-perms ./git/ $HOME > /dev/null 2>&1 || exit 1
 
 if ! [ -z "$username" ]; then
-    write_log $DEBUG "Persisting existing git configuration for global user.name: $username"
+    write_log $DEBUG "Existing git configuration for global user.name <$username> was found."
+    write_log $INFO "Persisting existing git configuration for global user.name: $username"
     git config --global user.name "$username" || exit 1
 fi
 
 if ! [ -z "$email" ]; then
-    write_log $DEBUG "Persisting existing git configuration for global user.email: $email"
+    write_log $DEBUG "Existing git configuration for global user.email <$email> was found."
+    write_log $INFO "Persisting existing git configuration for global user.email: $email"
     git config --global user.email "$email" || exit 1
 fi
 

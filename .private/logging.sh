@@ -1,3 +1,5 @@
+#! /usr/bin/env bash
+
 DEBUG=0
 INFO=1
 WARNING=2
@@ -68,7 +70,7 @@ function console_log() {
             color='\033[1;91m'   # Red
             ;;
         $FATAL)
-            color='\033[0;103m'  # Yellow
+            color='\033[1;91m'   # Red
             ;;
         *)
             color='\033[47m'     # White
