@@ -19,11 +19,13 @@ function bootstrap_packages() {
     local errors=false
     local warnings=false
 
+    write_log $INFO "Bootstrapping dotfiles."
+
     write_log $DEBUG "Searching for configurations."
     for dir in $(ls -d */); do
-        pkg=$(echo $dir | cut -d '/' -f 1 | sed 's/\///g')
+        local pkg=$(echo $dir | cut -d '/' -f 1 | sed 's/\///g')
         write_log $DEBUG "Found configuration: $pkg"
-        packages+=($pkg)
+        local packages+=($pkg)
     done
 
     for package in "${packages[@]}"; do
@@ -36,19 +38,20 @@ function bootstrap_packages() {
             continue
         fi
 
-        write_log $INFO "Bootstrapping $package."
+        write_log $INFO "Configuring $package..."
 
         cat "$(dirname "${BASH_SOURCE}")/$(echo $package)/bootstrap.sh" | bash
-        if [[ $? -eq 1 ]]; then
-            errors=true
-        elif [[ $? -eq 2 ]]; then
-            warnings=true
+        local exit_code=$?
+        if [[ $exit_code -eq 1 ]]; then
+            local errors=true
+        elif [[ $exit_code -eq 2 ]]; then
+            local warnings=true
         fi
     done
 
-    if [[ $errors == true ]]; then
+    if $errors; then
         return 1
-    elif [[ $warnings == true ]]; then
+    elif $warnings; then
         return 2
     else
         return 0
@@ -59,12 +62,13 @@ function main() {
     cd "$(dirname "${BASH_SOURCE}")"
 
     bootstrap_packages
-    if [[ $? -eq 1 ]]; then
-        write_log $ERROR "Bootstrapping completed with errors. Check $LOG_FILE for details."
-    elif [[ $? -eq 2 ]]; then
-        write_log $WARNING "Bootstrapping completed with warnings. Check $LOG_FILE for details."
+    local exit_code=$?
+    if [[ $exit_code -eq 1 ]]; then
+        write_log $ERROR "Bootstrapping dotfiles completed with errors. Check $LOG_FILE for details."
+    elif [[ $exit_code -eq 2 ]]; then
+        write_log $WARNING "Bootstrapping dotfiles completed with warnings. Check $LOG_FILE for details."
     else
-        write_log $INFO "Bootstrapping completed successfully."
+        write_log $INFO "Bootstrapping dotfiles completed successfully."
     fi
 
     return 0
