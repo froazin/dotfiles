@@ -2,6 +2,16 @@
 
 cd "$(dirname "${BASH_SOURCE}")"
 
+[ "$1" == "--force" -o "$1" == "-f" ] && FORCE=true || FORCE=false
+
+if ! $FORCE; then
+	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " reply
+	echo ""
+	if ! [[ $reply =~ ^[Yy](es){0,1}$ ]]; then
+		exit 0
+	fi
+fi
+
 function get_shells() {
     local shells=()
     [ -x "$(command -v bash)" ] && shells+=("bash")
@@ -41,7 +51,7 @@ function install_packages() {
             continue
         fi
 
-        cat "$(dirname "${BASH_SOURCE}")/$(echo $package | cut -d ':' -f 2)/install.sh" | bash
+        cat "$(dirname "${BASH_SOURCE}")/$(echo $package | cut -d ':' -f 2)/install.sh" | bash -s $FORCE
         if [[ $? -eq 0 ]]; then
             installed_packages+=($pkg_name)
             continue
@@ -79,7 +89,7 @@ function main() {
     fi
 
     for pkg in $INSTALLED_PACKAGES; do
-        [ -f "$pkg/bootstrap.sh" ] && [ -r "$pkg/bootstrap.sh" ] && source "$pkg/bootstrap.sh"
+        [ -f "$pkg/bootstrap.sh" ] && [ -r "$pkg/bootstrap.sh" ] && cat $pkg/bootstrap.sh | bash -s $FORCE
         if [[ $? -eq 1 ]]; then
             echo "ERROR: Encountered an unrecoverable error in $pkg/bootstrap.sh. Exiting..."
             exit 1
@@ -90,14 +100,6 @@ function main() {
         fi
     done
 }
-
-if ! [ "$1" == "--force" -o "$1" == "-f" ]; then
-	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " reply
-	echo ""
-	if ! [[ $reply =~ ^[Yy](es){0,1}$ ]]; then
-		exit 0
-	fi
-fi
 
 main
 unset main
