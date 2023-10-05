@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "${BASH_SOURCE}")"
+REQUIRED_PACKAGES=(
+    "bash"
+    "cat"
+    "ls"
+    "sed"
+    "cut"
+    "dirname"
+)
+
+source .modules/logging.sh 2> /dev/null      || exit 1
+source .modules/common.sh 2> /dev/null       || exit 1
+
+check_requirements "${REQUIRED_PACKAGES[@]}" || exit 1
 
 function bootstrap_packages() {
     local packages=()
@@ -44,6 +56,8 @@ function bootstrap_packages() {
 }
 
 function main() {
+    cd "$(dirname "${BASH_SOURCE}")"
+
     bootstrap_packages
     if [[ $? -eq 1 ]]; then
         write_log $ERROR "Bootstrapping completed with errors. Check $LOG_FILE for details."
@@ -52,11 +66,9 @@ function main() {
     else
         write_log $INFO "Bootstrapping completed successfully."
     fi
-}
 
-for file in $(ls -f .private/*.sh); do
-    source $file
-done
+    return 0
+}
 
 main
 unset main
