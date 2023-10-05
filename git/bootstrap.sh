@@ -1,18 +1,13 @@
 #! /usr/bin/env bash
 
-for file in $(ls -f .private/*.sh); do
-    source $file
-done
+source .modules/logging.sh 2> /dev/null || exit 1
+source .modules/common.sh 2> /dev/null  || exit 1
 
-if [ ! -x "$(command -v rsync)" ]; then
-    write_log "ERROR" "Bootstrapping git configurations requires rsync. Please install rsync and try again."
-    exit 1
-fi
+check_requirements git rsync            || exit 1
 
 username=$(git config --global user.name)
 email=$(git config --global user.email)
 
-# rsync files in current directory
 write_log $INFO "Synchronizing git config."
 rsync --exclude install.sh \
     --exclude bootstrap.sh \
@@ -20,13 +15,13 @@ rsync --exclude install.sh \
 
 if ! [ -z "$username" ]; then
     write_log $DEBUG "Existing git configuration for global user.name <$username> was found."
-    write_log $INFO "Persisting existing git configuration for global user.name: $username"
+    write_log $INFO "Persisting existing git configuration for global user.name"
     git config --global user.name "$username" || exit 1
 fi
 
 if ! [ -z "$email" ]; then
     write_log $DEBUG "Existing git configuration for global user.email <$email> was found."
-    write_log $INFO "Persisting existing git configuration for global user.email: $email"
+    write_log $INFO "Persisting existing git configuration for global user.email"
     git config --global user.email "$email" || exit 1
 fi
 

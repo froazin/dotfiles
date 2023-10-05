@@ -1,8 +1,9 @@
 #! /usr/bin/env bash
 
-for file in $(ls -f .private/*.sh); do
-    source $file
-done
+source .modules/logging.sh 2> /dev/null || exit 1
+source .modules/common.sh 2> /dev/null  || exit 1
+
+check_requirements bash                 || exit 1
 
 if ! [ -f bash/base.sh ]; then
     write_log $ERROR "Unable to find bash/base.sh. bash configuration will not be applied."
