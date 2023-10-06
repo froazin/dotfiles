@@ -6,11 +6,6 @@ source .modules/devcontainers.sh 2> /dev/null || exit 1
 
 check_requirements bash                       || exit 1
 
-if ! [ -f bash/base.sh ]; then
-    write_log $ERROR "Unable to find bash/base.sh. bash configuration will not be applied."
-    exit 1
-fi
-
 warnings=false
 devcontainer=false
 if check_devcontainer; then
@@ -19,21 +14,27 @@ if check_devcontainer; then
     warnings=true
 fi
 
-echo "#! /usr/bin/env bash" > $HOME/.bashrc
+cp bash/.bashrc $HOME/.bashrc
+chmod 644 $HOME/.bashrc
 
-cat << EOF >> $HOME/.bashrc
-$(cat bash/base.sh)
-EOF
+if [ -f /etc/inputrc ]; then
+    cp bash/.inputrc $HOME/.inputrc
+    echo "bind -f ~/.inputrc" >> $HOME/.bashrc
+fi
+
+chmod 644 $HOME/.inputrc && \
+    write_log $DEBUG "Changed permissions of ~/.inputrc to 644" || \
+    write_log $ERROR "Failed to change permissions of ~/.inputrc to 644"
 
 if [ -x "$(command -v direnv)" ]; then
-    write_log $INFO "Configuring direnv hooks for bash."
+    write_log $DEBUG "Configuring direnv hooks for bash."
     cat << EOF >> $HOME/.bashrc
 $(cat bash/direnv.sh)
 EOF
 fi
 
 if [ -x "$(command -v ssh-agent)" ] && ! $devcontainer; then
-    write_log $INFO "Configuring ssh-agent startup for bash."
+    write_log $DEBUG "Configuring ssh-agent startup for bash."
 
     cat << EOF >> $HOME/.bashrc
 $(cat bash/ssh.sh)

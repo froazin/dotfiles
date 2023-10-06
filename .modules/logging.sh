@@ -1,11 +1,12 @@
 #! /usr/bin/env bash
 
-DEBUG=0
-INFO=1
-WARNING=2
-ERROR=3
-CRITICAL=4
-FATAL=5
+TRACE=0
+DEBUG=1
+INFO=2
+WARNING=3
+ERROR=4
+CRITICAL=5
+FATAL=6
 
 if [ -x "$(command -v tee)" ]; then
     LOG_FILE="$HOME/.dotfiles.log"
@@ -21,6 +22,9 @@ function get_level_string() {
     local LEVEL=$1
 
     case $LEVEL in
+        $TRACE)
+            echo "TRACE"
+            ;;
         $DEBUG)
             echo "DEBUG"
             ;;
@@ -49,6 +53,11 @@ function console_log() {
     local level=$1
     local msg=$2
     local timestamp=$3
+
+    if ! [ -t 1 ]; then
+        # stdout is not a tty
+        return 0
+    fi
 
     if [[ $level -lt $INFO ]]; then
         return 0
@@ -80,7 +89,7 @@ function console_log() {
     local green='\033[0;32m' # Green
     local nc='\033[0m' # Text Reset
 
-    echo -e "$green$timestamp $color[$(get_level_string $level)]$nc $msg"
+    echo -e "$green$timestamp \033[$color[$(get_level_string $level)]$nc $msg"
     return 0
 }
 
