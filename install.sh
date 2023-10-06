@@ -33,6 +33,12 @@ function bootstrap_packages() {
             continue
         fi
 
+        btstrpfile="$(dirname "${BASH_SOURCE}")/$(echo $package)/bootstrap.sh"
+        if [[ ! -f "$btstrpfile" ]]; then
+            write_log $DEBUG "Bootstrap file for $package not found."
+            continue
+        fi
+
         if [[ ! -x "$(command -v $package)" ]]; then
             write_log $DEBUG "$package is not installed. Skipping bootstrap."
             continue
@@ -40,7 +46,7 @@ function bootstrap_packages() {
 
         write_log $INFO "Configuring $package..."
 
-        cat "$(dirname "${BASH_SOURCE}")/$(echo $package)/bootstrap.sh" | bash
+        cat $btstrpfile | bash
         local exit_code=$?
         if [[ $exit_code -eq 1 ]]; then
             local errors=true

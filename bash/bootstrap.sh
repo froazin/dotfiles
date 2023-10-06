@@ -14,11 +14,11 @@ if check_devcontainer; then
     warnings=true
 fi
 
-cp bash/.bashrc $HOME/.bashrc
+cp -f bash/.bashrc $HOME/.bashrc
 chmod 644 $HOME/.bashrc
 
 if [ -f /etc/inputrc ]; then
-    cp bash/.inputrc $HOME/.inputrc
+    cp -f inputrc/.inputrc $HOME/.inputrc
     echo "bind -f ~/.inputrc" >> $HOME/.bashrc
 fi
 

@@ -6,11 +6,6 @@ source .modules/devcontainers.sh 2> /dev/null || exit 1
 
 check_requirements zsh                        || exit 1
 
-if ! [ -f zsh/base.sh ]; then
-    write_log $ERROR "Unable to find zsh/base.sh. zsh configuration will not be applied."
-    exit 1
-fi
-
 warnings=false
 devcontainer=false
 if check_devcontainer; then
@@ -19,21 +14,27 @@ if check_devcontainer; then
     warnings=true
 fi
 
-echo "#! /usr/bin/env zsh" > $HOME/.zshrc
+cp -f zsh/.zshrc $HOME/.zshrc
+chmod 644 $HOME/.zshrc
 
-cat << EOF >> $HOME/.zshrc
-$(cat zsh/base.sh)
-EOF
+if [ -f /etc/inputrc ]; then
+    cp -f inputrc/.inputrc $HOME/.inputrc
+    echo "bind -f ~/.inputrc" >> $HOME/.zshrc
+fi
+
+chmod 644 $HOME/.inputrc && \
+    write_log $DEBUG "Changed permissions of ~/.inputrc to 644" || \
+    write_log $ERROR "Failed to change permissions of ~/.inputrc to 644"
 
 if [ -x "$(command -v direnv)" ]; then
-    write_log $INFO "Configuring direnv hooks for zsh."
+    write_log $DEBUG "Configuring direnv hooks for zsh."
     cat << EOF >> $HOME/.zshrc
 $(cat zsh/direnv.sh)
 EOF
 fi
 
 if [ -x "$(command -v ssh-agent)" ] && ! $devcontainer; then
-    write_log $INFO "Configuring ssh-agent startup for zsh."
+    write_log $DEBUG "Configuring ssh-agent startup for zsh."
 
     cat << EOF >> $HOME/.zshrc
 $(cat zsh/ssh.sh)

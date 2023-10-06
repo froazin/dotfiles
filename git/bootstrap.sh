@@ -32,7 +32,7 @@ function bootstrap_gitglobal() {
     email=$(git config --global user.email)
 
     write_log $DEBUG "Copying git global config file to <$configfile>."
-    cp --force git/.gitconfig $configfile || return 1
+    cp -f git/.gitconfig $configfile || return 1
 
     write_log $DEBUG "Changing permissions of <$configfile> to 644."
     chmod 644 $configfile || return 1
