@@ -14,17 +14,22 @@ if check_devcontainer; then
     warnings=true
 fi
 
-cp -f bash/.bashrc $HOME/.bashrc
-chmod 644 $HOME/.bashrc
+write_log $DEBUG "Copying bashrc file to <$HOME/.bashrc>."
+cp -f bash/.bashrc $HOME/.bashrc || exit 1
+
+write_log $DEBUG "Changing permissions of <$HOME/.bashrc> to 644."
+chmod 644 $HOME/.bashrc || exit 1
 
 if [ -f /etc/inputrc ]; then
+    write_log $DEBUG "Copying inputrc file to <$HOME/.inputrc>."
     cp -f inputrc/.inputrc $HOME/.inputrc
+    
+    write_log $DEBUG "Adding bind command to <$HOME/.bashrc>."
     echo "bind -f ~/.inputrc" >> $HOME/.bashrc
-fi
 
-chmod 644 $HOME/.inputrc && \
-    write_log $DEBUG "Changed permissions of ~/.inputrc to 644" || \
-    write_log $ERROR "Failed to change permissions of ~/.inputrc to 644"
+    write_log $DEBUG "Changing permissions of <$HOME/.inputrc> to 644."
+    chmod 644 $HOME/.inputrc
+fi
 
 if [ -x "$(command -v direnv)" ]; then
     write_log $DEBUG "Configuring direnv hooks for bash."

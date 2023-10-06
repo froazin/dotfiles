@@ -54,7 +54,7 @@ function bootstrap_gitignore() {
     excludesfile=$(git config --global core.excludesfile)
 
     if [ -L "$excludesfile" ]; then
-        write_log $DEBUG "Existing git configuration for global core.excludesfile <$excludesfile> was found, but it is a symbolic link and will be ignored."
+        write_log $WARNING "Existing git configuration for global core.excludesfile <$excludesfile> was found, but it is a symbolic link and will be ignored."
         return 2
     fi
 

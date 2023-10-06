@@ -17,15 +17,6 @@ fi
 cp -f zsh/.zshrc $HOME/.zshrc
 chmod 644 $HOME/.zshrc
 
-if [ -f /etc/inputrc ]; then
-    cp -f inputrc/.inputrc $HOME/.inputrc
-    echo "bind -f ~/.inputrc" >> $HOME/.zshrc
-fi
-
-chmod 644 $HOME/.inputrc && \
-    write_log $DEBUG "Changed permissions of ~/.inputrc to 644" || \
-    write_log $ERROR "Failed to change permissions of ~/.inputrc to 644"
-
 if [ -x "$(command -v direnv)" ]; then
     write_log $DEBUG "Configuring direnv hooks for zsh."
     cat << EOF >> $HOME/.zshrc
