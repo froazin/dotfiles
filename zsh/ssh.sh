@@ -6,5 +6,5 @@ for key in $(ls ~/.ssh/id_*); do
     if [[ $key =~ \. ]]; then
         continue
     fi
-    ssh-add $key 2> /dev/null
+    ssh-add ~/.ssh/$key 2> /dev/null
 done
