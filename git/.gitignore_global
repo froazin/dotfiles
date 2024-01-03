@@ -1,6 +1,10 @@
 # Ignore .local folder in git repos to give a safe space to store local files that should not be committed
 .local/
 
+# Ingore environment files
+*.env
+*.envrc
+
 #ignore thumbnails created by windows
 Thumbs.db
 
