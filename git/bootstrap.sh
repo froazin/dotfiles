@@ -31,12 +31,12 @@ function bootstrap_gitignore() {
         excludesfile="$HOME/.gitignore_global"
     fi
 
-    write_log $DEBUG "Copying .gitignore to <$excludesfile>."
+    write_log $DEBUG "Copying .gitignore_global to <$excludesfile>."
     echo "" > $excludesfile
     while read -r line; do
         write_log $TRACE "Adding <$line> to <$excludesfile>."
         echo "$line" >> $excludesfile
-    done < git/.gitignore || return 1
+    done < git/.gitignore_global || return 1
     
     write_log $DEBUG "Setting git configuration for global core.excludesfile to <$excludesfile>."
     git config --global core.excludesfile "$excludesfile" || return 1
@@ -47,12 +47,12 @@ function bootstrap_gitignore() {
 bootstrap_gitignore
 exit_code=$?
 if [ $exit_code -eq 0 ]; then
-    write_log $DEBUG "Successfully bootstrapped git global ignore configuration."
+    write_log $DEBUG "Successfully bootstrapped gitignore global configuration."
 elif [ $exit_code -eq 2 ]; then
-    write_log $DEBUG "Skipping git global ignore configuration bootstrap."
+    write_log $DEBUG "Skipping gitignore global configuration bootstrap."
     warnings=true
 else
-    write_log $ERROR "Failed to bootstrap git global ignore configuration."
+    write_log $ERROR "Failed to bootstrap gitignore global configuration."
     exit 1
 fi
 
