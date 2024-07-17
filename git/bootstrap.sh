@@ -1,20 +1,16 @@
 #! /usr/bin/env bash
 
-source internal/logging.sh 2> /dev/null       || exit 1
-source internal/common.sh 2> /dev/null        || exit 1
-
-check_requirements git                        || exit 1
+source internal/logging.sh 2>&1 > /dev/null || exit 1
+source internal/common.sh  2>&1 > /dev/null || exit 1
 
 warnings=false
 
-devcontainer=false
-if check_devcontainer; then
-    write_log $WARNING "Some git configurations will not be applied because the script is running in a devcontainer."
-    devcontainer=true
-    warnings=true
-fi
-
 function bootstrap_gitignore() {
+    if ! check_requirements git; then
+        write_log $ERROR "Git is not installed. Skipping gitignore global configuration bootstrap."
+        return 2
+    fi
+
     excludesfile=$(git config --global core.excludesfile)
 
     if [ -L "$excludesfile" ]; then
