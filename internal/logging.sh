@@ -9,7 +9,7 @@ CRITICAL=5
 FATAL=6
 
 if [ -x "$(command -v tee)" ]; then
-    LOG_FILE="$HOME/.dotfiles.log"
+    LOG_FILE="$HOME/.dotfiles/install.log"
 
     if ! [ -f "$LOG_FILE" ]; then
         touch "$LOG_FILE"

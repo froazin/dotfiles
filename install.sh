@@ -1,18 +1,7 @@
 #!/usr/bin/env bash
 
-REQUIRED_PACKAGES=(
-    "bash"
-    "cat"
-    "ls"
-    "sed"
-    "cut"
-    "dirname"
-)
-
-source internal/logging.sh 2> /dev/null      || exit 1
-source internal/common.sh 2> /dev/null       || exit 1
-
-check_requirements "${REQUIRED_PACKAGES[@]}" || exit 1
+source internal/logging.sh 2>&1 > /dev/null || exit 1
+source internal/common.sh  2>&1 > /dev/null || exit 1
 
 function bootstrap_packages() {
     local packages=()
@@ -65,6 +54,20 @@ function bootstrap_packages() {
 }
 
 function main() {
+    REQUIRED_PACKAGES=(
+        "bash"
+        "cat"
+        "ls"
+        "sed"
+        "cut"
+        "dirname"
+    )
+
+    check_requirements "${REQUIRED_PACKAGES[@]}" 2>&1 > /dev/null
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
+
     cd "$(dirname "${BASH_SOURCE}")"
 
     bootstrap_packages
@@ -80,5 +83,7 @@ function main() {
     return 0
 }
 
-main
-unset main
+if ! main; then
+    echo "Failed to bootstrap dotfiles..."
+    exit 1
+fi

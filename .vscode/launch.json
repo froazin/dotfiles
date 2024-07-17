@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Debug Installer",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/install.sh",
+            "args": []
+        }
+    ]
+}
