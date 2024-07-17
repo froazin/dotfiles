@@ -1,0 +1,24 @@
+{
+  "[yaml]": {
+      "editor.autoIndent": "advanced",
+      "editor.indentSize": "tabSize",
+      "editor.tabSize": 2,
+      "editor.rulers": [80]
+  },
+  "[github-actions-workflow]": {
+      "editor.autoIndent": "advanced",
+      "editor.indentSize": "tabSize",
+      "editor.tabSize": 2,
+      "editor.rulers": [80]
+  },
+  "git.enableCommitSigning": true,
+  "editor.indentSize": "tabSize",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.unicodeHighlight.ambiguousCharacters": true,
+  "editor.unicodeHighlight.invisibleCharacters": true,
+  "json.schemas": [],
+  "yaml.schemas": {
+      "https://json.schemastore.org/github-issue-config.json": "**/ISSUE_TEMPLATE/config.yml"
+  },
+}

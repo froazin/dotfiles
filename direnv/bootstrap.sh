@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
-source .modules/logging.sh 2> /dev/null || exit 1
-source .modules/common.sh 2> /dev/null  || exit 1
+source internal/logging.sh 2> /dev/null || exit 1
+source internal/common.sh 2> /dev/null  || exit 1
 
 check_requirements direnv               || exit 1
 

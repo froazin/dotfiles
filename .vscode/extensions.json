@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "bierner.markdown-checkbox",
+        "bierner.markdown-emoji",
+        "bierner.markdown-yaml-preamble",
+        "redhat.vscode-yaml",
+        "VisualStudioExptTeam.intellicode-api-usage-examples",
+        "VisualStudioExptTeam.vscodeintellicode",
+    ],
+}
