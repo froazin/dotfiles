@@ -27,16 +27,16 @@ function bootstrap_gitignore() {
         write_log $WARNING "Existing git configuration for global core.excludesfile <$excludesfile> was found, but it will be overwritten."
         warnings=true
     else
-        write_log $DEBUG "No existing git configuration for global core.excludesfile was found will generate a new one at <$HOME/.gitignore_global>."
-        excludesfile="$HOME/.gitignore_global"
+        write_log $DEBUG "No existing git configuration for global core.excludesfile was found will generate a new one at <$HOME/.gitignore>."
+        excludesfile="$HOME/.gitignore"
     fi
 
-    write_log $DEBUG "Copying .gitignore_global to <$excludesfile>."
+    write_log $DEBUG "Copying .gitignore to <$excludesfile>."
     echo "" > $excludesfile
     while read -r line; do
         write_log $TRACE "Adding <$line> to <$excludesfile>."
         echo "$line" >> $excludesfile
-    done < git/.gitignore_global || return 1
+    done < git/.gitignore || return 1
     
     write_log $DEBUG "Setting git configuration for global core.excludesfile to <$excludesfile>."
     git config --global core.excludesfile "$excludesfile" || return 1

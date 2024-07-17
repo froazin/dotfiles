@@ -7,25 +7,7 @@
 
 #ignore thumbnails created by windows
 Thumbs.db
+desktop.ini
 
-#Ignore files build by Visual Studio
-*.obj
-*.exe
-*.pdb
-*.user
-*.aps
-*.pch
-*.vspscc
-*_i.c
-*_p.c
-*.ncb
-*.suo
-*.tlb
-*.tlh
-*.bak
-*.cache
-*.ilk
-*.log
-*.dll
-*.lib
-*.sbr
+#ignore files created by mac
+.DS_Store
