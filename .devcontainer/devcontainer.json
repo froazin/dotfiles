@@ -1,20 +1,19 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-	"name": "Ubuntu",
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
-	"features": {
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"installZsh": true,
-			"configureZshAsDefaultShell": true,
-			"installOhMyZsh": true,
-			"installOhMyZshConfig": true,
-			"upgradePackages": true,
-			"username": "vscode"
-		},
-		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers/features/powershell:1": {}
-	},
-
-	"remoteUser": "vscode"
+    "name": "Ubuntu",
+    "image": "ghcr.io/froazin/devcontainer-images/base:0-noble",
+    "features": {
+        "ghcr.io/froazin/devcontainer-features/sdk:0": {},
+        "ghcr.io/froazin/devcontainer-features/direnv:0": {},
+        "ghcr.io/froazin/devcontainer-features/shellcheck:0": {},
+        "ghcr.io/froazin/devcontainer-features/shfmt:0": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "mads-hartmann.bash-ide-vscode"
+            ]
+        }
+    }
 }
