@@ -1,10 +1,17 @@
 # This is a generated file, manual changes may be lost.
+
 # Ignore .local folder in git repos to give a safe space to store local files that should not be committed
 .local/
 
 # Ingore environment files
 *.env
 *.envrc
+
+# Ignore ansible vault password files
+*.ansible_vault_password
+
+# Ignore pulumi passphrase files
+*.pulumi_passphrase
 
 # Ignore nektos/act files
 *.secrets
