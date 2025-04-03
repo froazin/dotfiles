@@ -5,6 +5,7 @@ eval "$(sdkmod common)" || exit 1
 
 # Set the feature name for the logging package.
 _FEATURE_NAME=dotfiles
+_LOG_LEVEL=debug
 
 function bootstrap_packages() {
     local packages=()
