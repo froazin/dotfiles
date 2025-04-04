@@ -27,12 +27,6 @@ function create_excludes_file {
         return 1
     }
 
-    log debug "Setting git configuration for global core.excludesfile to <$excludes_file>."
-    git config --global core.excludesfile "$excludes_file" >/dev/null 2>&1 || {
-        log error "Failed to set git configuration for global core.excludesfile to <$excludes_file>."
-        return 1
-    }
-
     log info "Global gitignore file created at <$excludes_file>."
     return 0
 }
@@ -103,7 +97,7 @@ function bootstrap {
         # devcontainer, so we need to create a profile here to ensure that modifications
         # to the git configuration are applied after the host configuration is copied.
 
-        profiles+=("github" "ssh" "gpg")
+        profiles+=("github" "gitignore" "gpg" "ssh")
         for profile in "${profiles[@]}"; do
             create_profile "$profile" || {
                 log error "Failed to create profile <$profile>."
