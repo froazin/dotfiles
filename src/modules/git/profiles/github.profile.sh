@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/sh
 
 # If the gh cli credential helper is set on the host when using a devcontainer,
 # it will result in errors when trying to commit from within the devcontainer as

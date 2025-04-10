@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/sh
 
 # Dotfiles are executed before vscode copies the gitconfig file to the container.
 # This means that setting the excludes file in the main bootstrap.sh will

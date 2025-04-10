@@ -1,8 +1,6 @@
 # Dotfiles
 
-Welcome to my dotfiles repository! It contains configuration files and scripts to set up and customize my development environment across different systems.
-
-This repository is designed to compliment my [devcontainers](https://github.com/froazin/devcontainers) project. The scripts in this repository have a hard dependency on my [Script Development Kit (sdk)](https://github.com/froazin/devcontainers/blob/main/features/src/sdk/README.md) dev container feature.
+Welcome to my dotfiles repository! Designed to compliment my [devcontainers](https://github.com/froazin/devcontainers) project; it contains configuration files and scripts to set up and customize my development environment across different systems.
 
 Feel free to use and adapt these configurations for your own setup.
 

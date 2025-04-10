@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
-eval "$(sdkmod logging)" || exit 1
-eval "$(sdkmod common)" || exit 1
+source "$(dirname "$0")/internal/logging.sh" || exit 1
+source "$(dirname "$0")/internal/common.sh" || exit 1
 
-# Set the feature name for the logging package.
-_FEATURE_NAME=dotfiles
-_LOG_LEVEL=debug
+_LOG_LEVEL=info
 
 function bootstrap_packages() {
     local packages=()
