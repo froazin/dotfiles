@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/sh
 
 # VSCode automatically forwards the ssh agent to the devcontainer, so we need to unset
 # the ssh program to avoid conflicts.
