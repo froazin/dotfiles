@@ -7,11 +7,10 @@
 *.env
 *.envrc
 
-# Ignore ansible vault password files
-*.ansible_vault_password
-
-# Ignore pulumi passphrase files
-*.pulumi_passphrase
+# Ignore passphrase files
+*.*_pass
+*.*_password
+*.*_passphrase
 
 # Ignore nektos/act files
 *.secrets
