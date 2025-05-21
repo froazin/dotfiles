@@ -64,7 +64,7 @@ function get_distro_name {
 function is_devcontainer {
     # Check if the script is running in a devcontainer.
 
-    [ -f /.dockerenv ] && return 0 || return 1
+    [[ "$REMOTE_CONTAINERS" == "true" ]] && return 0 || return 1
 }
 
 function is_wsl {
