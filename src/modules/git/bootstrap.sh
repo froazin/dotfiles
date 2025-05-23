@@ -34,7 +34,7 @@ function create_excludes_file {
 function ensure_user_profiles {
     local profile_dir
 
-    profile_dir="$HOME/.local/profile.d"
+    profile_dir="$HOME/.profile.d"
 
     log debug "Ensureing user profile directory <$profile_dir> exists."
 
@@ -70,7 +70,7 @@ function create_profile {
     }
 
     log info "Creating profile <$profile_name>."
-    cp --force "$profile" "$HOME/.local/profile.d/git-$profile_name.profile.sh" >/dev/null 2>&1 || {
+    cp --force "$profile" "$HOME/.profile.d/git-$profile_name.profile.sh" >/dev/null 2>&1 || {
         log error "Failed to copy profile <$profile_name>."
         return 1
     }
@@ -97,7 +97,7 @@ function bootstrap {
         # devcontainer, so we need to create a profile here to ensure that modifications
         # to the git configuration are applied after the host configuration is copied.
 
-        profiles+=("github" "gitignore" "gpg" "ssh")
+        profiles+=("gitconfig.devcontainers")
         for profile in "${profiles[@]}"; do
             create_profile "$profile" || {
                 log error "Failed to create profile <$profile>."
