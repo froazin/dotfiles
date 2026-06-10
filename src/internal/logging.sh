@@ -1,10 +1,9 @@
-#! /usr/bin/env bash
+#!/usr/bin/env sh
 
 DOTFILES_LOG_LEVEL="${DOTFILES_LOG_LEVEL:-"info"}"
 DOTFILES_LOG_FILE="${DOTFILES_LOG_FILE:-"$HOME/.local/var/log/dotfiles.log"}"
 
-function _parse_level {
-    local level
+_parse_level() {
     level=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
     case "$level" in
@@ -32,8 +31,7 @@ function _parse_level {
     esac
 }
 
-function _get_level_string {
-    local level
+_get_level_string() {
     level=$1
 
     case "$level" in
@@ -61,12 +59,7 @@ function _get_level_string {
     esac
 }
 
-function _log_to_console {
-    local level
-    local msg
-    local timestamp
-    local color
-
+_log_to_console() {
     if ! [ -t 1 ]; then
         # stdout is not a tty
         return 0
@@ -101,20 +94,15 @@ function _log_to_console {
         ;;
     esac
 
-    local green='\033[0;32m' # Green
-    local nc='\033[0m'       # Text Reset
+    green='\033[0;32m' # Green
+    nc='\033[0m'       # Text Reset
 
     # shellcheck disable=SC1087
-    echo -e "$green$timestamp \033[$color[$(_get_level_string "$level")]$nc $msg" 1>&2
+    printf '%b\n' "$green$timestamp $color[$(_get_level_string "$level")]$nc $msg" 1>&2
     return 0
 }
 
-function log {
-    local timestamp
-    local level
-    local msg
-    local min_level
-
+log() {
     timestamp=$(date --iso-8601=seconds)
     level="$(_parse_level "$1")"
     min_level="$(_parse_level "$DOTFILES_LOG_LEVEL")"
@@ -122,11 +110,11 @@ function log {
     shift 1
     msg="$*"
 
-    if ! [[ $level =~ ^[0-9]+$ ]]; then
+    if ! echo "$level" | grep -Eq '^[0-9]+$'; then
         return 1
     fi
 
-    if [[ $level -lt $min_level ]]; then
+    if [ "$level" -lt "$min_level" ]; then
         return 0
     fi
 
@@ -147,10 +135,10 @@ function log {
     fi
 
     if [ -f "$DOTFILES_LOG_FILE" ]; then
-        tee -a "$DOTFILES_LOG_FILE" <<<"{\"timestamp\":\"$timestamp\",\"level\":\"$(_get_level_string "$level" | tr '[:upper:]' '[:lower:]')\",\"message\":\"$msg\"}" >/dev/null 2>&1
+        printf '%s\n' "{\"timestamp\":\"$timestamp\",\"level\":\"$(_get_level_string "$level" | tr '[:upper:]' '[:lower:]')\",\"message\":\"$msg\"}" | tee -a "$DOTFILES_LOG_FILE" >/dev/null 2>&1
     fi
 
-    if [[ "$level" -ge 5 ]]; then
+    if [ "$level" -ge 5 ]; then
         # Program should immediately exit if a fatal error occurs
         exit 1
     fi

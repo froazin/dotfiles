@@ -1,8 +1,6 @@
-#! /usr/bin/env bash
+#!/usr/bin/env sh
 
-function create_excludes_file {
-    local excludes_file
-
+create_excludes_file() {
     log info "Configuring global gitignore file."
     excludes_file="$(git config --global core.excludesfile 2>/dev/null | sed "s/~/\$HOME/")" || {
         log debug "No existing git configuration for global core.excludesfile was found."
@@ -31,9 +29,7 @@ function create_excludes_file {
     return 0
 }
 
-function ensure_user_profiles {
-    local profile_dir
-
+ensure_user_profiles() {
     profile_dir="$HOME/.profile.d"
 
     log debug "Ensureing user profile directory <$profile_dir> exists."
@@ -49,10 +45,7 @@ function ensure_user_profiles {
     return 0
 }
 
-function create_profile {
-    local profile_name
-    local profile
-
+create_profile() {
     profile_name="$1"
     if [ -z "$profile_name" ]; then
         log error "No profile name provided."
@@ -79,11 +72,9 @@ function create_profile {
     return 0
 }
 
-function bootstrap {
-    local errors
-    local profiles
-
-    profiles=()
+bootstrap() {
+    errors=""
+    profiles=""
 
     log info "Bootstrapping git configuration."
 
@@ -97,8 +88,8 @@ function bootstrap {
         # devcontainer, so we need to create a profile here to ensure that modifications
         # to the git configuration are applied after the host configuration is copied.
 
-        profiles+=("gitconfig.devcontainers")
-        for profile in "${profiles[@]}"; do
+        profiles="$profiles gitconfig.devcontainers"
+        for profile in $profiles; do
             create_profile "$profile" || {
                 log error "Failed to create profile <$profile>."
                 errors="true"

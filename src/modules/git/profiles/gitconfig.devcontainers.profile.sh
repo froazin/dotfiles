@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 if [ ! -f "$HOME/.gitconfig_setup_complete" ]; then
   (
