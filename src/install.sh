@@ -1,27 +1,25 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-source "$(dirname "$0")/internal/logging.sh" || exit 1
-source "$(dirname "$0")/internal/common.sh" || exit 1
+. "$(dirname "$0")/internal/logging.sh" || exit 1
+. "$(dirname "$0")/internal/common.sh" || exit 1
 
 _LOG_LEVEL=info
 
-function bootstrap_packages() {
-    local packages=()
-    local errors="false"
+main() {
+    packages=""
+    errors="false"
 
     log info "Bootstrapping dotfiles."
 
     log debug "Searching for configurations."
     for dir in "$(dirname "$0")/modules/"*; do
-        local pkg
-
         pkg="$(basename "$dir")"
-        packages+=("$pkg")
+        packages="$packages $pkg"
 
         log debug "Found configuration $pkg"
     done
 
-    for package in "${packages[@]}"; do
+    for package in $packages; do
         if [ -z "$package" ]; then
             continue
         fi
@@ -32,7 +30,7 @@ function bootstrap_packages() {
         fi
 
         btstrpfile="$(dirname "$0")/modules/$package/bootstrap.sh"
-        if [[ ! -f "$btstrpfile" ]]; then
+        if [ ! -f "$btstrpfile" ]; then
             log debug "Bootstrap file for $package not found."
             continue
         fi
@@ -45,6 +43,7 @@ function bootstrap_packages() {
         }
 
         log debug "Running $package configuration."
+        # shellcheck disable=SC2218 # The bootstrap function is defined in the package's bootstrap.sh file.
         bootstrap || {
             log error "Failed to execute $package configuration."
             errors="true"
@@ -53,19 +52,14 @@ function bootstrap_packages() {
         # We should reset the bootstrap function to avoid running the same
         # function again if a package fails to implement the bootstrap function
         # or if the package is not a module.
-        function bootstrap { true >/dev/null 2>&1; }
+        bootstrap() { true >/dev/null 2>&1; }
     done
 
-    if $errors; then
+    if [ "$errors" = "true" ]; then
         return 1
     fi
 
     log info "Dotfiles configuration completed successfully."
-    return 0
-}
-
-function main() {
-    bootstrap_packages || return 1
     return 0
 }
 
