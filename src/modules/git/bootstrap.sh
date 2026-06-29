@@ -29,52 +29,8 @@ create_excludes_file() {
     return 0
 }
 
-ensure_user_profiles() {
-    profile_dir="$HOME/.profile.d"
-
-    log debug "Ensureing user profile directory <$profile_dir> exists."
-
-    if ! [ -d "$profile_dir" ]; then
-        log info "Creating user profile directory <$profile_dir>."
-        mkdir -p "$profile_dir" >/dev/null 2>&1 || {
-            log error "Failed to create user profile directory <$profile_dir>."
-            return 1
-        }
-    fi
-
-    return 0
-}
-
-create_profile() {
-    profile_name="$1"
-    if [ -z "$profile_name" ]; then
-        log error "No profile name provided."
-        return 1
-    fi
-
-    profile="$(dirname "$0")/modules/git/profiles/$profile_name.profile.sh" || {
-        log error "No profile found for <$profile_name>."
-        return 1
-    }
-
-    ensure_user_profiles || {
-        log error "Failed to ensure user profiles."
-        return 1
-    }
-
-    log info "Creating profile <$profile_name>."
-    cp --force "$profile" "$HOME/.profile.d/git-$profile_name.profile.sh" >/dev/null 2>&1 || {
-        log error "Failed to copy profile <$profile_name>."
-        return 1
-    }
-
-    log info "Profile <$profile_name> created successfully."
-    return 0
-}
-
 bootstrap() {
     errors=""
-    profiles=""
 
     log info "Bootstrapping git configuration."
 
@@ -82,20 +38,6 @@ bootstrap() {
         log error "Failed to create gitignore file."
         errors="true"
     }
-
-    if is_devcontainer; then
-        # Dotfiles are executed before the gitconfig is copied from the host to the
-        # devcontainer, so we need to create a profile here to ensure that modifications
-        # to the git configuration are applied after the host configuration is copied.
-
-        profiles="$profiles gitconfig.devcontainers"
-        for profile in $profiles; do
-            create_profile "$profile" || {
-                log error "Failed to create profile <$profile>."
-                errors="true"
-            }
-        done
-    fi
 
     if [ -n "$errors" ]; then
         log warning "Git configuration completed with errors."
