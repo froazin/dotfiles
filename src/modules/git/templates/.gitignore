@@ -6,16 +6,6 @@
 # Ignore mcp config files
 .mcp.json
 
-# Ignore common, non-standard agent files
-.claude/
-CLAUDE.md
-.gemini/
-GEMINI.md
-.github/skills
-.github/instructions
-.github/prompts
-.github/copilot-instructions.md
-
 # Ingore environment files
 *.env
 *.envrc
