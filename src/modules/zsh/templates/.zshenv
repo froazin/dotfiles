@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # ~/.zshenv - sourced by EVERY zsh: login, non-login, interactive and scripts.
 
@@ -11,7 +11,7 @@ path=(
   "$HOME/.local/bin"
   "$HOME/bin"
   "$HOME/.pulumi/bin"
-  "$path"
+  $path
   "/snap/bin"          # normally added by /etc/profile.d/apps-bin-path.sh
 )
 
