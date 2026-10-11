@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # Native zsh port of the devcontainers "common-utils" prompt theme
 #
@@ -43,14 +43,14 @@ _zp_err='#E74856'       # $fg_bold[red]     arrow on failure, branch name
 _zp_path='#21bfd3'      # old theme cyan    path
 _zp_paren='#6a6a6a'     # old theme grey    parens around the branch
 _zp_yellow='#F9F1A5'    # $fg_bold[yellow]  dirty marker
-_zp_blue='#0B57A4'      # Fedora logo blue
+_zp_blue='#E95420'      # Ubuntu logo orange
 _zp_dim='#767676'       # Campbell bright black, for the logo when root
 
 # ---------------------------------------------------------------------------
 # glyphs
 # ---------------------------------------------------------------------------
 
-_zp_logo=$'\uf30a'         # nf-linux-fedora
+_zp_logo=$'\uf31b'         # nf-linux-ubuntu
 _zp_arrow=$'\u279c'        # heavy round-tipped rightwards arrow
 _zp_dirty=$'\u2717'        # ballot X
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # This file is a loader and nothing else. Every actual setting lives in a
 # numbered file under ~/.zshrc.d/.

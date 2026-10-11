@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # Key bindings: emacs mode with Windows-style word editing.
 

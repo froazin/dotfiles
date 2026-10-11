@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # Shell options and history policy.
 

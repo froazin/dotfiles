@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shellcheck shell=zsh
+# shellcheck shell=bash
 #
 # A workspace is a git repository under ~/workspaces, laid out as
 # <provider>/<org>/<repo>, e.g. ~/workspaces/github.com/froazin/dotfiles
