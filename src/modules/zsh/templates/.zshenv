@@ -12,7 +12,7 @@ path=(
   "$HOME/bin"
   "$HOME/.pulumi/bin"
   $path
-  "/snap/bin"          # normally added by /etc/profile.d/apps-bin-path.sh
+  "/snap/bin" # normally added by /etc/profile.d/apps-bin-path.sh
 )
 
 # Snap desktop files - also normally handled by apps-bin-path.sh.
@@ -34,9 +34,10 @@ else
 fi
 export VISUAL="$EDITOR"
 
-# xdg-open's generic handler falls back to $BROWSER; explorer.exe opens URLs in
-# the Windows default browser.
-if [[ -x /mnt/c/Windows/explorer.exe ]]; then
+# xdg-open's generic handler falls back to $BROWSER.
+if [[ -x /usr/local/bin/start ]]; then
+  export BROWSER=/usr/local/bin/start
+elif [[ -x /mnt/c/Windows/explorer.exe ]]; then
   export BROWSER=/mnt/c/Windows/explorer.exe
 fi
 
