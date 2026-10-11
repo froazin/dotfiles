@@ -26,5 +26,22 @@ fi
 # Note: CTRL-R reads the in-memory history via fc, so it still works fully
 # despite history never being written to disk (see 00-options.zsh).
 if (( $+commands[fzf] )); then
-  source <(fzf --zsh)
+  _fzf_version=$(fzf --version | cut -d' ' -f1)
+  _fzf_major_version=$(echo "$_fzf_version" | cut -d. -f1)
+  _fzf_minor_version=$(echo "$_fzf_version" | cut -d. -f2)
+
+  if [[ $_fzf_major_version -eq 0 && $_fzf_minor_version -ge 48 ]]; then
+    source <(fzf --zsh)
+  else
+    _fzf_key_bindings="/usr/share/doc/fzf/examples/key-bindings.zsh"
+    _fzf_completion="/usr/share/doc/fzf/examples/completion.zsh"
+
+    if [[ -f $_fzf_key_bindings ]]; then
+      source "$_fzf_key_bindings"
+    fi
+
+    if [[ -f $_fzf_completion ]]; then
+      source "$_fzf_completion"
+    fi
+  fi
 fi
