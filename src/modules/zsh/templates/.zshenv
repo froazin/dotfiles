@@ -41,6 +41,10 @@ elif [[ -x /mnt/c/Windows/explorer.exe ]]; then
   export BROWSER=/mnt/c/Windows/explorer.exe
 fi
 
+# Without this a non-root virsh talks to qemu:///session, which cannot see
+# system VMs or the default NAT network.
+export LIBVIRT_DEFAULT_URI='qemu:///system'
+
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # We render the virtualenv name ourselves in the prompt; stop activate scripts

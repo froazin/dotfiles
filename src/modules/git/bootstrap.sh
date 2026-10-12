@@ -2,10 +2,24 @@
 
 create_excludes_file() {
     log info "Configuring global gitignore file."
-    excludes_file="$(git config --global core.excludesfile 2>/dev/null | sed "s/~/\$HOME/")" || {
-        log debug "No existing git configuration for global core.excludesfile was found."
-        return 0
-    }
+    # --get exits non-zero when the key is unset, which is not an error here.
+    excludes_file="$(git config --global --get core.excludesfile 2>/dev/null)" || excludes_file=""
+
+    case "$excludes_file" in
+    \~/*)
+        excludes_file="$HOME/${excludes_file#\~/}"
+        ;;
+    esac
+
+    if [ -z "$excludes_file" ]; then
+        excludes_file="$HOME/.gitignore"
+        log debug "No existing git configuration for global core.excludesfile was found, a new one will be generated at <$excludes_file>."
+
+        git config --global core.excludesfile "$excludes_file" >/dev/null 2>&1 || {
+            log error "Failed to set global core.excludesfile to <$excludes_file>."
+            return 1
+        }
+    fi
 
     if [ -L "$excludes_file" ]; then
         log warning "Existing git configuration for global core.excludesfile <$excludes_file> was found, but it is a symbolic link and will be ignored."
@@ -14,9 +28,13 @@ create_excludes_file() {
 
     if [ -f "$excludes_file" ]; then
         log warning "Existing git configuration for global core.excludesfile <$excludes_file> was found, it will be overwritten."
-    else
-        log debug "No existing git configuration for global core.excludesfile was found a new one will be generated at <$HOME/.gitignore>."
-        excludes_file="$HOME/.gitignore"
+    fi
+
+    if ! [ -d "$(dirname "$excludes_file")" ]; then
+        mkdir -p "$(dirname "$excludes_file")" >/dev/null 2>&1 || {
+            log error "Failed to create directory <$(dirname "$excludes_file")>."
+            return 1
+        }
     fi
 
     log debug "Copying .gitignore to <$excludes_file>."

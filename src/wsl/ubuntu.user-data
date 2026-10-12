@@ -1,0 +1,338 @@
+## template: jinja
+#cloud-config
+#
+# cloud-init user-data for an Ubuntu 26.04 WSL instance named "Ubuntu".
+#
+# Copy to %USERPROFILE%\.cloud-init\ubuntu.user-data, alongside a filled-in
+# copy of src/wsl/ubuntu.meta-data, before installing the distro. It applies
+# once, on first boot, and the OOBE waits for it.
+#
+# Nothing identifying belongs in this file. The username and git identity come
+# from the meta-data, which cloud-init exposes to this template as
+# ds.meta_data. Without a username the user-specific sections render to
+# nothing and the usual OOBE prompt creates the user instead.
+#
+# Do not add an `ubuntu_pro` key: Ubuntu Pro for WSL merges its own agent data
+# over this file and takes precedence.
+#
+# Jinja control tags must start at column 0: trim_blocks is on but
+# lstrip_blocks is not, so indented tags would leave their indentation behind.
+{% set user = ds.meta_data.username or '' %}
+{% set git_name = ds.meta_data.git_name or '' %}
+{% set git_email = ds.meta_data.git_email or '' %}
+{% set git_signingkey = ds.meta_data.git_signingkey or '' %}
+{% set git_ssh_program = ds.meta_data.git_ssh_program or '' %}
+{# GitHub username from a noreply address, ID+user@ or user@, for the workspace layout. #}
+{% set gh_local, _, gh_domain = (git_email | string).rpartition('@') %}
+{% set gh_user = gh_local.split('+', 1)[-1] if gh_domain | lower == 'users.noreply.github.com' else '' %}
+{% if not gh_user.replace('-', '').isalnum() %}
+{% set gh_user = '' %}
+{% endif %}
+{# This repo, checked out at the path its URL maps to under ~/workspaces. #}
+{% set dotfiles_repo = 'https://github.com/froazin/dotfiles.git' %}
+{% set dotfiles_dir = '~/workspaces/' ~ dotfiles_repo.split('://', 1)[-1].removesuffix('.git') %}
+{# Quote a value for git config: backslashes and double quotes escaped. #}
+{% macro gitval(value) %}"{{ value | string | replace('\\', '\\\\') | replace('"', '\\"') }}"{% endmacro %}
+
+locale: en_GB.UTF-8
+{% if user %}
+
+users:
+  - name: {{ user }}
+    uid: 1000
+    # zsh is installed later in this boot; useradd only warns until then.
+    shell: /usr/bin/zsh
+    # libvirt is added in runcmd: it does not exist yet, and creating it here
+    # would make it an ordinary group that takes gid 1000.
+    groups: [adm, cdrom, sudo, dip, plugdev, users, kvm]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+{% endif %}
+
+package_update: true
+package_upgrade: true
+
+apt:
+  sources:
+    github-cli:
+      source: "deb [signed-by=$KEY_FILE] https://cli.github.com/packages stable main"
+      # GitHub CLI <opensource+cli@github.com>
+      # 7F38 BBB5 9D06 4DBC B3D8  4D72 5612 B364 6231 3325
+      key: |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        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
+        LxU=
+        =VbVd
+        -----END PGP PUBLIC KEY BLOCK-----
+
+packages:
+  # dotfiles: the zsh and git modules, their soft and optional dependencies
+  - zsh
+  - zsh-common
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
+  - fzf
+  - git
+  - direnv
+  - xdg-utils
+  - curl
+  - ca-certificates
+  - jq
+  # development
+  - gh
+  - shellcheck
+  - shfmt
+  # containers
+  - podman
+  - podman-docker
+  - podman-compose
+  - buildah
+  - skopeo
+  # utilities
+  - btop
+  - nmap
+  - ncat
+  # virtualisation; qemu-kvm is a virtual package and must not be listed
+  - qemu-system-x86
+  - qemu-utils
+  - libvirt-daemon-system
+  - libvirt-clients
+  - virtinst
+  - ovmf
+  - swtpm
+  - swtpm-tools
+  - cpu-checker
+
+write_files:
+  # No [user] section: the OOBE adds `default=` for whichever user exists.
+  - path: /etc/wsl.conf
+    permissions: "0644"
+    content: |
+      [boot]
+      systemd=true
+      command=mount -o remount,shared /
+
+      [interop]
+      enabled=true
+      appendWindowsPath=false
+
+  # Ubuntu Pro pins ESM at 510, which would otherwise win over upstream gh.
+  - path: /etc/apt/preferences.d/github-cli
+    permissions: "0644"
+    content: |
+      Package: gh
+      Pin: origin cli.github.com
+      Pin-Priority: 600
+
+  # Defaults for a user created by the OOBE prompt rather than cloud-init.
+  # DSHELL is added in runcmd, once zsh is known to be installed.
+  - path: /etc/adduser.conf
+    append: true
+    content: |
+
+      # Added by cloud-init for WSL.
+      ADD_EXTRA_GROUPS=1
+      EXTRA_GROUPS="users kvm libvirt"
+
+  - path: /etc/containers/nodocker
+    permissions: "0644"
+    content: ""
+
+  # xdg-open falls back to $BROWSER when explorer.exe is not on PATH.
+  - path: /etc/profile.d/browser.sh
+    permissions: "0644"
+    content: |
+      export BROWSER=/usr/local/bin/start
+
+  - path: /etc/environment.d/90-browser.conf
+    permissions: "0644"
+    content: |
+      BROWSER=/usr/local/bin/start
+
+  # .wslconfig sets swap=0, but swap that WSL attaches anyway is turned off.
+  - path: /etc/systemd/system/disable-swap.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Disable swap to mirror swap=0 in .wslconfig
+      ConditionVirtualization=wsl
+      After=local-fs.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/sbin/swapoff -a
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # Podman wants / shared; backs up the [boot] command in wsl.conf.
+  - path: /etc/systemd/system/make-root-rshared.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Make / a recursively shared mount
+      ConditionVirtualization=wsl
+      DefaultDependencies=no
+      After=local-fs.target
+      Before=sysinit.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/mount --make-rshared /
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=sysinit.target
+
+  - path: /usr/local/bin/start
+    permissions: "0755"
+    content: |
+      #!/usr/bin/sh
+      #
+      # Open a URL or file with its default Windows handler. Exported as $BROWSER
+      # so xdg-open hands off to Windows instead of looking for a Linux browser.
+
+      _target="$*"
+
+      # Linux paths mean nothing to Windows, so translate them. URLs pass through.
+      if [ -e "$_target" ]; then
+      	_target="$(wslpath -w "$_target")" || exit 1
+      fi
+
+      # The target travels as an environment variable rather than as part of the
+      # PowerShell command, so nothing in it can be interpreted as code.
+      # shellcheck disable=SC2016 # $env: is expanded by PowerShell, not sh.
+      START_TARGET="$_target" WSLENV="${WSLENV:+$WSLENV:}START_TARGET" \
+      	/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
+      	-NoLogo \
+      	-NoProfile \
+      	-NonInteractive \
+      	-Command 'Start-Process -FilePath $env:START_TARGET' \
+      	</dev/null >/dev/null 2>&1 &
+
+      exit 0
+
+{% if user %}
+  # Written after the user exists. The dotfiles' git module adds
+  # core.excludesfile to this file later in the boot.
+  - path: /home/{{ user }}/.gitconfig
+    owner: "{{ user }}:{{ user }}"
+    permissions: "0644"
+    defer: true
+    content: |
+{% if git_name or git_email or git_signingkey %}
+      [user]
+{% if git_name %}
+      	name = {{ gitval(git_name) }}
+{% endif %}
+{% if git_email %}
+      	email = {{ gitval(git_email) }}
+{% endif %}
+{% if git_signingkey %}
+      	signingkey = {{ gitval(git_signingkey) }}
+{% endif %}
+{% endif %}
+      [init]
+      	defaultBranch = main
+      [core]
+      	autocrlf = false
+      	editor = /usr/local/bin/code --wait
+      [safe]
+      	directory = /home/{{ user }}/workspaces/*
+      [credential "https://github.com"]
+      	helper =
+      	helper = !/usr/bin/gh auth git-credential
+      [credential "https://gist.github.com"]
+      	helper =
+      	helper = !/usr/bin/gh auth git-credential
+{% if git_signingkey %}
+      [gpg]
+      	format = ssh
+      [commit]
+      	gpgsign = true
+{% endif %}
+{% if git_ssh_program %}
+      [gpg "ssh"]
+      	program = {{ gitval(git_ssh_program) }}
+{% endif %}
+{% endif %}
+
+# Runs in the final stage, after packages. Each entry runs regardless of the
+# others' exit status.
+runcmd:
+  # Windows tools, bridged into the Linux PATH.
+  - [ln, -sfn, "/mnt/c/Program Files/Microsoft VS Code/bin/code", /usr/local/bin/code]
+  - [ln, -sfn, "/mnt/c/Program Files/WinGet/Links/op.exe", /usr/local/bin/op]
+  - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh.exe", /usr/local/bin/ssh]
+  - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh-add.exe", /usr/local/bin/ssh-add]
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, disable-swap.service, make-root-rshared.service]
+  - [virsh, --connect, "qemu:///system", net-autostart, default]
+  # A login shell that does not exist would lock the OOBE-created user out.
+  - [sh, -c, 'if [ -x /usr/bin/zsh ]; then printf "DSHELL=/usr/bin/zsh\n" >> /etc/adduser.conf; fi']
+{% if user %}
+  - [usermod, -aG, libvirt, "{{ user }}"]
+  # Layout the zsh `ws` picker expects: ~/workspaces/<host>/<owner>/<repo>.
+  - [runuser, -u, "{{ user }}", --, mkdir, -p, "/home/{{ user }}/workspaces"]
+{% if gh_user %}
+  - [runuser, -u, "{{ user }}", --, mkdir, -p, "/home/{{ user }}/workspaces/github.com/{{ gh_user }}"]
+{% endif %}
+  # Official installers, run as the user so both can update themselves. The
+  # dotfiles' .zshenv puts ~/.local/bin and ~/.pulumi/bin on PATH.
+  - [runuser, -l, "{{ user }}", -c, "curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh"]
+  - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path"]
+  # nvm's manual install: a git checkout of the latest release tag, updated the
+  # same way. The zsh module sources it from ~/.nvm.
+  - [runuser, -l, "{{ user }}", -c, 'git clone --quiet https://github.com/nvm-sh/nvm.git ~/.nvm && cd ~/.nvm && git checkout --quiet "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")"']
+  # Runs after the workspace directories above. git clone creates whatever
+  # parents are still missing, and an existing checkout is reused.
+  - [runuser, -l, "{{ user }}", -c, "{ [ -d {{ dotfiles_dir }}/.git ] || git clone {{ dotfiles_repo }} {{ dotfiles_dir }}; } && sh {{ dotfiles_dir }}/src/install.sh"]
+{% endif %}

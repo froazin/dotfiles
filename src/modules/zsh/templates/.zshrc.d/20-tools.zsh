@@ -3,7 +3,7 @@
 #
 # External tool hooks.
 #
-# Both of these register ZLE widgets, so they must load before
+# direnv and fzf register ZLE widgets, so they must load before
 # zsh-syntax-highlighting (90-plugins.zsh), which wraps every widget that
 # exists at the moment it is sourced.
 
@@ -43,5 +43,22 @@ if (( $+commands[fzf] )); then
     if [[ -f $_fzf_completion ]]; then
       source "$_fzf_completion"
     fi
+  fi
+fi
+
+# nvm is a shell function sourced from a git checkout rather than a command on
+# PATH, so it is detected by its install directory. Sourcing nvm.sh also puts
+# the default node version on PATH.
+#
+# Its bash_completion runs compinit itself unless compinit is already defined,
+# and then bashcompinit. 10-completion.zsh has run compinit by now; compdef only
+# exists if it succeeded, so without zsh-common the completion is skipped
+# rather than letting nvm call compinit with its own defaults.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ -s $NVM_DIR/nvm.sh ]]; then
+  source "$NVM_DIR/nvm.sh"
+
+  if (( $+functions[compdef] )) && [[ -s $NVM_DIR/bash_completion ]]; then
+    source "$NVM_DIR/bash_completion"
   fi
 fi

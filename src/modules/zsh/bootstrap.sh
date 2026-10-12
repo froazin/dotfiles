@@ -31,6 +31,10 @@ ZSH_SOFT_PLUGINS="/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh /usr/sh
 # Auto-enabled when present, skipped with a warning when not.
 ZSH_OPTIONAL_DEPS="op uv pulumi direnv"
 
+# Optional tools that are sourced rather than run, so `command -v` cannot see
+# them from here. Each is a name and the file 20-tools.zsh sources.
+ZSH_OPTIONAL_SOURCED="nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+
 zsh_have_function() {
     # Resolve an autoloadable function through zsh's own $fpath. Works whether
     # the function tree came from Debian's zsh-common or is bundled with zsh.
@@ -81,6 +85,17 @@ zsh_report_optional_deps() {
             log info "Optional integration enabled: $cmd"
         else
             log warning "Optional integration skipped: $cmd is not installed. Its shell integration stays dormant until it is, no reinstall needed."
+        fi
+    done
+
+    for entry in $ZSH_OPTIONAL_SOURCED; do
+        name="${entry%%:*}"
+        file="${entry#*:}"
+
+        if [ -s "$file" ]; then
+            log info "Optional integration enabled: $name"
+        else
+            log warning "Optional integration skipped: $name is not installed at <$file>. Its shell integration stays dormant until it is, no reinstall needed."
         fi
     done
 

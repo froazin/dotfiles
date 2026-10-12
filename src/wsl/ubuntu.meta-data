@@ -1,0 +1,27 @@
+# Identifying inputs for src/wsl/ubuntu.user-data.
+#
+# Copy to %USERPROFILE%\.cloud-init\ubuntu.meta-data and fill in. Keep the
+# filled copy out of this repository. cloud-init only reads meta-data named
+# after the instance, so this matches an instance named "Ubuntu".
+#
+# The user-data reads these values as ds.meta_data. Leave a value empty to
+# skip it.
+
+# Required by cloud-init.
+instance-id: ubuntu-wsl
+
+# Linux username, created with uid 1000, zsh and passwordless sudo. Empty to
+# have the OOBE prompt for a user instead.
+username:
+
+# git user.name and user.email.
+git_name:
+git_email:
+
+# Public SSH key to sign commits with, e.g. "ssh-ed25519 AAAA...". Commit
+# signing is only enabled when this is set.
+git_signingkey:
+
+# Program git signs with, e.g. 1Password's WSL helper:
+# /mnt/c/Users/<you>/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe
+git_ssh_program:

@@ -11,7 +11,7 @@ cd dotfiles
 
 # 2. Run the install script
 chmod +x ./src/install.sh 
-& ./src/install.sh
+./src/install.sh
 ```
 
 ## Modules
@@ -40,7 +40,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
 | `git`  | `git` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm` |
 
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
@@ -48,6 +48,65 @@ check works on any distribution.
 
 > The install scripts are POSIX `sh` so they run anywhere. Only the files they
 > seed are zsh-specific.
+
+## WSL provisioning
+
+`src/wsl/ubuntu.user-data` is a cloud-init config that builds an Ubuntu 26.04 WSL
+instance from scratch:
+
+- installs every package the modules above depend on, plus containers and a
+  KVM/libvirt stack for running VMs inside WSL;
+- writes `/etc/wsl.conf` and disables swap to match `src/wsl/.wslconfig`;
+- bridges Windows tools (VS Code, 1Password CLI, OpenSSH) into the Linux
+  `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
+- creates the user with zsh and passwordless sudo, when a username is given;
+- installs `uv`, `pulumi` and `nvm` as that user, so each can update itself;
+- configures git, then clones this repo and runs `install.sh`.
+
+The user-data holds nothing personal. Your username and git identity go in the
+meta-data, which cloud-init reads alongside it and which stays on your machine:
+
+| Repo file | Copy to |
+| --------- | ------- |
+| `src/wsl/.wslconfig` | `%USERPROFILE%\.wslconfig` |
+| `src/wsl/ubuntu.user-data` | `%USERPROFILE%\.cloud-init\ubuntu.user-data` |
+| `src/wsl/ubuntu.meta-data` (fill it in) | `%USERPROFILE%\.cloud-init\ubuntu.meta-data` |
+
+cloud-init matches both files by instance name, so install the distro as
+`Ubuntu` from PowerShell:
+
+```powershell
+wsl --install Ubuntu-26.04 --name Ubuntu
+```
+
+cloud-init runs on first boot only, and the first launch waits for it. When it
+finishes, restart the instance so the `wsl.conf` settings and the new group
+memberships take effect:
+
+```powershell
+wsl --terminate Ubuntu
+```
+
+If the meta-data gives no `username`, WSL asks you to create a user as normal,
+and that user gets zsh and the virtualisation groups. Finish setting it up
+yourself:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
+curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path
+git clone https://github.com/nvm-sh/nvm.git ~/.nvm
+git -C ~/.nvm checkout "$(git -C ~/.nvm describe --abbrev=0 --tags --match 'v[0-9]*' "$(git -C ~/.nvm rev-list --tags --max-count=1)")"
+git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
+sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
+```
+
+To test changes, copy the files as `ci-test.user-data` and `ci-test.meta-data`
+to match a throwaway instance:
+
+```powershell
+wsl --install Ubuntu-26.04 --name ci-test
+wsl --unregister ci-test
+```
 
 ---
 Happy coding! :rocket:
