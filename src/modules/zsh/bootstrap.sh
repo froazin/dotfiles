@@ -51,11 +51,17 @@ zsh_check_soft_deps()
 
 zsh_report_optional_deps()
 {
+    # Per-user tools (uv, nvm, ...) are normally absent for root by design.
+    skipped="warning"
+    if is_root; then
+        skipped="debug"
+    fi
+
     for cmd in $ZSH_OPTIONAL_DEPS; do
         if command -v "$cmd" > /dev/null 2>&1; then
             log info "Optional integration enabled: $cmd"
         else
-            log warning "Optional integration skipped: $cmd is not installed. Its shell integration stays dormant until it is, no reinstall needed."
+            log "$skipped" "Optional integration skipped: $cmd is not installed. Its shell integration stays dormant until it is, no reinstall needed."
         fi
     done
 
@@ -66,7 +72,7 @@ zsh_report_optional_deps()
         if [ -s "$file" ]; then
             log info "Optional integration enabled: $name"
         else
-            log warning "Optional integration skipped: $name is not installed at <$file>. Its shell integration stays dormant until it is, no reinstall needed."
+            log "$skipped" "Optional integration skipped: $name is not installed at <$file>. Its shell integration stays dormant until it is, no reinstall needed."
         fi
     done
 

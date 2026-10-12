@@ -141,6 +141,10 @@ _zp_repo_cfg() {
 
   (( _zp_cfg_show_dirty )) || return 0
 
+  # `git status` can run repo-configured programs (core.fsmonitor, filters).
+  # As root, only in repos root owns; the branch still shows everywhere else.
+  (( EUID == 0 )) && [[ ! -O $(_zp_gitdir) ]] && return 0
+
   [[ -n $(command git status --porcelain --ignore-submodules=dirty 2>/dev/null) ]] &&
     hook_com[misc]+=" %F{${_zp_yellow}}${_zp_dirty}%f%F{${_zp_paren}}"
 }
@@ -198,7 +202,8 @@ RPROMPT=''
 if [[ $TERM != (dumb|linux|) ]]; then
   _zp_title()         { print -Pn -- "\e]0;%n@%m: $1\a" }
   _zp_title_preexec() { _zp_title "$1" }
-  _zp_title_precmd()  { _zp_title "${SHELL:t}" }
+  # Not $SHELL: under `sudo -s` that is root's login shell, not this one.
+  _zp_title_precmd()  { _zp_title "$ZSH_NAME" }
   add-zsh-hook preexec _zp_title_preexec
   add-zsh-hook precmd  _zp_title_precmd
 fi

@@ -21,8 +21,11 @@ fi
 
 # Prefer VS Code, but fall back so this file is still correct on a
 # machine without it - it is seeded from dotfiles and has to work
-# on servers and in containers too.
-if (( $+commands[code] )); then
+# on servers and in containers too. Not for root, except in a dev container
+# where VS Code itself runs as root: elsewhere sudo drops the WSL variables the
+# code launcher relies on, and the VS Code server runs as the user, so it could
+# not save root's files anyway.
+if (( $+commands[code] )) && { (( EUID != 0 )) || [[ $REMOTE_CONTAINERS == true ]] }; then
   export EDITOR='code --wait'
 elif (( $+commands[vim] )); then
   export EDITOR='vim'

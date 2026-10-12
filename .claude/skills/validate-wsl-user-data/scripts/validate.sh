@@ -131,6 +131,28 @@ if want and not any(d.endswith(f"/workspaces/github.com/{want}") for d in mkdirs
 if not want and mkdirs:
     problems.append(f"unexpected workspace dirs {mkdirs}")
 
+# Root: login shell set first, then the dotfiles installed after the user's.
+cmds = [c if isinstance(c, list) else [c] for c in doc.get("runcmd", [])]
+def find(pred):
+    return next((i for i, c in enumerate(cmds) if pred(c)), None)
+root_shell = find(lambda c: "usermod -s /usr/bin/zsh root" in " ".join(map(str, c)))
+root_install = find(lambda c: c[:3] == ["runuser", "-l", "root"])
+user_install = find(lambda c: c[:2] == ["runuser", "-l"] and c[2] != "root" and "src/install.sh" in str(c[-1]))
+if root_shell is None:
+    problems.append("runcmd does not set root's login shell")
+if root_install is None:
+    problems.append("runcmd does not install the dotfiles for root")
+else:
+    script = str(cmds[root_install][-1])
+    if root_shell is not None and root_install < root_shell:
+        problems.append("root's dotfiles install runs before its login shell is set")
+    if "~" in script:
+        problems.append("root's install path uses ~, which runuser -l expands to /root")
+    if expect["user"] and (user_install is None or root_install < user_install):
+        problems.append("root's install does not follow the user's clone")
+    if not expect["user"] and "mktemp" not in script:
+        problems.append("root's install without a user does not use a throwaway clone")
+
 if gitconfig is not None:
     with open(prefix + ".gitconfig", "w") as f:
         f.write(gitconfig["content"])

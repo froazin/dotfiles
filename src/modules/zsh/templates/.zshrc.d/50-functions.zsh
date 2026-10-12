@@ -5,11 +5,14 @@
 # `-c` prefers a *.code-workspace file at the workspace root over the plain
 # directory, so a repo that defines a multi-root workspace opens as that
 # workspace rather than as a bare folder.
+#
+# Under sudo, workspaces are looked up in the invoking user's home ($SUDO_HOME),
+# so a root shell started with `sudo su` or `sudo -s` still finds them.
 
 # Emit the list of workspaces, relative to the workspace root.
 __ws_list() {
   emulate -L zsh
-  local workspace_dir=${WORKSPACE_DIR:-$HOME/workspaces}
+  local workspace_dir=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
   [[ -d $workspace_dir ]] || return 1
 
   find "$workspace_dir" -mindepth 3 -maxdepth 3 -type d 2>/dev/null \
@@ -62,7 +65,7 @@ workspaces() {
   done
 
   # `local -x` so the fzf preview subprocess can see it.
-  local -x WS_DIR=${WORKSPACE_DIR:-$HOME/workspaces}
+  local -x WS_DIR=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
   local query="$*" target
 
   if [[ ! -d $WS_DIR ]]; then
@@ -77,6 +80,9 @@ workspaces() {
 
   # --select-1 jumps straight there when the query matches exactly one
   # workspace; --exit-0 gives up quietly when it matches none.
+  #
+  # git can run programs a repo's config names (core.fsmonitor, gpg.program),
+  # so as root the preview skips git in workspaces root does not own.
   target=$(
     __ws_list | fzf \
       --query="$query" \
@@ -84,6 +90,7 @@ workspaces() {
       --height=80% --reverse \
       --prompt='workspace> ' \
       --preview='printf "%s\n\n" "$WS_DIR"/{}; \
+                 [ "$(id -u)" -ne 0 ] || [ -O "$WS_DIR"/{} ] || exit 0; \
                  git -C "$WS_DIR"/{} status -sb 2>/dev/null; \
                  echo; \
                  git -C "$WS_DIR"/{} log --oneline -10 2>/dev/null' \
@@ -96,7 +103,11 @@ workspaces() {
       return 1
     }
     if (( open_code )); then
-      if (( $+commands[code] )); then
+      # Same rule as EDITOR in .zshenv: no VS Code for root outside a dev container.
+      if (( EUID == 0 )) && [[ $REMOTE_CONTAINERS != true ]]; then
+        print -ru2 -- "ws: not opening VS Code as root"
+        return 1
+      elif (( $+commands[code] )); then
         local code_target
         if code_target=$(__ws_code_target "$WS_DIR/$target"); then
           print -r -- "ws: opening ${code_target:t}"

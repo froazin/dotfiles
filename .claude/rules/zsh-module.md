@@ -26,3 +26,8 @@ paths:
   in `ZSH_OPTIONAL_SOURCED`), the README dependency table, and the package
   list in `src/wsl/ubuntu.user-data` if it comes from apt.
 - The installer never runs `chsh`; it only reports the login shell.
+- Root gets its own copy of these files (and zsh as its login shell on WSL),
+  and reaches them via `sudo su`/`sudo -s` with the user's repos under
+  `$SUDO_HOME`. Check `EUID` for anything that must not run as root, such as
+  launching Windows GUI editors or running `git status` in repos root does
+  not own, and don't trust `$SHELL` to name the running shell.

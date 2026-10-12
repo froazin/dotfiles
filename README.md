@@ -14,6 +14,25 @@ chmod +x ./src/install.sh
 ./src/install.sh
 ```
 
+### Root
+
+The installer configures whoever runs it. To keep `sudo su` and `sudo -i` in
+zsh, make the system zsh (the one in `/etc/shells`, never one in your home)
+root's login shell, then give root its own copy of the configuration:
+
+```bash
+sudo usermod -s /usr/bin/zsh root
+sudo -H sh ./src/install.sh
+```
+
+`sudo -s` already starts your own shell, so it needs only the second line.
+Root's files are copies rather than links to yours, so a process running as
+you can't change what root runs. Run the install again after pulling changes.
+
+If zsh is ever removed, set root back to bash first
+(`sudo usermod -s /bin/bash root`), or `su` and `sudo -i` stop working. On WSL,
+`wsl -u root -e /usr/sbin/usermod -s /bin/bash root` recovers it from Windows.
+
 ## Modules
 
 Each directory under `src/modules/` is a module with a `bootstrap.sh` that
@@ -35,7 +54,8 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
   Reported as errors and the module reports failure, so the run exits non-zero
   and you notice. The install still completes, and the features start working on
   the next shell once the dependency is present — no reinstall needed.
-- **Optional** — nice to have. Reported as warnings only.
+- **Optional** — nice to have. Reported as warnings only, and not at all when
+  installing for root, which rarely has per-user tools like `uv` or `nvm`.
 
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
@@ -61,7 +81,10 @@ instance from scratch:
   `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
 - creates the user with zsh and passwordless sudo, when a username is given;
 - installs `uv`, `pulumi` and `nvm` as that user, so each can update itself;
-- configures git, then clones this repo and runs `install.sh`.
+- configures git, then clones this repo and runs `install.sh`;
+- makes zsh root's login shell and runs `install.sh` for root too, so
+  `sudo su` keeps the same shell and prompt. Without a username, root's copy
+  comes from a temporary clone.
 
 The user-data holds nothing personal. Your username and git identity go in the
 meta-data, which cloud-init reads alongside it and which stays on your machine:
@@ -88,8 +111,8 @@ wsl --terminate Ubuntu
 ```
 
 If the meta-data gives no `username`, WSL asks you to create a user as normal,
-and that user gets zsh and the virtualisation groups. Finish setting it up
-yourself:
+and that user gets zsh and the virtualisation groups. Root is already
+configured. Finish setting up the user yourself:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh

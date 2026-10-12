@@ -48,6 +48,12 @@ side.
 - Never set `power_state` or `package_reboot_if_required`: they restart the
   instance in the middle of the OOBE.
 - Run user-scoped installers with `runuser -l <user>` so HOME is the user's.
+  runcmd itself has no HOME, so this applies to root too; `~` in a
+  `runuser -l root` command is `/root`, so point it at the user's checkout
+  with an absolute path.
+- `users:` skips existing users, root included (and would lock root's
+  password). Root's login shell is set with a guarded `usermod` in runcmd,
+  before root's dotfiles install so its `$SHELL` check sees zsh.
 
 ## Privacy
 
