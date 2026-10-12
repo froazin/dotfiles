@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(shellcheck *)",
+      "Bash(shfmt -d *)",
+      "Bash(shfmt -i 4 -d *)",
+      "Bash(zsh -n *)",
+      "Bash(cloud-init schema *)",
+      "Bash(cloud-init devel render *)",
+      "Bash(.claude/skills/validate-wsl-user-data/scripts/validate.sh)",
+      "Bash(.claude/skills/validate-wsl-user-data/scripts/validate.sh *)",
+      "Bash(apt-cache policy *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lint-shell.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
