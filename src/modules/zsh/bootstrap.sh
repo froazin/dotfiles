@@ -1,44 +1,13 @@
 #!/usr/bin/env sh
 
-# Everything is graded into two tiers, and NEITHER prevents the
-# configuration from being written:
-#
-#   soft     - the shell works without them but loses real functionality, so
-#              they are reported as errors and the module reports failure. The
-#              install still completes, and the features light up on the next
-#              shell once the dependency is present.
-#   optional - nice to have. Reported as warnings only.
-#
-# The config guards every one of these at runtime, so a missing dependency never
-# produces an error on shell startup - it just silently does less.
 
-# Commands. fzf drives CTRL-R / CTRL-T / ALT-C and the `ws` workspace picker;
-# git drives the prompt's branch and dirty segments.
 ZSH_SOFT_DEPS="fzf git"
-
-# Autoloadable functions, shipped on Debian/Ubuntu as the `zsh-common` package
-# and bundled with zsh elsewhere. Probed through zsh's own $fpath rather than a
-# package manager so the check is distro-agnostic:
-#   vcs_info      - the prompt's entire git segment
-#   compinit      - the completion system, and therefore every completion below
-#   add-zsh-hook  - shimmed in 00-options.zsh, so this one only degrades
 ZSH_SOFT_FUNCTIONS="vcs_info compinit add-zsh-hook"
-
-# Plugin files. Both are apt packages (zsh-autosuggestions,
-# zsh-syntax-highlighting) and 90-plugins.zsh sources them only if readable.
 ZSH_SOFT_PLUGINS="/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-
-# Auto-enabled when present, skipped with a warning when not.
 ZSH_OPTIONAL_DEPS="op uv pulumi direnv"
-
-# Optional tools that are sourced rather than run, so `command -v` cannot see
-# them from here. Each is a name and the file 20-tools.zsh sources.
 ZSH_OPTIONAL_SOURCED="nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 
 zsh_have_function() {
-    # Resolve an autoloadable function through zsh's own $fpath. Works whether
-    # the function tree came from Debian's zsh-common or is bundled with zsh.
-    # -f so the user's own config cannot influence the result.
     zsh -fc "_f=( \${^fpath}/$1(N) ); (( \${#_f} ))" >/dev/null 2>&1
 }
 
@@ -103,8 +72,6 @@ zsh_report_optional_deps() {
 }
 
 zsh_install_file() {
-    # Copy a single template into $HOME, warning before clobbering anything that
-    # is already there and refusing to write through a symlink.
     src="$1"
     dest="$2"
 
@@ -152,8 +119,6 @@ zsh_install_config() {
     zsh_install_file "$templates/.zshenv" "$HOME/.zshenv" || failed="true"
     zsh_install_file "$templates/.zshrc" "$HOME/.zshrc" || failed="true"
 
-    # The numbered drop-ins. Load order is encoded in the filenames, so the
-    # whole directory is copied verbatim rather than cherry-picked.
     for template in "$templates/.zshrc.d/"*.zsh; do
         [ -f "$template" ] || continue
 
@@ -169,8 +134,6 @@ zsh_install_config() {
 }
 
 zsh_report_login_shell() {
-    # Deliberately does not run chsh: changing a login shell is the user's call,
-    # not an installer's side effect.
     if [ "$(basename "${SHELL:-}")" = "zsh" ]; then
         log debug "zsh is already the login shell."
         return 0
@@ -185,9 +148,6 @@ bootstrap() {
 
     log info "Bootstrapping zsh configuration."
 
-    # Soft dependencies are reported first so the reason for a failed module is
-    # visible above the install output, but they never short-circuit it - the
-    # configuration is written either way.
     zsh_check_soft_deps || errors="true"
 
     zsh_report_optional_deps || {

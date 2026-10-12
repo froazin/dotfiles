@@ -1,5 +1,4 @@
 #!/usr/bin/env zsh
-# shellcheck shell=bash
 
 if (( $+commands[dircolors] )); then
   if [[ -r $HOME/.dircolors ]]; then

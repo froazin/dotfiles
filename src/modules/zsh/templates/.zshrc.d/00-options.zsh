@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-# shellcheck shell=bash
-#
 # Shell options and history policy.
 
 setopt extended_glob          # (#qN.mh+24)-style qualifiers, ^ and ~ patterns

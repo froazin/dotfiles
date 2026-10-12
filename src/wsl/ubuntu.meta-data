@@ -7,7 +7,6 @@
 # The user-data reads these values as ds.meta_data. Leave a value empty to
 # skip it.
 
-# Required by cloud-init.
 instance-id: ubuntu-wsl
 
 # Linux username, created with uid 1000, zsh and passwordless sudo. Empty to

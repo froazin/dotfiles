@@ -1,0 +1,10 @@
+[*.sh]
+indent_style = space
+indent_size = 4
+
+shell_variant      = posix  # Maps to: -ln=posix
+binary_next_line   = true   # Maps to: -bn
+switch_case_indent = true   # Maps to: -ci
+space_redirects    = true   # Maps to: -sr
+keep_padding       = true   # Maps to: -kp
+function_next_line = true   # Maps to: -fn

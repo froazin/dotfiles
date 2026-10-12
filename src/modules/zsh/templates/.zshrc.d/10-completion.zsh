@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-# shellcheck shell=bash
-#
 # Completion system: fpath, cached tool completions, compinit, styling.
 
 # ---------------------------------------------------------------------------
@@ -45,16 +43,7 @@ zcache_completion() {
 
 # ---------------------------------------------------------------------------
 # uv: fix completion of the command `uv run` is about to execute.
-#
-# uv's clap-generated zsh completion declares that positional as
-#   "*::external_command:_default"
-# and _default is plain file completion. So in a project containing an
-# ansible.cfg, `uv run ansible-p<TAB>` completes to `ansible-playbook`'s
-# neighbour ansible.cfg, and never offers .venv/bin/ansible-playbook - the
-# thing uv would actually run. (uv's bash completion has the same gap; it uses
-# `compgen -f`.) Swap that one action for a completer that knows about the
-# project environment. Everything else in the generated file is untouched, so
-# _arguments still does all of uv's option parsing.
+# ---------------------------------------------------------------------------
 _zcache_patch_uv()  { sed -i 's/::external_command:_default/::external_command:_uv_run_command/g' "$1" }
 _zcache_patch_uvx() { _zcache_patch_uv "$1" }
 
@@ -80,12 +69,8 @@ _uv_run_command() {
     fi
 
     bindir=$venv/bin
-    # (N) no-match-is-empty, (-) follow symlinks, (*) executable plain files,
-    # (:t) basename only.
     if [[ -n $venv && -d $bindir ]]; then
       bins=( $bindir/*(N-*:t) )
-      # Drop the shell-activation shims and the Windows/other-shell variants -
-      # `uv run activate.ps1` is never what anyone means. python/python3 stay.
       bins=( ${bins:#(activate*|deactivate*|*.bat|*.ps1|*.csh|*.fish|*.nu)} )
     fi
   fi
@@ -97,23 +82,6 @@ _uv_run_command() {
 }
 
 # Optional tool completions.
-#
-# Every tool here is OPTIONAL: if the command is not installed its entry is
-# skipped and the shell starts normally. Nothing warns at startup - a shell that
-# nags on every launch is worse than a missing completion. The dotfiles
-# installer warns once at install time, and `zshup` reports skipped tools.
-#
-# Keep this as the single registry: `zshup` (60-maintenance.zsh) iterates the
-# same array to force a regeneration.
-#
-# uv exposes the generator as a subcommand, but uvx exposes it as a hidden
-# top-level FLAG - `uvx generate-shell-completion` makes uvx try to resolve that
-# as a PyPI package instead.
-#
-# pulumi's is a Cobra bash-completion-v1 script that sed-converts itself for zsh
-# and calls `autoload -U +X bashcompinit && bashcompinit` internally, so no
-# bashcompinit setup is needed here. It is slower and less rich than a native
-# completion, but it is what pulumi ships.
 typeset -gA ZSH_OPTIONAL_COMPLETIONS=(
   uv     'uv generate-shell-completion zsh'
   uvx    'uvx --generate-shell-completion zsh'
@@ -132,9 +100,6 @@ unset _zc_tool
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-$ZSH_VERSION"
 [[ -d ${ZSH_COMPDUMP:h} ]] || mkdir -p "${ZSH_COMPDUMP:h}"
 
-# compinit lives in zsh's function tree (Debian: zsh-common). Without it there
-# is no completion system at all, so everything below - compdef, zstyle
-# ':completion:*', the menuselect keymap - would be meaningless. Skip the lot.
 if zsh_have_function compinit; then
   autoload -Uz compinit
   if [[ -n ${ZSH_COMPDUMP}(#qN.mh+24) || ! -f $ZSH_COMPDUMP ]]; then
@@ -157,7 +122,7 @@ fi
 # ---------------------------------------------------------------------------
 # Completion behaviour and appearance
 # ---------------------------------------------------------------------------
-zmodload zsh/complist                   # provides the menuselect keymap
+zmodload zsh/complist # provides the menuselect keymap
 
 zstyle ':completion:*' menu select
 

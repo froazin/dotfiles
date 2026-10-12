@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-# shellcheck shell=bash
-#
 # Native zsh port of the devcontainers "common-utils" prompt theme
 #
 # Upstream:
@@ -76,16 +74,9 @@ _zp_gitdir() {
 }
 
 # Upstream derives the branch as `git symbolic-ref --short HEAD` falling back to
-# `git rev-parse --short HEAD`, so a detached HEAD shows a short SHA. zsh's %b
-# does not: its fallback chain reaches `git name-rev --always` and yields
-# "heads/some-branch". Read .git/HEAD directly - forkless, and it holds the full
-# SHA when detached.
+# `git rev-parse --short HEAD`.
 +vi-git-detached() {
-  # Skip while a rebase/merge/bisect is in progress. HEAD is detached during an
-  # interactive rebase, but vcs_info has already resolved %b to the original
-  # branch from .git/rebase-merge/head-name - which is far more useful than the
-  # SHA of whichever commit the rebase happens to be sitting on. Without this
-  # guard the prompt reads (a1b2c3d|rebase-i) instead of (main|rebase-i).
+  # Skip while a rebase/merge/bisect is in progress.
   [[ -n ${hook_com[action]} ]] && return 0
 
   local gitdir head
@@ -199,8 +190,6 @@ PROMPT+="%F{${_zp_path}}%1~%f "                                    # cwd basenam
 PROMPT+='${_zp_git}'                                               # (branch[ X])
 PROMPT+="%F{${_zp_ok}}%(!.#.\$)%f "                                # $, or # as root
 
-# Upstream renders no right prompt; keep RPROMPT empty so a resized window never
-# leaves artefacts.
 RPROMPT=''
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-# shellcheck shell=bash
-#
 # A workspace is a git repository under ~/workspaces, laid out as
 # <provider>/<org>/<repo>, e.g. ~/workspaces/github.com/froazin/dotfiles
 #
@@ -22,16 +20,11 @@ __ws_list() {
 }
 
 # Resolve what `code` should be pointed at for a given workspace directory.
-# Prints a *.code-workspace file when one is present, otherwise the directory
-# itself. Returns 0 if a workspace file was found, 1 if falling back, so the
-# caller can tell the two apart.
 __ws_code_target() {
   emulate -L zsh
   local dir=$1
   local -a candidates
 
-  # Root of the workspace only. A *.code-workspace buried somewhere deeper is
-  # not the workspace for this repo and picking it up would be surprising.
   candidates=( $dir/*.code-workspace(N) )
 
   if (( ! $#candidates )); then
@@ -39,10 +32,6 @@ __ws_code_target() {
     return 1
   fi
 
-  # With more than one, prefer the file named after the directory -
-  # dotfiles/dotfiles.code-workspace - which is what VS Code's
-  # "Save Workspace As..." offers by default. Otherwise take the
-  # first alphabetically.
   local preferred=$dir/${dir:t}.code-workspace
   if [[ -f $preferred ]]; then
     print -r -- "$preferred"
@@ -145,4 +134,5 @@ _ws() {
     workspace) _describe -t workspaces 'workspace' ws_candidates ;;
   esac
 }
+
 (( ${ZSH_COMPINIT_OK:-0} )) && compdef _ws workspaces workspace ws wsc

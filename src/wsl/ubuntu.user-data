@@ -1,22 +1,10 @@
 ## template: jinja
 #cloud-config
-#
-# cloud-init user-data for an Ubuntu 26.04 WSL instance named "Ubuntu".
-#
+
 # Copy to %USERPROFILE%\.cloud-init\ubuntu.user-data, alongside a filled-in
 # copy of src/wsl/ubuntu.meta-data, before installing the distro. It applies
 # once, on first boot, and the OOBE waits for it.
-#
-# Nothing identifying belongs in this file. The username and git identity come
-# from the meta-data, which cloud-init exposes to this template as
-# ds.meta_data. Without a username the user-specific sections render to
-# nothing and the usual OOBE prompt creates the user instead.
-#
-# Do not add an `ubuntu_pro` key: Ubuntu Pro for WSL merges its own agent data
-# over this file and takes precedence.
-#
-# Jinja control tags must start at column 0: trim_blocks is on but
-# lstrip_blocks is not, so indented tags would leave their indentation behind.
+
 {% set user = ds.meta_data.username or '' %}
 {% set git_name = ds.meta_data.git_name or '' %}
 {% set git_email = ds.meta_data.git_email or '' %}
@@ -40,10 +28,7 @@ locale: en_GB.UTF-8
 users:
   - name: {{ user }}
     uid: 1000
-    # zsh is installed later in this boot; useradd only warns until then.
     shell: /usr/bin/zsh
-    # libvirt is added in runcmd: it does not exist yet, and creating it here
-    # would make it an ordinary group that takes gid 1000.
     groups: [adm, cdrom, sudo, dip, plugdev, users, kvm]
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     lock_passwd: true
