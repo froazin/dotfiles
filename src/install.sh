@@ -5,7 +5,8 @@
 
 _LOG_LEVEL=info
 
-main() {
+main()
+{
     packages=""
     errors="false"
 
@@ -36,7 +37,7 @@ main() {
         fi
 
         log debug "Loading $package configuration from $btstrpfile."
-        eval "$(cat "$btstrpfile")" >/dev/null 2>&1 || {
+        eval "$(cat "$btstrpfile")" > /dev/null 2>&1 || {
             log error "Failed to load $package configuration."
             errors="true"
             continue
@@ -52,7 +53,10 @@ main() {
         # We should reset the bootstrap function to avoid running the same
         # function again if a package fails to implement the bootstrap function
         # or if the package is not a module.
-        bootstrap() { true >/dev/null 2>&1; }
+        bootstrap()
+        {
+            true > /dev/null 2>&1
+        }
     done
 
     if [ "$errors" = "true" ]; then

@@ -5,9 +5,11 @@ paths:
 
 # zsh module
 
-- Templates are zsh but start with `# shellcheck shell=bash` so editors lint
-  them. Bash-mode ShellCheck cannot parse zsh syntax and reports errors on
-  valid code; the real check is `zsh -n <file>`.
+- Templates start with `#!/usr/bin/env zsh` and indent with 2 spaces. The
+  only check is `zsh -n <file>`. ShellCheck does not support zsh, so
+  `.shellcheckrc` disables SC1071/SC1103 and it skips them silently. Never
+  run shfmt on them: it detects them by shebang and mangles zsh syntax
+  (`(( $+commands[x] ))` becomes `(($ + commands[x]))`).
 - `.zshrc` only loads `~/.zshrc.d/*.zsh`; load order is the numeric prefix.
   Keep a setting in the file whose topic it belongs to. Anything registering
   ZLE widgets loads before `90-plugins.zsh` (zsh-syntax-highlighting).

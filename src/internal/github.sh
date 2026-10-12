@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
-github_api_request() {
+github_api_request()
+{
     request_method="$1"
     request_uri="$2"
     request_body="${3:-}"
@@ -29,7 +30,7 @@ github_api_request() {
     fi
 
     if [ -n "$request_body" ]; then
-        if ! printf '%s' "$request_body" | jq --exit-status . >/dev/null 2>&1; then
+        if ! printf '%s' "$request_body" | jq --exit-status . > /dev/null 2>&1; then
             log error "Failed to parse request body as JSON."
             return 1
         fi
@@ -42,7 +43,7 @@ github_api_request() {
         }
     fi
 
-    curl -fL "$@" "https://api.github.com/$request_uri" 2>/dev/null || {
+    curl -fL "$@" "https://api.github.com/$request_uri" 2> /dev/null || {
         log error "Failed to make request to GitHub API."
         return 1
     }
@@ -50,7 +51,8 @@ github_api_request() {
     return 0
 }
 
-get_github_release_with_tag() {
+get_github_release_with_tag()
+{
     # Fetch the JSON formatted payload for the github release at the given tag.
     owner="$1"
     repo="$2"
@@ -65,14 +67,15 @@ get_github_release_with_tag() {
         return 1
     fi
 
-    github_api_request GET "repos/$owner/$repo/releases/$tag" 2>/dev/null || {
+    github_api_request GET "repos/$owner/$repo/releases/$tag" 2> /dev/null || {
         return 1
     }
 
     return 0
 }
 
-get_github_latest_release() {
+get_github_latest_release()
+{
     # Fetch the JSON formatted payload for the latest github release.
     owner="$1"
     repo="$2"
@@ -88,7 +91,8 @@ get_github_latest_release() {
     return 0
 }
 
-get_github_refs() {
+get_github_refs()
+{
     # Fetch the JSON formatted payload for the github repo refs. Provide an
     # optional ref or partial ref to search for a specific ref. If multiple
     # matching refs are found, all matching refs will be returned.
@@ -106,14 +110,15 @@ get_github_refs() {
         uri="repos/$owner/$repo/git/refs/$(echo "$ref" | sed -r 's/^\///')"
     fi
 
-    github_api_request GET "$uri" 2>/dev/null || {
+    github_api_request GET "$uri" 2> /dev/null || {
         return 1
     }
 
     return 0
 }
 
-get_github_ref() {
+get_github_ref()
+{
     # Fetch the JSON formatted payload for the github repo ref.
     owner="$1"
     repo="$2"
@@ -125,7 +130,7 @@ get_github_ref() {
 
     uri="repos/$owner/$repo/git/ref/$(echo "$ref" | sed -r 's/^\///')"
 
-    github_api_request GET "$uri" 2>/dev/null || {
+    github_api_request GET "$uri" 2> /dev/null || {
         return 1
     }
 

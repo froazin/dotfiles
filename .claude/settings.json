@@ -4,7 +4,6 @@
     "allow": [
       "Bash(shellcheck *)",
       "Bash(shfmt -d *)",
-      "Bash(shfmt -i 4 -d *)",
       "Bash(zsh -n *)",
       "Bash(cloud-init schema *)",
       "Bash(cloud-init devel render *)",

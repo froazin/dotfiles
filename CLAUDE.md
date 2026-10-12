@@ -13,6 +13,7 @@ so it must stay generic.
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
 | `src/wsl/` | `.wslconfig`, `ubuntu.user-data` (Jinja cloud-config), `ubuntu.meta-data` (fill-in template). |
+| `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. |
 
 Path-specific guidance lives in `.claude/rules/` and loads when those files
 are touched.
@@ -40,12 +41,18 @@ are touched.
 ## Checks
 
 ```sh
-shellcheck -s sh -e SC1091 src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh
-shfmt -i 4 -d src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh
+shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh .claude/hooks/*.sh .claude/skills/*/scripts/*.sh
+shfmt -d .
 for f in src/modules/zsh/templates/.zshenv src/modules/zsh/templates/.zshrc src/modules/zsh/templates/.zshrc.d/*.zsh; do zsh -n "$f"; done
 HOME=$(mktemp -d) SHELL=/usr/bin/zsh sh src/install.sh     # end-to-end install into a scratch home
 .claude/skills/validate-wsl-user-data/scripts/validate.sh  # after any src/wsl change
 ```
+
+ShellCheck and shfmt read their options from `.shellcheckrc` and
+`.editorconfig`, so run them without flags: any shfmt formatting flag (`-i`,
+`-ci`, ...) makes it ignore `.editorconfig`. shfmt cannot parse zsh:
+`.editorconfig` excludes the zsh templates when walking a directory, but
+never name one explicitly.
 
 A PostToolUse hook (`.claude/hooks/lint-shell.sh`) runs ShellCheck/shfmt on
 edited `.sh` files and `zsh -n` on zsh files, and reports failures back.

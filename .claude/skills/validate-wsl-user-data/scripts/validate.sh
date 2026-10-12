@@ -11,13 +11,14 @@ set -u
 user_data="${1:-src/wsl/ubuntu.user-data}"
 failed="false"
 
-fail() {
+fail()
+{
     printf 'FAIL: %s\n' "$*"
     failed="true"
 }
 
 for cmd in cloud-init python3 git shellcheck; do
-    command -v "$cmd" >/dev/null 2>&1 || {
+    command -v "$cmd" > /dev/null 2>&1 || {
         printf 'missing required command: %s\n' "$cmd" >&2
         exit 2
     }
@@ -35,7 +36,7 @@ trap 'rm -rf "$work"' EXIT
 #   user      - whether user-specific config should render
 #   gh_dir    - expected ~/workspaces/github.com/<owner> directory, or ""
 #   git_name  - exact user.name git must read back from the rendered .gitconfig
-python3 -I - "$work" <<'EOF'
+python3 -I - "$work" << 'EOF'
 import json
 import sys
 
@@ -84,7 +85,7 @@ EOF
 while read -r case; do
     rendered="$work/$case.yaml"
 
-    if ! cloud-init devel render -i "$work/$case.json" "$user_data" >"$rendered" 2>"$work/$case.err"; then
+    if ! cloud-init devel render -i "$work/$case.json" "$user_data" > "$rendered" 2> "$work/$case.err"; then
         fail "$case: render failed: $(tail -1 "$work/$case.err")"
         continue
     fi
@@ -93,11 +94,11 @@ while read -r case; do
         fail "$case: rendered output references an undefined Jinja variable"
     fi
 
-    if ! cloud-init schema -c "$rendered" >"$work/$case.schema" 2>&1; then
+    if ! cloud-init schema -c "$rendered" > "$work/$case.schema" 2>&1; then
         fail "$case: schema: $(grep -v 'obj.pkl\|datasource' "$work/$case.schema" | head -3)"
     fi
 
-    python3 -I - "$rendered" "$work/$case.expect.json" "$work/$case" <<'EOF' || failed="true"
+    python3 -I - "$rendered" "$work/$case.expect.json" "$work/$case" << 'EOF' || failed="true"
 import json
 import subprocess
 import sys
@@ -150,7 +151,7 @@ for p in problems:
 print(f"{'ok  ' if not problems else 'FAIL'} {case}")
 sys.exit(1 if problems else 0)
 EOF
-done <"$work/cases"
+done < "$work/cases"
 
 # The embedded start script is the same in every render.
 if [ -f "$work/full.start" ]; then

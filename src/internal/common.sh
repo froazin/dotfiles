@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
-check_commands() {
+check_commands()
+{
     # Check if the required packages are installed and available in the path.
     # if any are missing, return 1, otherwise return 0.
     if [ $# -eq 0 ]; then
@@ -12,7 +13,7 @@ check_commands() {
     failed='false'
 
     for req in $requirements; do
-        command -v "$req" >/dev/null 2>&1 || {
+        command -v "$req" > /dev/null 2>&1 || {
             log error "Unable to find command: $req"
 
             failed='true'
@@ -26,7 +27,8 @@ check_commands() {
     return 0
 }
 
-get_distro_name() {
+get_distro_name()
+{
     # Get the distribution name from /etc/os-release.
     # Supported distributions are: debian, ubuntu, alpine, redhat, centos, fedora.
     # If the distribution is not supported, return 1.
@@ -41,34 +43,37 @@ get_distro_name() {
     }
 
     case "$distro" in
-    debian | ubuntu | alpine)
-        echo "$distro"
-        return 0
-        ;;
-    redhat | centos | fedora)
-        echo "redhat"
-        return 0
-        ;;
-    *)
-        log error "Unsupported distribution: $distro"
-        return 1
-        ;;
+        debian | ubuntu | alpine)
+            echo "$distro"
+            return 0
+            ;;
+        redhat | centos | fedora)
+            echo "redhat"
+            return 0
+            ;;
+        *)
+            log error "Unsupported distribution: $distro"
+            return 1
+            ;;
     esac
 }
 
-is_devcontainer() {
+is_devcontainer()
+{
     # Check if the script is running in a devcontainer.
 
     [ "$REMOTE_CONTAINERS" = "true" ] && return 0 || return 1
 }
 
-is_wsl() {
+is_wsl()
+{
     # Check if the script is running in wsl.
 
-    grep -q microsoft /proc/version >/dev/null 2>&1 && return 0 || return 1
+    grep -q microsoft /proc/version > /dev/null 2>&1 && return 0 || return 1
 }
 
-is_root() {
+is_root()
+{
     # Check if the script is running as root.
 
     [ "$(id -u)" -eq 0 ] && return 0 || return 1

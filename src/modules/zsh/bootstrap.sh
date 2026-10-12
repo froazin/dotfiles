@@ -1,21 +1,22 @@
 #!/usr/bin/env sh
 
-
 ZSH_SOFT_DEPS="fzf git"
 ZSH_SOFT_FUNCTIONS="vcs_info compinit add-zsh-hook"
 ZSH_SOFT_PLUGINS="/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 ZSH_OPTIONAL_DEPS="op uv pulumi direnv"
 ZSH_OPTIONAL_SOURCED="nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 
-zsh_have_function() {
-    zsh -fc "_f=( \${^fpath}/$1(N) ); (( \${#_f} ))" >/dev/null 2>&1
+zsh_have_function()
+{
+    zsh -fc "_f=( \${^fpath}/$1(N) ); (( \${#_f} ))" > /dev/null 2>&1
 }
 
-zsh_check_soft_deps() {
+zsh_check_soft_deps()
+{
     failed="false"
 
     for cmd in $ZSH_SOFT_DEPS; do
-        if command -v "$cmd" >/dev/null 2>&1; then
+        if command -v "$cmd" > /dev/null 2>&1; then
             log debug "Found soft dependency: $cmd"
         else
             log error "Missing dependency: $cmd is not installed. The configuration will be installed, but the features that rely on it stay inert until it is."
@@ -48,9 +49,10 @@ zsh_check_soft_deps() {
     return 0
 }
 
-zsh_report_optional_deps() {
+zsh_report_optional_deps()
+{
     for cmd in $ZSH_OPTIONAL_DEPS; do
-        if command -v "$cmd" >/dev/null 2>&1; then
+        if command -v "$cmd" > /dev/null 2>&1; then
             log info "Optional integration enabled: $cmd"
         else
             log warning "Optional integration skipped: $cmd is not installed. Its shell integration stays dormant until it is, no reinstall needed."
@@ -71,7 +73,8 @@ zsh_report_optional_deps() {
     return 0
 }
 
-zsh_install_file() {
+zsh_install_file()
+{
     src="$1"
     dest="$2"
 
@@ -95,13 +98,13 @@ zsh_install_file() {
     fi
 
     if ! [ -d "$(dirname "$dest")" ]; then
-        mkdir -p "$(dirname "$dest")" >/dev/null 2>&1 || {
+        mkdir -p "$(dirname "$dest")" > /dev/null 2>&1 || {
             log error "Failed to create directory <$(dirname "$dest")>."
             return 1
         }
     fi
 
-    cp --force "$src" "$dest" >/dev/null 2>&1 || {
+    cp --force "$src" "$dest" > /dev/null 2>&1 || {
         log error "Failed to write <$dest>."
         return 1
     }
@@ -110,7 +113,8 @@ zsh_install_file() {
     return 0
 }
 
-zsh_install_config() {
+zsh_install_config()
+{
     log info "Installing zsh configuration."
 
     templates="$(dirname "$0")/modules/zsh/templates"
@@ -133,7 +137,8 @@ zsh_install_config() {
     return 0
 }
 
-zsh_report_login_shell() {
+zsh_report_login_shell()
+{
     if [ "$(basename "${SHELL:-}")" = "zsh" ]; then
         log debug "zsh is already the login shell."
         return 0
@@ -143,7 +148,8 @@ zsh_report_login_shell() {
     return 0
 }
 
-bootstrap() {
+bootstrap()
+{
     errors=""
 
     log info "Bootstrapping zsh configuration."
