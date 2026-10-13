@@ -3,12 +3,10 @@
 CLAUDE_SOFT_DEPS="jq python3"
 CLAUDE_SUBDIRS="agents commands skills rules output-styles hooks"
 
-# Deep merge of the template ($tpl) into the existing settings ($cur), each
-# slurped on its own so one file can never shift the other. Template values
-# win, objects merge key by key and lists are unioned, so keys Claude Code
-# writes itself (/model, /config, plugins, /permissions) survive. Hook groups
-# from the template replace their earlier copies. A file with no values
-# (whitespace only) gets the template; anything but one object fails.
+# Deep merge of the template ($tpl) into the existing settings ($cur): template
+# values win, objects merge key by key and lists are unioned, so keys Claude
+# Code writes itself (/model, /config, plugins, /permissions) survive. Each file
+# is slurped on its own so one can never shift the other.
 # shellcheck disable=SC2016 # $a, $b, $k, $cur and $tpl are jq variables.
 CLAUDE_SETTINGS_MERGE='
 def merge($a; $b):
@@ -19,16 +17,15 @@ def merge($a; $b):
   else
     $b
   end;
+# Whitespace only: passes [ -s ] but holds no values.
 if ($cur | length) == 0 then
   $tpl[0]
 elif ($cur | length) != 1 or ($cur[0] | type) != "object" then
   error("not a single JSON object")
 else
   merge($cur[0]; $tpl[0])
-  # Hook groups are lists of objects, so a union would keep an outdated copy
-  # of a template hook next to the new one. Remove the template hooks
-  # (by command) from the existing groups, keeping everything else in them,
-  # drop groups left empty, then add the template groups.
+  # A union would keep an outdated copy of a template hook next to the new
+  # one, so existing hooks with a template command are replaced instead.
   | reduce ($tpl[0].hooks // {} | keys_unsorted[]) as $e (.;
       ([$tpl[0].hooks[$e][]?.hooks[]?.command]) as $cmds
       | .hooks[$e] = ([$cur[0].hooks[$e][]?
@@ -66,10 +63,7 @@ claude_create_dirs()
     claude_dir="$1"
     failed="false"
 
-    mkdir -p "$claude_dir" > /dev/null 2>&1 || {
-        log error "Failed to create directory <$claude_dir>."
-        return 1
-    }
+    ensure_dir "$claude_dir" || return 1
 
     # Credentials and session history live here in plain text.
     chmod 700 "$claude_dir" > /dev/null 2>&1 || {
@@ -78,10 +72,7 @@ claude_create_dirs()
     }
 
     for subdir in $CLAUDE_SUBDIRS; do
-        mkdir -p "$claude_dir/$subdir" > /dev/null 2>&1 || {
-            log error "Failed to create directory <$claude_dir/$subdir>."
-            failed="true"
-        }
+        ensure_dir "$claude_dir/$subdir" || failed="true"
     done
 
     if [ "$failed" = "true" ]; then
@@ -106,7 +97,6 @@ claude_merge_settings()
         return 1
     fi
 
-    # Nothing to merge into: seed the template as-is.
     if [ ! -s "$dest" ]; then
         install_file "$src" "$dest" || return 1
         log info "Claude Code settings created at <$dest>."
@@ -133,8 +123,7 @@ claude_merge_settings()
 
     jq_error="$(jq -n --slurpfile cur "$dest" --slurpfile tpl "$src" "$CLAUDE_SETTINGS_MERGE" 2>&1 > "$tmp")" || {
         rm -f "$tmp"
-        # jq's own reason, first line only and without the double quotes and
-        # backslashes (octal 042, 134) that the log's JSON line cannot hold.
+        # The log's JSON line cannot hold " or \ (octal 042, 134).
         jq_error="$(printf '%s\n' "$jq_error" | head -n 1 | tr -d '\042\134')"
         log error "Failed to merge <$src> into <$dest>, which was left unchanged: $jq_error"
         return 1
@@ -162,9 +151,8 @@ claude_install_templates()
     claude_dir="$2"
     failed="false"
 
-    # Everything under templates (installed as ~/.claude) except settings.json,
-    # which is merged rather than copied, and Python bytecode caches. Template
-    # paths never contain newlines.
+    # settings.json is merged, not copied. Template paths never contain
+    # newlines, so the list is split on them.
     files="$(CDPATH='' cd -- "$templates" && find . -type f ! -path ./settings.json ! -path '*/__pycache__/*' ! -name '*.pyc')" || {
         log error "Failed to list templates in <$templates>."
         return 1

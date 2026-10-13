@@ -205,7 +205,7 @@ none PostToolUseFailure diff -u old-rules.md rules/commit-signing.md ||| Exit co
 none PostToolUseFailure cat README.md missing.txt ||| Exit code 1\nuse 1Password for signing\ncat: missing.txt: No such file or directory
 lock PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/1)\rerror: 1Password: failed to fill whole buffer\nerror: failed to write commit object
 
-# --- Review round 2: quoting and message text
+# --- Quoting and message text
 deny git commit -m "Fix A & B" --no-gpg-sign
 deny git commit -m "feat: add x; tidy y" --no-gpg-sign
 deny git commit -m "fix: handle a|b" --no-gpg-sign
@@ -236,7 +236,7 @@ allow git config user.signingkey 2>/dev/null
 allow git config --show-origin gpg.format | cat
 allow GIT_CONFIG_GLOBAL=/dev/null git status
 
-# --- Review round 2: bypasses
+# --- Bypasses
 deny git config --global commit.gpgsign ""
 deny git config set --global commit.gpgsign ''
 deny git config --global tag.gpgsign ""
@@ -286,7 +286,7 @@ locked-allow git log --oneline --grep "git commit"
 locked-allow gh pr create --title x --body "follow-up to the git merge of main"
 locked-allow git cherry-pick --abort
 
-# --- Review round 2: post events
+# --- Post events: timeouts
 none PostToolUseFailure git pull ||| Exit code 1\nssh: connect to host github.com port 22: Connection timed out\nfatal: Could not read from remote repository.
 lock PostToolUseFailure git commit -am x && git push ||| Command timed out after 2m 0s
 none PostToolUseFailure git add -A && git commit -m x && git push ||| Exit code 1\n[main 1a2b3c4] x\n 1 file changed\nCommand timed out after 2m 0s
@@ -299,7 +299,7 @@ lock PostToolUseFailure timeout 30 git commit -m x ||| Exit code 124
 none PostToolUse timeout 30 git commit -m x; echo "exit=$?" ||| [main 1a2b3c4] x\n 1 file changed\nexit=0
 none PostToolUseFailure timeout 30 npm test && git commit -m x ||| Exit code 124
 
-# --- Review round 3: shells fed a script, wrappers, variables
+# --- Shells fed a script, wrappers, variables
 deny bash <<'EOF'{NL}git commit --no-gpg-sign -m x{NL}EOF
 deny echo 'git commit --no-gpg-sign -m x' | bash
 deny sh <<< 'git -c commit.gpgsign=false commit -m x'
@@ -334,7 +334,7 @@ locked-deny time -p git commit -m x
 locked-deny function f { git commit -m x; }; f
 locked-deny git config alias.ci commit && git ci -m x
 
-# --- Review round 3: false positives
+# --- False positives
 allow export HOME=$(mktemp -d) && mkdir -p ~/.claude && echo '{"model":"x","hooks":{}}' > ~/.claude/settings.json && sh src/install.sh && jq . ~/.claude/settings.json
 allow export HOME=$(mktemp -d) && echo '[user]' > ~/.gitconfig
 allow HOME=/tmp/h; export HOME; printf '[core]\n' > "$HOME/.gitconfig"
@@ -357,7 +357,7 @@ allow export FOO=bar && git commit -m x
 deny git config -f ~/.gitconfig gpg.format ssh
 deny export HOME=~ && sed -i s/true/false/ ~/.gitconfig
 
-# --- Review round 3: post events
+# --- Post events: false positives
 none PostToolUseFailure git cherry-pick side ||| Exit code 1\nAuto-merging README.md\nCONFLICT (content): Merge conflict in README.md\nerror: could not apply f1e1045... docs: explain 1Password SSH signing on WSL\nhint: after resolving the conflicts, mark them
 none PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/2)\rerror: could not apply f1e1045... docs: 1Password op-ssh-sign notes\nhint: Resolve all conflicts manually
 none PostToolUseFailure timeout 60 git commit -m "fix: x" ||| Exit code 1\nOn branch main\nYour branch is ahead of 'origin/main' by 124 commits.\nnothing to commit, working tree clean

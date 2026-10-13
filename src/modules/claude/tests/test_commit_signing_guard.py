@@ -113,11 +113,6 @@ def hook(runtime: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureF
     return Hook(runtime, monkeypatch, capsys)
 
 
-# ---------------------------------------------------------------------------
-# Command cases
-# ---------------------------------------------------------------------------
-
-
 @pytest.mark.parametrize("case", load_cases(), ids=case_id)
 def test_case(hook: Hook, case: Case) -> None:
     if case.kind in ("deny", "allow", "locked-deny", "locked-allow"):
@@ -132,11 +127,6 @@ def test_case(hook: Hook, case: Case) -> None:
         assert path.exists() == (case.kind == "lock")
     else:
         pytest.fail(f"unknown case kind {case.kind!r}")
-
-
-# ---------------------------------------------------------------------------
-# The session lock
-# ---------------------------------------------------------------------------
 
 
 def test_lock_lifecycle(hook: Hook) -> None:
@@ -197,11 +187,6 @@ def test_unwritable_lock_dir_still_tells_the_model(hook: Hook) -> None:
         directory.chmod(0o700)
 
 
-# ---------------------------------------------------------------------------
-# Timeouts and asynchronous runs
-# ---------------------------------------------------------------------------
-
-
 def test_hang_moved_to_background(hook: Hook) -> None:
     path = hook.lock(False)
     reply = hook.post("PostToolUse", "git add a && git commit -m x", "", backgroundTaskId="b1", timedOutAfterMs=120000)
@@ -228,10 +213,6 @@ def test_slow_command_before_commit_only_warns(hook: Hook) -> None:
 def test_background_and_monitor(hook: Hook, tool: str, tool_input: dict[str, object], expected: str) -> None:
     assert hook.pre(tool, tool_input) == expected
 
-
-# ---------------------------------------------------------------------------
-# Edit, Write and MultiEdit
-# ---------------------------------------------------------------------------
 
 SETTINGS = HOME + "/.claude/settings.json"
 DISABLE_HOOKS = '{"disableAllHooks": true,'
@@ -283,11 +264,6 @@ DISABLE_HOOKS = '{"disableAllHooks": true,'
 )
 def test_edit_and_write(hook: Hook, expected: str, tool: str, tool_input: dict[str, object]) -> None:
     assert hook.pre(tool, tool_input) == expected
-
-
-# ---------------------------------------------------------------------------
-# Robustness
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(

@@ -36,7 +36,6 @@ type Reply = dict[str, object]
 
 
 def as_object(value: object) -> dict[str, object]:
-    """A JSON object from the hook input, or an empty one."""
     return cast(dict[str, object], value) if isinstance(value, dict) else {}
 
 
@@ -56,9 +55,8 @@ MAX_DEPTH = 8
 
 
 class Word:
-    """A shell word: its text with quoting removed, the source of any command
-    substitutions in it (the text keeps them verbatim), whether any of it was
-    quoted, and, for a heredoc delimiter, the heredoc's body."""
+    """text has quoting removed but keeps substitutions verbatim (subs is their
+    source); body is set on a heredoc delimiter."""
 
     def __init__(self) -> None:
         self.text = ""
@@ -68,8 +66,7 @@ class Word:
 
 
 class Command:
-    """A simple command: words, redirections, the operator after it, and how
-    many ( subshells deep it is."""
+    """A simple command; op is the operator after it, depth its ( subshell nesting."""
 
     def __init__(self, depth: int = 0) -> None:
         self.words: list[Word] = []
@@ -120,7 +117,7 @@ def lex(s: str, i: int = 0, closing: bool = False) -> tuple[list[Command], int]:
                 target.body, i = _read_heredoc(s, i, target.text, strip_tabs)
             heredocs = []
             continue
-        if s.startswith("<(", i) or s.startswith(">(", i):
+        if s.startswith(("<(", ">("), i):
             word = Word()
             i = _read_substitution(s, i + 1, word, prefix=s[i])
             cur.words.append(word)
@@ -156,8 +153,11 @@ def lex(s: str, i: int = 0, closing: bool = False) -> tuple[list[Command], int]:
     return commands, i
 
 
+def split_words(source: str) -> list[str]:
+    return [w.text for c in lex(source)[0] for w in c.words]
+
+
 def _read_heredoc(s: str, i: int, delimiter: str, strip_tabs: bool) -> tuple[str, int]:
-    """Return a heredoc's body and the index after its delimiter line."""
     n = len(s)
     lines: list[str] = []
     while i < n:
@@ -279,36 +279,29 @@ def _read_substitution(s: str, i: int, word: Word, prefix: str = "$") -> int:
     return end
 
 
+def _skip_balanced(s: str, i: int, opening: str, closing: str) -> int:
+    """The index after the bracket that closes the one at s[i]."""
+    depth = 0
+    for j in range(i, len(s)):
+        if s[j] == opening:
+            depth += 1
+        elif s[j] == closing:
+            depth -= 1
+            if depth == 0:
+                return j + 1
+    return len(s)
+
+
 def _read_expansion(s: str, i: int, word: Word) -> int:
     n = len(s)
     if s.startswith("$((", i):
-        depth = 0
-        j = i + 1
-        while j < n:
-            if s[j] == "(":
-                depth += 1
-            elif s[j] == ")":
-                depth -= 1
-                if depth == 0:
-                    j += 1
-                    break
-            j += 1
+        j = _skip_balanced(s, i + 1, "(", ")")
         word.text += s[i:j]
         return j
     if s.startswith("$(", i):
         return _read_substitution(s, i + 1, word)
     if s.startswith("${", i):
-        depth = 0
-        j = i + 1
-        while j < n:
-            if s[j] == "{":
-                depth += 1
-            elif s[j] == "}":
-                depth -= 1
-                if depth == 0:
-                    j += 1
-                    break
-            j += 1
+        j = _skip_balanced(s, i + 1, "{", "}")
         word.text += s[i:j]
         return j
     if s[i] == "`":
@@ -485,13 +478,29 @@ WRAPPER_VALUE_OPTS: dict[str, set[str]] = {
     "timeout": {"-s", "-k", "--signal", "--kill-after"},
     "stdbuf": {"-i", "-o", "-e"},
 }
+WRAPPERS = {
+    "command",
+    "builtin",
+    "exec",
+    "nohup",
+    "time",
+    "nice",
+    "stdbuf",
+    "ionice",
+    "setsid",
+    "chrt",
+    "taskset",
+    "timeout",
+    "unbuffer",
+    "flock",
+}
+FIND_EXEC = {"-exec", "-execdir", "-ok", "-okdir"}
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "mksh", "ash"}
 # Shell options that take a value, before -c: bash -o pipefail -c '...'.
 SHELL_VALUE_OPTS = {"-o", "+o", "-O", "+O", "--rcfile", "--init-file"}
 KEYWORDS = {"if", "then", "else", "elif", "do", "while", "until", "!", "{", "}"}
 # $(which git), `command -v git`: the command name is git.
 GIT_LOOKUP = re.compile(r"^(\$\(|`)\s*(which|command\s+-v|type\s+-[pP])\s+git\s*(\)|`)$")
-SIMPLE_VARIABLE = re.compile(r"^\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))$")
 VARIABLE = re.compile(r"\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 # Variables whose expansion the path checks handle themselves.
 PATH_VARIABLES = {"HOME", "XDG_CONFIG_HOME", "CLAUDE_CONFIG_DIR", "XDG_RUNTIME_DIR"}
@@ -500,130 +509,128 @@ PRINTERS = {"echo", "printf", "cat"}
 # Commands that remove or lock down whole directories.
 DESTRUCTIVE = {"rm", "unlink", "shred", "mv", "chmod", "chown", "chgrp", "chattr"}
 # Builtin git commands; anything else may be an alias.
-GIT_BUILTINS = set(
-    [
-        "add",
-        "am",
-        "annotate",
-        "apply",
-        "archive",
-        "bisect",
-        "blame",
-        "branch",
-        "bundle",
-        "cat-file",
-        "check-attr",
-        "check-ignore",
-        "check-mailmap",
-        "check-ref-format",
-        "checkout",
-        "checkout-index",
-        "cherry",
-        "cherry-pick",
-        "citool",
-        "clean",
-        "clone",
-        "column",
-        "commit",
-        "commit-graph",
-        "commit-tree",
-        "config",
-        "count-objects",
-        "credential",
-        "describe",
-        "diff",
-        "diff-files",
-        "diff-index",
-        "diff-tree",
-        "difftool",
-        "fast-export",
-        "fast-import",
-        "fetch",
-        "fetch-pack",
-        "filter-branch",
-        "filter-repo",
-        "for-each-ref",
-        "for-each-repo",
-        "format-patch",
-        "fsck",
-        "gc",
-        "get-tar-commit-id",
-        "grep",
-        "gui",
-        "hash-object",
-        "help",
-        "index-pack",
-        "init",
-        "instaweb",
-        "interpret-trailers",
-        "lfs",
-        "log",
-        "ls-files",
-        "ls-remote",
-        "ls-tree",
-        "mailinfo",
-        "mailsplit",
-        "maintenance",
-        "merge",
-        "merge-base",
-        "merge-file",
-        "merge-tree",
-        "mergetool",
-        "mktag",
-        "mktree",
-        "multi-pack-index",
-        "mv",
-        "name-rev",
-        "notes",
-        "pack-objects",
-        "pack-refs",
-        "patch-id",
-        "prune",
-        "pull",
-        "push",
-        "range-diff",
-        "read-tree",
-        "rebase",
-        "reflog",
-        "remote",
-        "repack",
-        "replace",
-        "replay",
-        "request-pull",
-        "rerere",
-        "reset",
-        "restore",
-        "rev-list",
-        "rev-parse",
-        "revert",
-        "rm",
-        "send-email",
-        "shortlog",
-        "show",
-        "show-branch",
-        "show-ref",
-        "sparse-checkout",
-        "stash",
-        "status",
-        "stripspace",
-        "submodule",
-        "switch",
-        "symbolic-ref",
-        "tag",
-        "unpack-file",
-        "unpack-objects",
-        "update-index",
-        "update-ref",
-        "var",
-        "verify-commit",
-        "verify-pack",
-        "verify-tag",
-        "version",
-        "whatchanged",
-        "worktree",
-        "write-tree",
-    ]
-)
+GIT_BUILTINS = {
+    "add",
+    "am",
+    "annotate",
+    "apply",
+    "archive",
+    "bisect",
+    "blame",
+    "branch",
+    "bundle",
+    "cat-file",
+    "check-attr",
+    "check-ignore",
+    "check-mailmap",
+    "check-ref-format",
+    "checkout",
+    "checkout-index",
+    "cherry",
+    "cherry-pick",
+    "citool",
+    "clean",
+    "clone",
+    "column",
+    "commit",
+    "commit-graph",
+    "commit-tree",
+    "config",
+    "count-objects",
+    "credential",
+    "describe",
+    "diff",
+    "diff-files",
+    "diff-index",
+    "diff-tree",
+    "difftool",
+    "fast-export",
+    "fast-import",
+    "fetch",
+    "fetch-pack",
+    "filter-branch",
+    "filter-repo",
+    "for-each-ref",
+    "for-each-repo",
+    "format-patch",
+    "fsck",
+    "gc",
+    "get-tar-commit-id",
+    "grep",
+    "gui",
+    "hash-object",
+    "help",
+    "index-pack",
+    "init",
+    "instaweb",
+    "interpret-trailers",
+    "lfs",
+    "log",
+    "ls-files",
+    "ls-remote",
+    "ls-tree",
+    "mailinfo",
+    "mailsplit",
+    "maintenance",
+    "merge",
+    "merge-base",
+    "merge-file",
+    "merge-tree",
+    "mergetool",
+    "mktag",
+    "mktree",
+    "multi-pack-index",
+    "mv",
+    "name-rev",
+    "notes",
+    "pack-objects",
+    "pack-refs",
+    "patch-id",
+    "prune",
+    "pull",
+    "push",
+    "range-diff",
+    "read-tree",
+    "rebase",
+    "reflog",
+    "remote",
+    "repack",
+    "replace",
+    "replay",
+    "request-pull",
+    "rerere",
+    "reset",
+    "restore",
+    "rev-list",
+    "rev-parse",
+    "revert",
+    "rm",
+    "send-email",
+    "shortlog",
+    "show",
+    "show-branch",
+    "show-ref",
+    "sparse-checkout",
+    "stash",
+    "status",
+    "stripspace",
+    "submodule",
+    "switch",
+    "symbolic-ref",
+    "tag",
+    "unpack-file",
+    "unpack-objects",
+    "update-index",
+    "update-ref",
+    "var",
+    "verify-commit",
+    "verify-pack",
+    "verify-tag",
+    "version",
+    "whatchanged",
+    "worktree",
+    "write-tree",
+}
 # Subcommands that only read: signing overrides there can't create commits.
 READ_ONLY_GIT = {
     "log",
@@ -685,9 +692,12 @@ def truthy(value: str) -> bool:
     if value in ("true", "yes", "on"):
         return True
     if TRUE_INT.match(value):
-        number = int(re.sub(r"[kmgKMG]$", "", value))
-        return number != 0
+        return int(value.rstrip("kmg")) != 0
     return False
+
+
+def is_signing_key(key: str) -> bool:
+    return key in GPGSIGN_KEYS or key in SIGNING_KEYS or key == "include.path" or key.startswith("includeif.")
 
 
 def signing_override(key: str, value: str | None) -> str | None:
@@ -695,7 +705,7 @@ def signing_override(key: str, value: str | None) -> str | None:
     key = key.lower()
     if key in GPGSIGN_KEYS:
         return None if value is not None and truthy(value) else key + " override"
-    if key in SIGNING_KEYS or key == "include.path" or key.startswith("includeif."):
+    if is_signing_key(key):
         return key + " override"
     if key.startswith("alias.") and (value is None or BYPASS_TEXT.search(value)):
         return "alias that changes signing"
@@ -744,8 +754,8 @@ class Guard:
         self.xdg = (os.environ.get("XDG_CONFIG_HOME") or self.home + "/.config").rstrip("/")
         self.claude_dir = (os.environ.get("CLAUDE_CONFIG_DIR") or self.home + "/.claude").rstrip("/")
         self.runtime = (os.environ.get("XDG_RUNTIME_DIR") or "").rstrip("/")
-        cwd = event.get("cwd")
-        self.cwd = cwd if isinstance(cwd, str) and cwd.startswith("/") else (os.getcwd() if os.path.isdir(".") else "/")
+        cwd = as_str(event.get("cwd"))
+        self.cwd = cwd if cwd.startswith("/") else (os.getcwd() if os.path.isdir(".") else "/")
         self.locked = False
         self.bypasses: list[str] = []
         self.signing: list[str] = []
@@ -777,19 +787,19 @@ class Guard:
             "XDG_RUNTIME_DIR": self._value("XDG_RUNTIME_DIR", self.runtime, env) if self.runtime else None,
         }
         for var, value in values.items():
-            if "${" + var + "}" in path or re.search(r"\$" + var + r"(?![A-Za-z0-9_])", path):
+            reference = r"\$(\{" + var + r"\}|" + var + r"(?![A-Za-z0-9_]))"
+            if re.search(reference, path):
                 if value is None:
                     return None
-                path = path.replace("${" + var + "}", value)
-                path = re.sub(r"\$" + var + r"(?![A-Za-z0-9_])", lambda _, value=value: value, path)
+                path = re.sub(reference, lambda _, value=value: value, path)
         if path == "~" or path.startswith("~/"):
             home = values["HOME"]
             if home is None:
                 return None
             path = home + path[1:]
-        if not path.startswith("/") and not path.startswith("$"):
-            path = os.path.join(state.cwd, path)
-        return os.path.normpath(path) if not path.startswith("$") else path
+        if path.startswith("$"):
+            return path
+        return os.path.normpath(os.path.join(state.cwd, path))
 
     def lock_dirs(self) -> list[str]:
         dirs = [self.claude_dir + "/state/claude-commit-signing"]
@@ -909,22 +919,7 @@ class Guard:
                     env[key] = value
             elif name == "env":
                 words = self.unwrap_env(words[1:], env)
-            elif name in (
-                "command",
-                "builtin",
-                "exec",
-                "nohup",
-                "time",
-                "nice",
-                "stdbuf",
-                "ionice",
-                "setsid",
-                "chrt",
-                "taskset",
-                "timeout",
-                "unbuffer",
-                "flock",
-            ):
+            elif name in WRAPPERS:
                 if name == "command" and words[1:2] and words[1] in ("-v", "-V"):
                     return "quick"
                 if name == "flock":
@@ -946,8 +941,8 @@ class Guard:
                 if body:
                     self.script(body, State(state.cwd, env, state.aliases), privileged, depth + 1)
                 return self.kind_since(signing_before, "other")
-            elif name == "find" and any(w in ("-exec", "-execdir", "-ok", "-okdir") for w in words):
-                start = next(i for i, w in enumerate(words) if w in ("-exec", "-execdir", "-ok", "-okdir")) + 1
+            elif name == "find" and any(w in FIND_EXEC for w in words):
+                start = next(i for i, w in enumerate(words) if w in FIND_EXEC) + 1
                 end = next((i for i in range(start, len(words)) if words[i] in (";", "+")), len(words))
                 words = words[start:end]
             elif name == "xargs":
@@ -1015,10 +1010,10 @@ class Guard:
         known = {k: v for k, v in state.env.items() if v is not None and k not in PATH_VARIABLES}
         out: list[str] = []
         for word in words:
-            match = SIMPLE_VARIABLE.match(word.text)
+            match = VARIABLE.fullmatch(word.text)
             if match and not word.quoted and (match.group(2) or match.group(3)) in known:
                 # Unquoted: the value is split into words.
-                out += [w.text for c in lex(known[match.group(2) or match.group(3)])[0] for w in c.words]
+                out += split_words(known[match.group(2) or match.group(3)])
                 continue
             out.append(VARIABLE.sub(lambda m: known.get(m.group(2) or m.group(3), m.group(0)), word.text))
         return out
@@ -1028,12 +1023,7 @@ class Guard:
         """What a shell reads as its script: a heredoc, a here-string, a
         <(...) process substitution, or the output of echo, printf or cat
         piped into it."""
-        scripts: list[str] = []
-        for op, target in command.redirects:
-            if op in ("<<", "<<-") and target.body is not None:
-                scripts.append(target.body)
-            elif op == "<<<":
-                scripts.append(target.text)
+        scripts = Guard.redirected_input(command)
         for word in command.words:
             if word.text.startswith("<("):
                 for sub in word.subs:
@@ -1051,12 +1041,18 @@ class Guard:
         out = [" ".join(a for a in words[1:] if not a.startswith("-"))]
         if words[0] == "printf":
             out.append(out[0].replace("\\n", "\n"))
+        return out + Guard.redirected_input(command)
+
+    @staticmethod
+    def redirected_input(command: Command) -> list[str]:
+        """Heredoc bodies and here-strings."""
+        texts: list[str] = []
         for op, target in command.redirects:
             if op in ("<<", "<<-") and target.body is not None:
-                out.append(target.body)
+                texts.append(target.body)
             elif op == "<<<":
-                out.append(target.text)
-        return out
+                texts.append(target.text)
+        return texts
 
     def kind_since(self, signing_before: int, default: Kind) -> Kind:
         return "signing" if len(self.signing) > signing_before else default
@@ -1121,11 +1117,9 @@ class Guard:
                 env[word[2:]] = None
             elif word in ("-S", "--split-string"):
                 if i + 1 < len(words):
-                    split = [w.text for c in lex(words[i + 1])[0] for w in c.words]
-                    return split + words[i + 2 :]
+                    return split_words(words[i + 1]) + words[i + 2 :]
             elif word.startswith("--split-string="):
-                split = [w.text for c in lex(word[len("--split-string=") :])[0] for w in c.words]
-                return split + words[i + 1 :]
+                return split_words(word[len("--split-string=") :]) + words[i + 1 :]
             elif word in ("-C", "--chdir"):
                 i += 1
             elif word == "--":
@@ -1180,7 +1174,7 @@ class Guard:
                     alias[1:] + " " + " ".join(rest), State(state.cwd, env, state.aliases), privileged, depth + 1
                 )
                 return "other"
-            expanded = [w.text for c in lex(alias)[0] for w in c.words]
+            expanded = split_words(alias)
             if expanded:
                 sub, rest = expanded[0], [*expanded[1:], *rest]
 
@@ -1325,12 +1319,9 @@ class Guard:
                 and not self.classify(file, state, state.env)
             ):
                 return
-        signing_key = (
-            key in GPGSIGN_KEYS or key in SIGNING_KEYS or key == "include.path" or key.startswith("includeif.")
-        )
         if action == "edit":
             self.bypasses.append("git config --edit")
-        elif action == "unset" and signing_key:
+        elif action == "unset" and is_signing_key(key):
             self.bypasses.append("git config unset of " + key)
         elif action in ("remove", "rename") and key.split(".")[0].split('"')[0].strip() in SIGNING_SECTIONS:
             self.bypasses.append("git config " + action + "-section of " + key)
