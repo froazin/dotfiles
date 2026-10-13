@@ -3,14 +3,11 @@
 create_excludes_file()
 {
     log info "Configuring global gitignore file."
-    # --get exits non-zero when the key is unset, which is not an error here.
-    excludes_file="$(git config --global --get core.excludesfile 2> /dev/null)" || excludes_file=""
-
-    case "$excludes_file" in
-        \~/*)
-            excludes_file="$HOME/${excludes_file#\~/}"
-            ;;
-    esac
+    # --get exits 1 when the key is unset, which is not an error here.
+    excludes_file="$(git config --global --type=path --get core.excludesfile 2> /dev/null)" || [ $? -eq 1 ] || {
+        log error "Failed to read global core.excludesfile."
+        return 1
+    }
 
     if [ -z "$excludes_file" ]; then
         excludes_file="$HOME/.gitignore"
