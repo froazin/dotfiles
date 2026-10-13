@@ -4,11 +4,14 @@
 # result. The user-data is a Jinja template, so `cloud-init schema` on the raw
 # file is meaningless; every case has to be rendered first.
 #
-# Usage: validate.sh [path/to/ubuntu.user-data]
+# Usage: validate.sh [path/to/ubuntu.user-data [path/to/ubuntu.meta-data]]
+#
+# The meta-data template defaults to the ubuntu.meta-data beside the user-data.
 
 set -u
 
 user_data="${1:-src/wsl/ubuntu.user-data}"
+meta_data="${2:-$(dirname "$user_data")/ubuntu.meta-data}"
 failed="false"
 
 fail()
@@ -29,6 +32,11 @@ done
     exit 2
 }
 
+[ -f "$meta_data" ] || {
+    printf 'meta-data not found: %s\n' "$meta_data" >&2
+    exit 2
+}
+
 work="$(mktemp -d)" || exit 2
 trap 'rm -rf "$work"' EXIT
 
@@ -36,11 +44,15 @@ trap 'rm -rf "$work"' EXIT
 #   user      - whether user-specific config should render
 #   gh_dir    - expected ~/workspaces/github.com/<owner> directory, or ""
 #   git_name  - exact user.name git must read back from the rendered .gitconfig
-python3 -I - "$work" << 'EOF'
+#   extensions - VS Code extension IDs installed, in order (default: none)
+#   skipped   - vscode_extensions entries reported as invalid (default: none)
+python3 -I - "$work" "$meta_data" << 'EOF' || exit 2
 import json
 import sys
 
-work = sys.argv[1]
+import yaml
+
+work, meta_template = sys.argv[1:]
 
 v1 = {
     "cloud_name": "wsl", "platform": "wsl", "cloud_id": "wsl",
@@ -52,13 +64,39 @@ v1 = {
 }
 
 hostile = "O'Hara \"Q\" \\ # ; {{ x }}"
+bad_extensions = ["a.b; rm -rf ~", "$(id).x", "a.b'c", 'a"b.c', "no-dot", ".x", "x.",
+                  "-a.b", "a.b.c", "a b.c", "a\nb.c", "\u00fcn.code", "\U0001F600.x",
+                  "C:\\new\\cext.vsix", "{{ x }}", 42, None]
+
+# The shipped template, with a username so its extensions install.
+with open(meta_template) as f:
+    shipped = yaml.safe_load(f)
 
 cases = {
     "full": ({"username": "jdoe", "git_name": "Jane Doe",
               "git_email": "1+jdoe@users.noreply.github.com",
               "git_signingkey": "ssh-ed25519 AAAA jane",
-              "git_ssh_program": "/mnt/c/Users/<you>/op-ssh-sign-wsl.exe"},
-             {"user": True, "gh_dir": "jdoe", "git_name": "Jane Doe"}),
+              "git_ssh_program": "/mnt/c/Users/<you>/op-ssh-sign-wsl.exe",
+              "vscode_extensions": ["Anthropic.claude-code", "ms-python.python"]},
+             {"user": True, "gh_dir": "jdoe", "git_name": "Jane Doe",
+              "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
+    "shipped-meta-data": ({**shipped, "username": "jdoe"},
+                          {"user": True, "gh_dir": "", "git_name": "",
+                           "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
+    "extensions-string": ({"username": "jdoe", "vscode_extensions": "Anthropic.claude-code, ms-python.python"},
+                          {"user": True, "gh_dir": "", "git_name": "",
+                           "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
+    "extensions-hostile": ({"username": "jdoe", "vscode_extensions": ["ok.ext", *bad_extensions, "Pub-1.name-2"]},
+                           {"user": True, "gh_dir": "", "git_name": "",
+                            "extensions": ["ok.ext", "Pub-1.name-2"],
+                            "skipped": [str(e).encode("ascii", "backslashreplace").decode("ascii")
+                                        for e in bad_extensions]}),
+    "extensions-mapping": ({"username": "jdoe", "vscode_extensions": {"a": "b.c"}},
+                           {"user": True, "gh_dir": "", "git_name": ""}),
+    "extensions-number": ({"username": "jdoe", "vscode_extensions": 5},
+                          {"user": True, "gh_dir": "", "git_name": ""}),
+    "extensions-no-user": ({"vscode_extensions": ["Anthropic.claude-code"]},
+                           {"user": False, "gh_dir": "", "git_name": ""}),
     "empty-values": ({"username": None, "git_name": None},
                      {"user": False, "gh_dir": "", "git_name": ""}),
     "no-meta-data": ({}, {"user": False, "gh_dir": "", "git_name": ""}),
@@ -75,12 +113,18 @@ cases = {
 with open(f"{work}/cases", "w") as index:
     for name, (meta, expect) in cases.items():
         meta = {"instance-id": "ubuntu-wsl", **meta}
+        expect = {"extensions": [], "skipped": [], **expect}
         with open(f"{work}/{name}.json", "w") as f:
             json.dump({"v1": v1, "ds": {"meta_data": meta}}, f)
         with open(f"{work}/{name}.expect.json", "w") as f:
             json.dump(expect, f)
         index.write(name + "\n")
 EOF
+
+[ -s "$work/cases" ] || {
+    printf 'no cases were generated\n' >&2
+    exit 2
+}
 
 while read -r case; do
     rendered="$work/$case.yaml"
@@ -102,6 +146,8 @@ while read -r case; do
 import json
 import subprocess
 import sys
+
+from cloudinit.util import shellify
 
 rendered, expect_path, prefix = sys.argv[1:]
 case = prefix.rsplit("/", 1)[-1]
@@ -131,10 +177,43 @@ if want and not any(d.endswith(f"/workspaces/github.com/{want}") for d in mkdirs
 if not want and mkdirs:
     problems.append(f"unexpected workspace dirs {mkdirs}")
 
-# Root: login shell set first, then the dotfiles installed after the user's.
 cmds = [c if isinstance(c, list) else [c] for c in doc.get("runcmd", [])]
+
 def find(pred):
     return next((i for i, c in enumerate(cmds) if pred(c)), None)
+
+# VS Code extensions: one install per valid ID, as the user; the rest reported.
+installs = [c for c in cmds if "--install-extension" in str(c[-1])]
+installed = [str(c[-1]).rsplit(" ", 1)[-1] for c in installs]
+if installed != expect["extensions"]:
+    problems.append(f"extensions installed {installed}, expected {expect['extensions']}")
+if any(c[:3] != ["runuser", "-l", "jdoe"] for c in installs):
+    problems.append("an extension install does not run as the user")
+skipped = [c[-1] for c in cmds if c[0] == "printf" and "vscode_extensions" in str(c[1])]
+if skipped != expect["skipped"]:
+    problems.append(f"extensions reported as skipped {skipped!r}, expected {expect['skipped']!r}")
+
+# The first `runuser -l` starts the user's systemd manager, which only reads
+# global wants when it starts.
+podman = find(lambda c: c == ["systemctl", "--global", "enable", "podman.socket"])
+first_login = find(lambda c: c[:2] == ["runuser", "-l"])
+if podman is None:
+    problems.append("runcmd does not enable podman.socket for users")
+elif first_login is not None and first_login < podman:
+    problems.append("podman.socket is enabled after the first runuser -l starts the user's manager")
+if ["systemctl", "enable", "--now", "podman.socket"] not in cmds:
+    problems.append("runcmd does not enable the system podman.socket for root")
+not_root = files.get("/etc/systemd/user/podman.socket.d/10-not-root.conf", {})
+if "ConditionUser=!root" not in not_root.get("content", "").splitlines():
+    problems.append("root's user manager is not kept from starting the user podman.socket")
+
+# cc_runcmd writes the whole script as UTF-8; one unencodable item fails all of it.
+try:
+    shellify(doc.get("runcmd", [])).encode("utf-8")
+except Exception as e:
+    problems.append(f"runcmd cannot be written as a script: {e}")
+
+# Root: login shell set first, then the dotfiles installed after the user's.
 root_shell = find(lambda c: "usermod -s /usr/bin/zsh root" in " ".join(map(str, c)))
 root_install = find(lambda c: c[:3] == ["runuser", "-l", "root"])
 user_install = find(lambda c: c[:2] == ["runuser", "-l"] and c[2] != "root" and "src/install.sh" in str(c[-1]))

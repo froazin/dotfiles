@@ -1,4 +1,4 @@
-# Identifying inputs for src/wsl/ubuntu.user-data.
+# Identifying inputs and personal choices for src/wsl/ubuntu.user-data.
 #
 # Copy to %USERPROFILE%\.cloud-init\ubuntu.meta-data and fill in. Keep the
 # filled copy out of this repository. cloud-init only reads meta-data named
@@ -24,3 +24,10 @@ git_signingkey:
 # Program git signs with, e.g. 1Password's WSL helper:
 # /mnt/c/Users/<you>/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe
 git_ssh_program:
+
+# VS Code extensions to install into the instance's VS Code server, by
+# Marketplace ID (publisher.name). Needs a username, and VS Code with its WSL
+# extension on Windows. Empty to install none.
+vscode_extensions:
+  - Anthropic.claude-code
+  - ms-python.python

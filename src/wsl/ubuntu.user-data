@@ -10,6 +10,23 @@
 {% set git_email = ds.meta_data.git_email or '' %}
 {% set git_signingkey = ds.meta_data.git_signingkey or '' %}
 {% set git_ssh_program = ds.meta_data.git_ssh_program or '' %}
+{# VS Code extension IDs, as a list or a comma/space-separated string. Anything else is ignored. #}
+{% set vscode_extensions = ds.meta_data.vscode_extensions or [] %}
+{% if vscode_extensions is string %}
+{% set vscode_extensions = vscode_extensions.replace(',', ' ').split() %}
+{% elif vscode_extensions is mapping or vscode_extensions is not sequence %}
+{% set vscode_extensions = [] %}
+{% endif %}
+{# Only Marketplace-shaped IDs, publisher.name with each part [A-Za-z0-9][A-Za-z0-9-]*, reach the shell; the rest are reported. #}
+{% set extensions = namespace(valid=[], invalid=[]) %}
+{% for ext in vscode_extensions %}
+{% set publisher, dot, name = (ext | string).partition('.') %}
+{% if ext is string and dot and publisher[:1].isalnum() and name[:1].isalnum() and (publisher ~ name).isascii() and (publisher ~ name).replace('-', '').isalnum() %}
+{% set extensions.valid = extensions.valid + [ext] %}
+{% else %}
+{% set extensions.invalid = extensions.invalid + [ext | string] %}
+{% endif %}
+{% endfor %}
 {# GitHub username from a noreply address, ID+user@ or user@, for the workspace layout. #}
 {% set gh_local, _, gh_domain = (git_email | string).rpartition('@') %}
 {% set gh_user = gh_local.split('+', 1)[-1] if gh_domain | lower == 'users.noreply.github.com' else '' %}
@@ -207,6 +224,15 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
+  # podman.socket is enabled for every user manager in runcmd. Root's, which
+  # `sudo su` starts, would run a second rootful API beside the system socket,
+  # so it skips the user unit.
+  - path: /etc/systemd/user/podman.socket.d/10-not-root.conf
+    permissions: "0644"
+    content: |
+      [Unit]
+      ConditionUser=!root
+
   # Podman wants / shared; backs up the [boot] command in wsl.conf.
   - path: /etc/systemd/system/make-root-rshared.service
     permissions: "0644"
@@ -309,6 +335,14 @@ runcmd:
   - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh-add.exe", /usr/local/bin/ssh-add]
   - [systemctl, daemon-reload]
   - [systemctl, enable, --now, disable-swap.service, make-root-rshared.service]
+  # Rootless podman's Docker-compatible API socket, for every user, started by
+  # their user manager. runcmd runs as root with no user bus, so not
+  # `systemctl --user`. The first `runuser -l` below starts the user's manager,
+  # which reads the global wants only then, so this stays above it.
+  - [systemctl, --global, enable, podman.socket]
+  # Root's API is the system socket, /run/podman/podman.sock, which
+  # podman-docker's /run/docker.sock also points at.
+  - [systemctl, enable, --now, podman.socket]
   - [virsh, --connect, "qemu:///system", net-autostart, default]
   # A login shell that does not exist would lock the OOBE-created user out.
   - [sh, -c, 'if [ -x /usr/bin/zsh ]; then printf "DSHELL=/usr/bin/zsh\n" >> /etc/adduser.conf; fi']
@@ -341,11 +375,18 @@ runcmd:
   # updates it. tar -m stamps it with the install time, which is how zsh knows
   # to regenerate its completion. Never the apt `ant` package (Apache Ant).
   - [runuser, -l, "{{ user }}", -c, 'v="$(curl -fsSLI -o /dev/null -w "%{url_effective}" https://github.com/anthropics/anthropic-cli/releases/latest)" && v="${v##*/v}" && case "$(uname -m)" in x86_64) a=amd64 ;; aarch64) a=arm64 ;; esac && mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant']
-  # The extension runs on the WSL side, in ~/.vscode-server. VS Code's launcher
-  # only installs it there when WSL_DISTRO_NAME is set, which runuser clears;
-  # the value only labels the remote, so the instance name from wslpath does.
-  # Needs Windows VS Code with its WSL extension.
-  - [runuser, -l, "{{ user }}", -c, '[ -x /usr/local/bin/code ] || exit 0; WSL_DISTRO_NAME="$(basename "$(wslpath -am /)")" code --install-extension Anthropic.claude-code']
+  # The meta-data's VS Code extensions, one entry each so one failure does not
+  # stop the rest. They run on the WSL side, in ~/.vscode-server. VS Code's
+  # launcher only installs there when WSL_DISTRO_NAME is set, which runuser
+  # clears; the value only labels the remote, so the instance name from
+  # wslpath does. Needs Windows VS Code with its WSL extension.
+{% for ext in extensions.valid %}
+  - [runuser, -l, "{{ user }}", -c, '[ -x /usr/local/bin/code ] || exit 0; WSL_DISTRO_NAME="$(basename "$(wslpath -am /)")" code --install-extension {{ ext }}']
+{% endfor %}
+{# ASCII first: tojson writes non-BMP characters as surrogate pairs, which YAML decodes to lone surrogates that cloud-init cannot write out, failing all of runcmd. printf, not echo: dash's echo interprets backslashes. #}
+{% for ext in extensions.invalid %}
+  - [printf, "Skipped vscode_extensions entry, not a publisher.name ID: %s\n", {{ ext.encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
+{% endfor %}
   # Runs after the workspace directories above. git clone creates whatever
   # parents are still missing, and an existing checkout is reused. ~/.zshenv
   # does not exist yet, so PATH gets its directories here; otherwise the

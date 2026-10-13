@@ -11,7 +11,8 @@ running `cloud-init schema` on the raw file proves nothing. Run:
 
 ```sh
 ${CLAUDE_SKILL_DIR}/scripts/validate.sh            # defaults to src/wsl/ubuntu.user-data
-${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/file
+${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/file  # with ubuntu.meta-data beside it
+${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/user-data path/to/meta-data
 ```
 
 It renders the template with `cloud-init devel render` against a set of mock
@@ -23,12 +24,24 @@ It renders the template with `cloud-init devel render` against a set of mock
 | `empty-values`, `no-meta-data` | nothing user-specific renders, YAML stays valid |
 | `hostile-name` | `"`, `\`, `#`, `;`, `'` and `{{ }}` in `git_name` read back exactly through `git config` |
 | `legacy-noreply`, `plain-email`, `path-traversal` | the `~/workspaces/github.com/<owner>` extraction only accepts GitHub noreply addresses with a safe owner name |
+| `shipped-meta-data` | the repo's `ubuntu.meta-data` template parses and its `vscode_extensions` install |
+| `extensions-string` | a comma/space-separated `vscode_extensions` string installs each ID |
+| `extensions-hostile` | only `publisher.name` IDs reach the shell; every other entry is reported with `printf`, ASCII-escaped, including non-BMP characters and backslashes |
+| `extensions-mapping`, `extensions-number`, `extensions-no-user` | other types install nothing, and nothing installs without a user |
+
+Every case also checks one extension install per expected ID, run as the
+user; that `podman.socket` is enabled with `systemctl --global` before the
+first `runuser -l` starts the user's systemd manager, while root gets the
+system socket and a `ConditionUser=!root` drop-in instead; and that cloud-init can
+write the whole runcmd out as a UTF-8 script.
 
 It also runs `cloud-init schema` on every render, shellchecks the embedded
 `/usr/local/bin/start`, and fails if a concrete `/mnt/c/Users/<name>/` path
 appears in the template.
 
 Exit 0 means every case passed; any `FAIL:` line names the case and what broke.
+Exit 2 means it could not run: a missing tool, user-data or meta-data, or a
+meta-data template that does not parse.
 
 When adding a meta-data key or a new conditional block, add a case for it to
 the Python table at the top of the script, including the "key unset" side.

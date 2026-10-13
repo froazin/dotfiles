@@ -114,21 +114,25 @@ instance from scratch:
 
 - installs every package the modules above depend on, plus containers and a
   KVM/libvirt stack for running VMs inside WSL;
+- enables podman's Docker-compatible API socket (`podman.socket`): rootless
+  for every user, and the system socket for root;
 - writes `/etc/wsl.conf` and disables swap to match `src/wsl/.wslconfig`;
 - bridges Windows tools (VS Code, 1Password CLI, OpenSSH) into the Linux
   `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
 - creates the user with zsh and passwordless sudo, when a username is given;
 - installs `uv`, `pulumi`, `nvm`, Claude Code (`claude`) and the Claude
-  Platform CLI (`ant`) as that user, and the Claude Code VS Code extension
-  into the instance's VS Code server (this needs VS Code and its WSL extension
-  on Windows);
+  Platform CLI (`ant`) as that user, and the VS Code extensions listed in the
+  meta-data's `vscode_extensions` (Claude Code and Python to start with) into
+  the instance's VS Code server (this needs VS Code and its WSL extension on
+  Windows);
 - configures git, then clones this repo and runs `install.sh`;
 - makes zsh root's login shell and runs `install.sh` for root too, so
   `sudo su` keeps the same shell and prompt. Without a username, root's copy
   comes from a temporary clone.
 
-The user-data holds nothing personal. Your username and git identity go in the
-meta-data, which cloud-init reads alongside it and which stays on your machine:
+The user-data holds nothing personal. Your username, git identity and VS Code
+extensions go in the meta-data, which cloud-init reads alongside it and which
+stays on your machine:
 
 | Repo file | Copy to |
 | --------- | ------- |
@@ -168,7 +172,8 @@ curl -fsSL https://claude.ai/install.sh | bash
 v="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/anthropics/anthropic-cli/releases/latest)"; v="${v##*/v}"
 case "$(uname -m)" in aarch64) a=arm64 ;; *) a=amd64 ;; esac
 mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant
-code --install-extension Anthropic.claude-code
+# The extensions in your meta-data's vscode_extensions, e.g.:
+code --install-extension Anthropic.claude-code --install-extension ms-python.python
 git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
 # Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
 PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
