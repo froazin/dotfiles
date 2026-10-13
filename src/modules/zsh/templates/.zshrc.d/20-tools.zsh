@@ -8,24 +8,15 @@ fi
 # fzf registers ZLE widgets, so it must load before zsh-syntax-highlighting
 # (90-plugins.zsh).
 if (( $+commands[fzf] )); then
-  _fzf_version=$(fzf --version | cut -d' ' -f1)
-  _fzf_major_version=$(echo "$_fzf_version" | cut -d. -f1)
-  _fzf_minor_version=$(echo "$_fzf_version" | cut -d. -f2)
-
-  if [[ $_fzf_major_version -eq 0 && $_fzf_minor_version -ge 48 ]]; then
+  _fzf_version=( ${(s:.:)${$(fzf --version)%% *}} )
+  if (( _fzf_version[1] > 0 || _fzf_version[2] >= 48 )); then
     source <(fzf --zsh)
   else
-    _fzf_key_bindings="/usr/share/doc/fzf/examples/key-bindings.zsh"
-    _fzf_completion="/usr/share/doc/fzf/examples/completion.zsh"
-
-    if [[ -f $_fzf_key_bindings ]]; then
-      source "$_fzf_key_bindings"
-    fi
-
-    if [[ -f $_fzf_completion ]]; then
-      source "$_fzf_completion"
-    fi
+    for _fzf_script in /usr/share/doc/fzf/examples/{key-bindings,completion}.zsh; do
+      [[ -f $_fzf_script ]] && source "$_fzf_script"
+    done
   fi
+  unset _fzf_version _fzf_script
 fi
 
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
