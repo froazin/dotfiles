@@ -62,7 +62,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | ------ | -------- | ---- | -------- |
 | `claude` | `claude` | `jq`, `python3` | — |
 | `git`  | `git` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman` |
 
 The `claude` module never overwrites `~/.claude/settings.json`, because Claude
 Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The
@@ -99,6 +99,13 @@ interpreter or another git client can still get past it. Its tests are in
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
 generated on demand like the other optional tools.
+
+With `podman` installed and its user API socket listening
+(`systemctl --user enable --now podman.socket`), zsh points `DOCKER_HOST` at
+that socket, so Docker clients such as `docker compose` or VS Code Dev
+Containers use rootless podman. Root uses the system socket instead
+(`/run/podman/podman.sock`, from `sudo systemctl enable --now podman.socket`).
+A `DOCKER_HOST` you set yourself wins.
 
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
