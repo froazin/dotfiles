@@ -33,13 +33,14 @@ zstyle ':vcs_info:git*' formats       '%b%m'
 zstyle ':vcs_info:git*' actionformats '%b|%a%m'
 zstyle ':vcs_info:git*+set-message:*' hooks git-detached git-dirty
 
-# .git is a file, not a directory, in linked worktrees and submodules.
+# $1 is --git-dir (this worktree's HEAD) or --git-common-dir (the shared
+# config); they differ only where .git is a file: linked worktrees, submodules.
 _zp_gitdir() {
   local dir=${hook_com[base]}/.git
   if [[ -d $dir ]]; then
     print -r -- $dir
   elif [[ -f $dir ]]; then
-    command git rev-parse --git-common-dir 2>/dev/null
+    command git rev-parse "$1" 2>/dev/null
   fi
 }
 
@@ -50,7 +51,7 @@ _zp_gitdir() {
   [[ -n ${hook_com[action]} ]] && return 0
 
   local gitdir head
-  gitdir=$(_zp_gitdir) || return 0
+  gitdir=$(_zp_gitdir --git-dir) || return 0
   [[ -r $gitdir/HEAD ]] || return 0
   head=$(<$gitdir/HEAD)
   [[ $head == ref:* ]] && return 0
@@ -96,7 +97,7 @@ _zp_repo_cfg() {
   # beside %a. Cleared before any early return so it never leaks through.
   hook_com[misc]=''
 
-  _zp_repo_cfg "$(_zp_gitdir)" || return 0
+  _zp_repo_cfg "$(_zp_gitdir --git-common-dir)" || return 0
 
   if (( _zp_cfg_hide_status )); then
     hook_com[branch]=''
