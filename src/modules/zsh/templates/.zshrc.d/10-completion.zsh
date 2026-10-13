@@ -23,21 +23,30 @@ zcache_completion() {
 
   local name=$1 generator=$2 bin=$3
   local file="$ZSH_COMPLETION_DIR/_$name"
+  # Outside fpath, so compinit never sees it.
+  local failed="$ZSH_COMPLETION_DIR/.failed/$name"
 
   [[ -n $bin && -x $bin ]] || return 2          # tool not installed
-  if (( ! force )) && [[ -f $file && ! $bin -nt $file ]]; then
-    return 1                                    # already current
+  if (( ! force )); then
+    [[ -f $file && ! $bin -nt $file ]] && return 1      # already current
+    # Don't retry a generator that failed for this same binary on every
+    # startup (e.g. Apache Ant answering to `ant`); zshup forces a retry.
+    [[ -f $failed && ! $bin -nt $failed ]] && return 3
   fi
 
   local tmp="$file.new.$$"
-  if eval "$generator" > "$tmp" 2>/dev/null && [[ -s $tmp ]]; then
+  # Run from a directory we own, so a tool that reads its working directory
+  # (Apache Ant parses ./build.xml) never acts on the project the shell opened in.
+  if ( cd -q "$ZSH_COMPLETION_DIR" && eval "$generator" ) > "$tmp" 2>/dev/null && [[ -s $tmp ]]; then
     # Give a tool a chance to patch its own generated completion. Runs here so
     # the fix is reapplied automatically on every regeneration, including zshup.
     (( $+functions[_zcache_patch_$name] )) && "_zcache_patch_$name" "$tmp"
     mv -f "$tmp" "$file"
+    rm -f "$failed"
     return 0                                    # regenerated
   fi
   rm -f "$tmp"
+  mkdir -p "${failed:h}" && : >| "$failed"
   return 3                                      # generation failed
 }
 
@@ -87,6 +96,7 @@ typeset -gA ZSH_OPTIONAL_COMPLETIONS=(
   uvx    'uvx --generate-shell-completion zsh'
   op     'op completion zsh'
   pulumi 'pulumi gen-completion zsh'
+  ant    'ant @completion zsh'
 )
 
 for _zc_tool in ${(ko)ZSH_OPTIONAL_COMPLETIONS}; do

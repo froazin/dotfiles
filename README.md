@@ -60,7 +60,11 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
 | `git`  | `git` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant` |
+
+`ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
+not the `ant` package from apt, which is Apache Ant. Its zsh completion is
+generated on demand like the other optional tools.
 
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
