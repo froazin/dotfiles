@@ -79,46 +79,6 @@ zsh_report_optional_deps()
     return 0
 }
 
-zsh_install_file()
-{
-    src="$1"
-    dest="$2"
-
-    if [ ! -f "$src" ]; then
-        log error "Template not found: <$src>."
-        return 1
-    fi
-
-    if [ -L "$dest" ]; then
-        log warning "Existing file <$dest> is a symbolic link and will be left alone."
-        return 1
-    fi
-
-    if [ -f "$dest" ]; then
-        if cmp -s "$src" "$dest"; then
-            log debug "<$dest> is already up to date."
-            return 0
-        fi
-
-        log warning "Existing file <$dest> was found, it will be overwritten."
-    fi
-
-    if ! [ -d "$(dirname "$dest")" ]; then
-        mkdir -p "$(dirname "$dest")" > /dev/null 2>&1 || {
-            log error "Failed to create directory <$(dirname "$dest")>."
-            return 1
-        }
-    fi
-
-    cp --force "$src" "$dest" > /dev/null 2>&1 || {
-        log error "Failed to write <$dest>."
-        return 1
-    }
-
-    log debug "Installed <$dest>."
-    return 0
-}
-
 zsh_install_config()
 {
     log info "Installing zsh configuration."
@@ -126,13 +86,13 @@ zsh_install_config()
     templates="$(dirname "$0")/modules/zsh/templates"
     failed="false"
 
-    zsh_install_file "$templates/.zshenv" "$HOME/.zshenv" || failed="true"
-    zsh_install_file "$templates/.zshrc" "$HOME/.zshrc" || failed="true"
+    install_file "$templates/.zshenv" "$HOME/.zshenv" || failed="true"
+    install_file "$templates/.zshrc" "$HOME/.zshrc" || failed="true"
 
     for template in "$templates/.zshrc.d/"*.zsh; do
         [ -f "$template" ] || continue
 
-        zsh_install_file "$template" "$HOME/.zshrc.d/$(basename "$template")" || failed="true"
+        install_file "$template" "$HOME/.zshrc.d/$(basename "$template")" || failed="true"
     done
 
     if [ "$failed" = "true" ]; then

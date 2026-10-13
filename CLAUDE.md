@@ -9,7 +9,7 @@ so it must stay generic.
 | Path | What |
 | ---- | ---- |
 | `src/install.sh` | Entry point. Runs each `src/modules/<name>/bootstrap.sh` whose `<name>` is a command on `PATH`. |
-| `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `is_wsl`, ...). |
+| `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). |
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
 | `src/wsl/` | `.wslconfig`, `ubuntu.user-data` (Jinja cloud-config), `ubuntu.meta-data` (fill-in template). |

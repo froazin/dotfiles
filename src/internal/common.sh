@@ -27,6 +27,49 @@ check_commands()
     return 0
 }
 
+install_file()
+{
+    # Copy a template to its destination, creating parent directories. An
+    # existing file is overwritten with a warning; a symbolic link is left
+    # alone and reported as a failure.
+    src="$1"
+    dest="$2"
+
+    if [ ! -f "$src" ]; then
+        log error "Template not found: <$src>."
+        return 1
+    fi
+
+    if [ -L "$dest" ]; then
+        log warning "Existing file <$dest> is a symbolic link and will be left alone."
+        return 1
+    fi
+
+    if [ -f "$dest" ]; then
+        if cmp -s "$src" "$dest"; then
+            log debug "<$dest> is already up to date."
+            return 0
+        fi
+
+        log warning "Existing file <$dest> was found, it will be overwritten."
+    fi
+
+    if ! [ -d "$(dirname "$dest")" ]; then
+        mkdir -p "$(dirname "$dest")" > /dev/null 2>&1 || {
+            log error "Failed to create directory <$(dirname "$dest")>."
+            return 1
+        }
+    fi
+
+    cp --force "$src" "$dest" > /dev/null 2>&1 || {
+        log error "Failed to write <$dest>."
+        return 1
+    }
+
+    log debug "Installed <$dest>."
+    return 0
+}
+
 get_distro_name()
 {
     # Get the distribution name from /etc/os-release.
