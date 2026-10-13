@@ -10,14 +10,13 @@
 {% set git_email = ds.meta_data.git_email or '' %}
 {% set git_signingkey = ds.meta_data.git_signingkey or '' %}
 {% set git_ssh_program = ds.meta_data.git_ssh_program or '' %}
-{# VS Code extension IDs, as a list or a comma/space-separated string. Anything else is ignored. #}
 {% set vscode_extensions = ds.meta_data.vscode_extensions or [] %}
 {% if vscode_extensions is string %}
 {% set vscode_extensions = vscode_extensions.replace(',', ' ').split() %}
 {% elif vscode_extensions is mapping or vscode_extensions is not sequence %}
 {% set vscode_extensions = [] %}
 {% endif %}
-{# Only Marketplace-shaped IDs, publisher.name with each part [A-Za-z0-9][A-Za-z0-9-]*, reach the shell; the rest are reported. #}
+{# Only publisher.name IDs, each part [A-Za-z0-9][A-Za-z0-9-]*, reach the shell. #}
 {% set extensions = namespace(valid=[], invalid=[]) %}
 {% for ext in vscode_extensions %}
 {% set publisher, dot, name = (ext | string).partition('.') %}
@@ -27,21 +26,18 @@
 {% set extensions.invalid = extensions.invalid + [ext | string] %}
 {% endif %}
 {% endfor %}
-{# GitHub username from a noreply address, ID+user@ or user@, for the workspace layout. #}
+{# GitHub username from a noreply address, ID+user@ or user@. #}
 {% set gh_local, _, gh_domain = (git_email | string).rpartition('@') %}
 {% set gh_user = gh_local.split('+', 1)[-1] if gh_domain | lower == 'users.noreply.github.com' else '' %}
 {% if not gh_user.replace('-', '').isalnum() %}
 {% set gh_user = '' %}
 {% endif %}
-{# A repo's checkout, relative to ~: the path its URL maps to under ~/workspaces. #}
 {% macro workspace(repo) %}workspaces/{{ repo.split('://', 1)[-1].removesuffix('.git') }}{% endmacro %}
-{# This repo. #}
 {% set dotfiles_repo = 'https://github.com/froazin/dotfiles.git' %}
 {% set dotfiles_rel = workspace(dotfiles_repo) %}
 {% set dotfiles_dir = '~/' ~ dotfiles_rel %}
 {% set nvm_repo = 'https://github.com/nvm-sh/nvm.git' %}
 {% set nvm_dir = '~/' ~ workspace(nvm_repo) %}
-{# Quote a value for git config: backslashes and double quotes escaped. #}
 {% macro gitval(value) %}"{{ value | string | replace('\\', '\\\\') | replace('"', '\\"') }}"{% endmacro %}
 
 locale: en_GB.UTF-8
@@ -120,7 +116,7 @@ apt:
         -----END PGP PUBLIC KEY BLOCK-----
 
 packages:
-  # dotfiles: the zsh and git modules, their soft and optional dependencies
+  # dotfiles modules and their soft and optional dependencies
   - zsh
   - zsh-common
   - zsh-autosuggestions
@@ -135,8 +131,8 @@ packages:
   - python3
   # development
   - gh
-  # VS Code's launcher downloads its WSL server with wget (runcmd's
-  # --install-extension); ubuntu-wsl only pulls it in indirectly.
+  # VS Code's launcher fetches its WSL server with wget; ubuntu-wsl only pulls
+  # it in indirectly.
   - wget
   - shellcheck
   - shfmt
@@ -182,8 +178,8 @@ write_files:
       Pin: origin cli.github.com
       Pin-Priority: 600
 
-  # Defaults for a user created by the OOBE prompt rather than cloud-init.
-  # DSHELL is added in runcmd, once zsh is known to be installed.
+  # For a user the OOBE creates. DSHELL is added in runcmd, once zsh is known
+  # to be installed.
   - path: /etc/adduser.conf
     append: true
     content: |
@@ -224,9 +220,8 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
-  # podman.socket is enabled for every user manager in runcmd. Root's, which
-  # `sudo su` starts, would run a second rootful API beside the system socket,
-  # so it skips the user unit.
+  # runcmd enables podman.socket globally. In root's user manager, which
+  # `sudo su` starts, it would be a second rootful API beside the system one.
   - path: /etc/systemd/user/podman.socket.d/10-not-root.conf
     permissions: "0644"
     content: |
@@ -257,18 +252,15 @@ write_files:
     content: |
       #!/usr/bin/sh
       #
-      # Open a URL or file with its default Windows handler. Exported as $BROWSER
-      # so xdg-open hands off to Windows instead of looking for a Linux browser.
+      # Open a URL or file with its default Windows handler. Used as $BROWSER.
 
       _target="$*"
 
-      # Linux paths mean nothing to Windows, so translate them. URLs pass through.
       if [ -e "$_target" ]; then
       	_target="$(wslpath -w "$_target")" || exit 1
       fi
 
-      # The target travels as an environment variable rather than as part of the
-      # PowerShell command, so nothing in it can be interpreted as code.
+      # Passed in the environment, not the command, so it is never parsed as code.
       # shellcheck disable=SC2016 # $env: is expanded by PowerShell, not sh.
       START_TARGET="$_target" WSLENV="${WSLENV:+$WSLENV:}START_TARGET" \
       	/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
@@ -281,8 +273,7 @@ write_files:
       exit 0
 
 {% if user %}
-  # Written after the user exists. The dotfiles' git module adds
-  # core.excludesfile to this file later in the boot.
+  # Deferred until the user exists. The git module adds core.excludesfile later.
   - path: /home/{{ user }}/.gitconfig
     owner: "{{ user }}:{{ user }}"
     permissions: "0644"
@@ -328,26 +319,22 @@ write_files:
 # Runs in the final stage, after packages. Each entry runs regardless of the
 # others' exit status.
 runcmd:
-  # Windows tools, bridged into the Linux PATH.
   - [ln, -sfn, "/mnt/c/Program Files/Microsoft VS Code/bin/code", /usr/local/bin/code]
   - [ln, -sfn, "/mnt/c/Program Files/WinGet/Links/op.exe", /usr/local/bin/op]
   - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh.exe", /usr/local/bin/ssh]
   - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh-add.exe", /usr/local/bin/ssh-add]
   - [systemctl, daemon-reload]
   - [systemctl, enable, --now, disable-swap.service, make-root-rshared.service]
-  # Rootless podman's Docker-compatible API socket, for every user, started by
-  # their user manager. runcmd runs as root with no user bus, so not
-  # `systemctl --user`. The first `runuser -l` below starts the user's manager,
-  # which reads the global wants only then, so this stays above it.
+  # Not `systemctl --user`: runcmd has no user bus. Keep this above the first
+  # `runuser -l`, which starts the user's manager, the only time it reads
+  # global wants.
   - [systemctl, --global, enable, podman.socket]
-  # Root's API is the system socket, /run/podman/podman.sock, which
-  # podman-docker's /run/docker.sock also points at.
+  # Root's API; podman-docker's /run/docker.sock points at it.
   - [systemctl, enable, --now, podman.socket]
   - [virsh, --connect, "qemu:///system", net-autostart, default]
   # A login shell that does not exist would lock the OOBE-created user out.
   - [sh, -c, 'if [ -x /usr/bin/zsh ]; then printf "DSHELL=/usr/bin/zsh\n" >> /etc/adduser.conf; fi']
-  # Root too, so `sudo su`, `sudo -i` and `wsl -u root` stay in zsh. `users:`
-  # skips existing users, so it cannot do this. Same guard as above.
+  # Root too; `users:` skips existing users. Same guard as above.
   - [sh, -c, 'if [ -x /usr/bin/zsh ]; then usermod -s /usr/bin/zsh root; fi']
 {% if user %}
   - [usermod, -aG, libvirt, "{{ user }}"]
@@ -360,43 +347,33 @@ runcmd:
   # dotfiles' .zshenv puts ~/.local/bin and ~/.pulumi/bin on PATH.
   - [runuser, -l, "{{ user }}", -c, "curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh"]
   - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path"]
-  # nvm: a workspace checkout of the latest release tag, whose install.sh
-  # fetches that release into ~/.nvm, where the zsh module sources it.
-  # PROFILE=/dev/null keeps it out of the shell profiles. install.sh pins its
-  # own release, so updating means fetching tags, checking out the newest and
-  # rerunning it, which is what this does to an existing checkout. git clone
-  # creates the missing parents.
+  # nvm's install.sh installs its own pinned release into ~/.nvm, so check out
+  # the newest tag first; rerunning this updates it. PROFILE=/dev/null keeps it
+  # out of the shell profiles.
   - [runuser, -l, "{{ user }}", -c, 'if [ -d {{ nvm_dir }}/.git ]; then git -C {{ nvm_dir }} fetch --quiet --tags; else git clone --quiet {{ nvm_repo }} {{ nvm_dir }}; fi && cd {{ nvm_dir }} && git checkout --quiet "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")" && PROFILE=/dev/null bash install.sh']
-  # Claude Code's native installer needs bash. It installs to ~/.local/bin and
-  # updates itself.
+  # Claude Code's installer needs bash.
   - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://claude.ai/install.sh | bash"]
-  # ant, the Claude Platform CLI, has no installer or self-update: the release
-  # tarball goes into ~/.local/bin, as its docs describe, and rerunning this
-  # updates it. tar -m stamps it with the install time, which is how zsh knows
-  # to regenerate its completion. Never the apt `ant` package (Apache Ant).
+  # ant (Claude Platform CLI, not apt's Apache Ant) has no installer or
+  # self-update; rerunning this updates it. tar -m stamps the install time,
+  # which is how zsh knows to regenerate its completion.
   - [runuser, -l, "{{ user }}", -c, 'v="$(curl -fsSLI -o /dev/null -w "%{url_effective}" https://github.com/anthropics/anthropic-cli/releases/latest)" && v="${v##*/v}" && case "$(uname -m)" in x86_64) a=amd64 ;; aarch64) a=arm64 ;; esac && mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant']
-  # The meta-data's VS Code extensions, one entry each so one failure does not
-  # stop the rest. They run on the WSL side, in ~/.vscode-server. VS Code's
-  # launcher only installs there when WSL_DISTRO_NAME is set, which runuser
-  # clears; the value only labels the remote, so the instance name from
-  # wslpath does. Needs Windows VS Code with its WSL extension.
+  # One entry each so one failure does not stop the rest. VS Code's launcher
+  # only installs into ~/.vscode-server when WSL_DISTRO_NAME is set, which
+  # runuser clears; the value only labels the remote, so the instance name from
+  # wslpath will do.
 {% for ext in extensions.valid %}
   - [runuser, -l, "{{ user }}", -c, '[ -x /usr/local/bin/code ] || exit 0; WSL_DISTRO_NAME="$(basename "$(wslpath -am /)")" code --install-extension {{ ext }}']
 {% endfor %}
-{# ASCII first: tojson writes non-BMP characters as surrogate pairs, which YAML decodes to lone surrogates that cloud-init cannot write out, failing all of runcmd. printf, not echo: dash's echo interprets backslashes. #}
+{# ASCII first: tojson writes non-BMP characters as surrogate pairs, which YAML decodes to lone surrogates that fail all of runcmd. printf, not echo: dash's echo interprets backslashes. #}
 {% for ext in extensions.invalid %}
   - [printf, "Skipped vscode_extensions entry, not a publisher.name ID: %s\n", {{ ext.encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
 {% endfor %}
-  # Runs after the workspace directories above. git clone creates whatever
-  # parents are still missing, and an existing checkout is reused. ~/.zshenv
-  # does not exist yet, so PATH gets its directories here; otherwise the
-  # installer cannot see claude and skips the claude module.
+  # ~/.zshenv does not exist yet, so PATH gets its directories here; otherwise
+  # the installer cannot see claude and skips the claude module.
   - [runuser, -l, "{{ user }}", -c, "{ [ -d {{ dotfiles_dir }}/.git ] || git clone {{ dotfiles_repo }} {{ dotfiles_dir }}; } && PATH=\"$HOME/.local/bin:$HOME/.pulumi/bin:$PATH\" sh {{ dotfiles_dir }}/src/install.sh"]
-  # Root gets its own copies from the user's checkout. runuser -l sets
-  # HOME=/root (runcmd has no HOME), so the path cannot use ~.
+  # runcmd has no HOME; runuser -l sets HOME=/root, so the path cannot use ~.
   - [runuser, -l, root, -c, "sh /home/{{ user }}/{{ dotfiles_rel }}/src/install.sh"]
 {% else %}
-  # No user yet: configure root from a throwaway clone. The installer copies
-  # its templates, so nothing points back into the clone.
+  # No user yet. The installer copies its templates, so the clone can be deleted.
   - [runuser, -l, root, -c, 'd="$(mktemp -d)" && git clone --quiet --depth 1 {{ dotfiles_repo }} "$d" && sh "$d/src/install.sh"; rc=$?; rm -rf "$d"; exit "$rc"']
 {% endif %}

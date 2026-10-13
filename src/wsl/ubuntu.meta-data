@@ -4,8 +4,7 @@
 # filled copy out of this repository. cloud-init only reads meta-data named
 # after the instance, so this matches an instance named "Ubuntu".
 #
-# The user-data reads these values as ds.meta_data. Leave a value empty to
-# skip it.
+# Leave a value empty to skip it.
 
 instance-id: ubuntu-wsl
 
@@ -27,7 +26,7 @@ git_ssh_program:
 
 # VS Code extensions to install into the instance's VS Code server, by
 # Marketplace ID (publisher.name). Needs a username, and VS Code with its WSL
-# extension on Windows. Empty to install none.
+# extension on Windows.
 vscode_extensions:
   - Anthropic.claude-code
   - ms-python.python

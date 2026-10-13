@@ -1,12 +1,9 @@
 #!/usr/bin/env sh
 #
 # Render src/wsl/ubuntu.user-data against mock instance-data and validate the
-# result. The user-data is a Jinja template, so `cloud-init schema` on the raw
-# file is meaningless; every case has to be rendered first.
+# result; `cloud-init schema` on the raw Jinja template proves nothing.
 #
 # Usage: validate.sh [path/to/ubuntu.user-data [path/to/ubuntu.meta-data]]
-#
-# The meta-data template defaults to the ubuntu.meta-data beside the user-data.
 
 set -u
 
@@ -20,22 +17,18 @@ fail()
     failed="true"
 }
 
+die()
+{
+    printf '%s\n' "$*" >&2
+    exit 2
+}
+
 for cmd in cloud-init python3 git shellcheck; do
-    command -v "$cmd" > /dev/null 2>&1 || {
-        printf 'missing required command: %s\n' "$cmd" >&2
-        exit 2
-    }
+    command -v "$cmd" > /dev/null 2>&1 || die "missing required command: $cmd"
 done
 
-[ -f "$user_data" ] || {
-    printf 'user-data not found: %s\n' "$user_data" >&2
-    exit 2
-}
-
-[ -f "$meta_data" ] || {
-    printf 'meta-data not found: %s\n' "$meta_data" >&2
-    exit 2
-}
+[ -f "$user_data" ] || die "user-data not found: $user_data"
+[ -f "$meta_data" ] || die "meta-data not found: $meta_data"
 
 work="$(mktemp -d)" || exit 2
 trap 'rm -rf "$work"' EXIT
@@ -68,7 +61,6 @@ bad_extensions = ["a.b; rm -rf ~", "$(id).x", "a.b'c", 'a"b.c', "no-dot", ".x", 
                   "-a.b", "a.b.c", "a b.c", "a\nb.c", "\u00fcn.code", "\U0001F600.x",
                   "C:\\new\\cext.vsix", "{{ x }}", 42, None]
 
-# The shipped template, with a username so its extensions install.
 with open(meta_template) as f:
     shipped = yaml.safe_load(f)
 
@@ -121,10 +113,7 @@ with open(f"{work}/cases", "w") as index:
         index.write(name + "\n")
 EOF
 
-[ -s "$work/cases" ] || {
-    printf 'no cases were generated\n' >&2
-    exit 2
-}
+[ -s "$work/cases" ] || die 'no cases were generated'
 
 while read -r case; do
     rendered="$work/$case.yaml"
@@ -147,13 +136,14 @@ import json
 import subprocess
 import sys
 
+import yaml
 from cloudinit.util import shellify
 
 rendered, expect_path, prefix = sys.argv[1:]
 case = prefix.rsplit("/", 1)[-1]
 expect = json.load(open(expect_path))
 text = open(rendered).read()
-doc = __import__("yaml").safe_load(text)
+doc = yaml.safe_load(text)
 problems = []
 
 if not text.startswith("#cloud-config"):
@@ -168,21 +158,18 @@ if has_user != expect["user"]:
 if (gitconfig is not None) != expect["user"]:
     problems.append(f".gitconfig rendered={gitconfig is not None}, expected {expect['user']}")
 
-runcmd = json.dumps(doc.get("runcmd", []))
-gh_dirs = [part for part in runcmd.split('"') if "/workspaces/github.com/" in part and "mkdir" not in part]
-want = expect["gh_dir"]
-mkdirs = [d for d in gh_dirs if d.startswith("/home/")]
-if want and not any(d.endswith(f"/workspaces/github.com/{want}") for d in mkdirs):
-    problems.append(f"expected workspace dir github.com/{want}, got {mkdirs}")
-if not want and mkdirs:
-    problems.append(f"unexpected workspace dirs {mkdirs}")
-
 cmds = [c if isinstance(c, list) else [c] for c in doc.get("runcmd", [])]
 
 def find(pred):
     return next((i for i, c in enumerate(cmds) if pred(c)), None)
 
-# VS Code extensions: one install per valid ID, as the user; the rest reported.
+want = expect["gh_dir"]
+mkdirs = [a for c in cmds for a in map(str, c) if a.startswith("/home/") and "/workspaces/github.com/" in a]
+if want and not any(d.endswith(f"/workspaces/github.com/{want}") for d in mkdirs):
+    problems.append(f"expected workspace dir github.com/{want}, got {mkdirs}")
+if not want and mkdirs:
+    problems.append(f"unexpected workspace dirs {mkdirs}")
+
 installs = [c for c in cmds if "--install-extension" in str(c[-1])]
 installed = [str(c[-1]).rsplit(" ", 1)[-1] for c in installs]
 if installed != expect["extensions"]:
@@ -213,7 +200,6 @@ try:
 except Exception as e:
     problems.append(f"runcmd cannot be written as a script: {e}")
 
-# Root: login shell set first, then the dotfiles installed after the user's.
 root_shell = find(lambda c: "usermod -s /usr/bin/zsh root" in " ".join(map(str, c)))
 root_install = find(lambda c: c[:3] == ["runuser", "-l", "root"])
 user_install = find(lambda c: c[:2] == ["runuser", "-l"] and c[2] != "root" and "src/install.sh" in str(c[-1]))
