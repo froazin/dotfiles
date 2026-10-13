@@ -363,3 +363,9 @@ none PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/2)\rerror: 
 none PostToolUseFailure timeout 60 git commit -m "fix: x" ||| Exit code 1\nOn branch main\nYour branch is ahead of 'origin/main' by 124 commits.\nnothing to commit, working tree clean
 none PostToolUseFailure timeout 60 git commit -m "fix: x" ||| Exit code 1\nlint.sh:124: error: SC2086
 lock PostToolUseFailure bash <<'EOF'{NL}git commit -m x{NL}EOF ||| Command timed out after 2m 0s
+
+# --- git clone: -ckey=value and abbreviations of --config
+deny git clone --co commit.gpgsign=false /r /tmp/clone
+deny git clone --con=commit.gpgsign=false /r /tmp/clone
+deny git clone -ccommit.gpgsign=false /r /tmp/clone
+allow git clone --config core.autocrlf=false /r /tmp/clone

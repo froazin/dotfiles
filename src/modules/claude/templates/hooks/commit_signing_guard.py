@@ -1196,17 +1196,11 @@ class Guard:
             self.bypasses.append("--no-gpg-sign")
         if sub == "clone":
             # git clone -c key=value writes it into the new repository's config.
-            for j, arg in enumerate(options):
-                value: str | None = None
-                if arg in ("-c", "--config", "--conf", "--confi", "--confg") and j + 1 < len(options):
-                    value = options[j + 1]
-                elif arg.startswith("--config="):
-                    value = arg.split("=", 1)[1]
-                if value is not None:
-                    key, eq, setting = value.partition("=")
-                    reason = signing_override(key, setting if eq else "true")
-                    if reason:
-                        self.bypasses.append("git clone -c " + reason)
+            for value in self.clone_configs(options):
+                key, eq, setting = value.partition("=")
+                reason = signing_override(key, setting if eq else "true")
+                if reason:
+                    self.bypasses.append("git clone -c " + reason)
         if sub == "tag" and any(NO_SIGN.match(a) for a in options):
             self.bypasses.append("tag --no-sign")
         if sub == "commit-tree" and not any(a.startswith("-S") or a.startswith("--gpg-sign") for a in options):
@@ -1257,6 +1251,22 @@ class Guard:
                 for a in options
             )
         return False
+
+    @staticmethod
+    def clone_configs(options: list[str]) -> list[str]:
+        """git clone's -c values: git also takes -ckey=value, and any prefix of
+        --config down to --co, with the value attached by = or separate."""
+        values: list[str] = []
+        for i, arg in enumerate(options):
+            name, eq, value = arg.partition("=")
+            following = options[i + 1] if i + 1 < len(options) else ""
+            if arg == "-c":
+                values.append(following)
+            elif arg.startswith("-c"):
+                values.append(arg[2:])
+            elif len(name) >= 4 and "--config".startswith(name):
+                values.append(value if eq else following)
+        return values
 
     @staticmethod
     def hash_object_writes_commit(options: list[str]) -> bool:
