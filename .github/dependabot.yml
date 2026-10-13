@@ -1,0 +1,19 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: "monday"
+    allow:
+      - dependency-type: "all"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    cooldown:
+      default-days: 7
+    groups:
+      python:
+        patterns:
+          - "*"
