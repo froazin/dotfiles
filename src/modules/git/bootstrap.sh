@@ -31,12 +31,7 @@ create_excludes_file()
         log warning "Existing git configuration for global core.excludesfile <$excludes_file> was found, it will be overwritten."
     fi
 
-    if ! [ -d "$(dirname "$excludes_file")" ]; then
-        mkdir -p "$(dirname "$excludes_file")" > /dev/null 2>&1 || {
-            log error "Failed to create directory <$(dirname "$excludes_file")>."
-            return 1
-        }
-    fi
+    ensure_dir "$(dirname "$excludes_file")" || return 1
 
     log debug "Copying .gitignore to <$excludes_file>."
     cp --force "$(dirname "$0")/modules/git/templates/.gitignore" "$excludes_file" > /dev/null 2>&1 || {

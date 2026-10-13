@@ -1,29 +1,24 @@
 # This is a generated file, manual changes may be lost.
 
-# Ignore .local folder in git repos to give a safe space to store local files that should not be committed
+# A safe place in any repo for local files that should never be committed
 .local/
 
-# Ignore mcp config files
 .mcp.json
 
-# Ingore environment files
 *.env
 *.envrc
 
-# Ignore passphrase files
 *.*_pass
 *.*_password
 *.*_passphrase
 
-# Ignore nektos/act files
+# nektos/act
 *.secrets
 *.vars
 *.inputs
 
-# Ignore thumbnails created by windows
+# Windows and macOS metadata
 Thumbs.db
 desktop.ini
 *:Zone.Identifier
-
-# Ignore files created by mac
 .DS_Store
