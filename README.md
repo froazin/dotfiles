@@ -43,6 +43,7 @@ matching its directory name is on `PATH`.
 | ------ | -------- |
 | `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
+| `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
 ### Dependencies
@@ -62,6 +63,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | ------ | -------- | ---- | -------- |
 | `claude` | `claude` | `jq`, `python3` | — |
 | `git`  | `git` | — | — |
+| `podman` | `podman` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman` |
 
 The `claude` module never overwrites `~/.claude/settings.json`, because Claude
@@ -106,6 +108,14 @@ that socket, so Docker clients such as `docker compose` or VS Code Dev
 Containers use rootless podman. Root uses the system socket instead
 (`/run/podman/podman.sock`, from `sudo systemctl enable --now podman.socket`).
 A `DOCKER_HOST` you set yourself wins.
+
+`podman login` saves credentials in `$XDG_RUNTIME_DIR/containers/auth.json`,
+which lasts for the session. Credentials not found there are looked up in
+`~/.config/containers/auth.json`, which persists. The `podman` module creates
+that file and links `~/.docker/config.json` to it, so Docker tooling such as
+VS Code Dev Containers (pulling private features) sees the same persistent
+credentials. An existing `~/.docker/config.json` is never replaced: move its
+`auths` into podman's file, delete it, and rerun the installer.
 
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the

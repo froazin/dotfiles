@@ -12,6 +12,7 @@ so it must stay generic.
 | `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). |
 | `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard hook and rule); `settings.json` is deep-merged in with jq. pytest tests in `tests/`. |
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
+| `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
 | `src/wsl/` | `.wslconfig`, `ubuntu.user-data` (Jinja cloud-config), `ubuntu.meta-data` (fill-in template). |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. |
