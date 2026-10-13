@@ -2,8 +2,6 @@
 
 check_commands()
 {
-    # Check if the required packages are installed and available in the path.
-    # if any are missing, return 1, otherwise return 0.
     if [ $# -eq 0 ]; then
         log warning "No commands provided to check."
         return 0
@@ -27,11 +25,16 @@ check_commands()
     return 0
 }
 
+ensure_dir()
+{
+    [ -d "$1" ] || mkdir -p "$1" > /dev/null 2>&1 || {
+        log error "Failed to create directory <$1>."
+        return 1
+    }
+}
+
 install_file()
 {
-    # Copy a template to its destination, creating parent directories. An
-    # existing file is overwritten with a warning; a symbolic link is left
-    # alone and reported as a failure.
     src="$1"
     dest="$2"
 
@@ -54,12 +57,7 @@ install_file()
         log warning "Existing file <$dest> was found, it will be overwritten."
     fi
 
-    if ! [ -d "$(dirname "$dest")" ]; then
-        mkdir -p "$(dirname "$dest")" > /dev/null 2>&1 || {
-            log error "Failed to create directory <$(dirname "$dest")>."
-            return 1
-        }
-    fi
+    ensure_dir "$(dirname "$dest")" || return 1
 
     cp --force "$src" "$dest" > /dev/null 2>&1 || {
         log error "Failed to write <$dest>."
@@ -72,9 +70,6 @@ install_file()
 
 get_distro_name()
 {
-    # Get the distribution name from /etc/os-release.
-    # Supported distributions are: debian, ubuntu, alpine, redhat, centos, fedora.
-    # If the distribution is not supported, return 1.
     if ! [ -f /etc/os-release ]; then
         log error "Unsupported distribution."
         return 1
@@ -103,21 +98,15 @@ get_distro_name()
 
 is_devcontainer()
 {
-    # Check if the script is running in a devcontainer.
-
-    [ "$REMOTE_CONTAINERS" = "true" ] && return 0 || return 1
+    [ "$REMOTE_CONTAINERS" = "true" ]
 }
 
 is_wsl()
 {
-    # Check if the script is running in wsl.
-
-    grep -q microsoft /proc/version > /dev/null 2>&1 && return 0 || return 1
+    grep -q microsoft /proc/version > /dev/null 2>&1
 }
 
 is_root()
 {
-    # Check if the script is running as root.
-
-    [ "$(id -u)" -eq 0 ] && return 0 || return 1
+    [ "$(id -u)" -eq 0 ]
 }
