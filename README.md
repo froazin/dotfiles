@@ -41,7 +41,7 @@ matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
@@ -60,7 +60,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
-| `claude` | `claude` | `jq` | — |
+| `claude` | `claude` | `jq`, `python3` | — |
 | `git`  | `git` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant` |
 
@@ -69,6 +69,32 @@ Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The
 template is deep-merged in with `jq`: its values win, nested objects merge
 key by key, lists are unioned, and every other key is kept. Without `jq` the
 template is only written where no settings exist yet.
+
+### Commit-signing guard
+
+When commits are signed through something that needs you in person, such as
+1Password with Windows Hello, an agent working while you're away hits a
+signing timeout and tends to retry with signing switched off. The `claude`
+module installs a guard against that: a hook,
+`~/.claude/hooks/commit_signing_guard.sh` (logic in the `.py` beside it), and
+a rule, `~/.claude/rules/commit-signing.md`.
+
+- It always denies signing bypasses: `--no-gpg-sign`, `tag --no-sign`,
+  `-c`/`--config-env`/`GIT_CONFIG_*`/`HOME`/`sudo` overrides of the signing
+  settings, aliases that do any of that, `git config` changes to them, edits
+  of git config files, unsigned plumbing such as `commit-tree`, and changes
+  to the guard itself. There is no opt-out; to commit unsigned, run the
+  command yourself.
+- When a git command fails to sign, or hangs until it times out, it tells
+  the agent to stop and report, shows you a notice, and denies every signing
+  git command in that session (subagents included) until your next message.
+
+Commands are parsed like a shell (quotes, heredocs, `$(...)`, `sh -c`), so
+commit messages that mention these flags are fine. It needs `python3` (the
+standard library only) and does nothing without it. It is a guard rail
+against an agent's habits, not a security boundary: a script on disk, another
+interpreter or another git client can still get past it. Its tests are in
+`src/modules/claude/tests/`.
 
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is

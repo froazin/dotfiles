@@ -1,0 +1,365 @@
+# Cases for test_commit_signing_guard.py, one per line. Blank lines and
+# lines starting with "#" are ignored. In commands, {NL} is a newline (so a
+# literal \n stays as typed, e.g. in printf); in post-event output, \n and \r
+# are a newline and a carriage return.
+#
+#   deny <command>          PreToolUse Bash, unlocked session: must be denied
+#   allow <command>         ... must be allowed
+#   locked-deny <command>   PreToolUse Bash after a signing failure
+#   locked-allow <command>
+#   lock <Event> <command> ||| <output>   PostToolUse(Failure): must lock
+#   none <Event> <command> ||| <output>   ... must not lock
+#
+# Paths: HOME is /home/u during the tests.
+
+# --- PreToolUse
+deny git commit --no-gpg-sign -m x
+deny git commit -m x --no-gpg
+deny git merge --no-g side
+deny git rebase --no-gpg-sign main
+deny git -c commit.gpgsign=false commit -m x
+deny git -c Commit.GpgSign=0 commit -m x
+deny git -c "commit.gpgsign=false" commit -m x
+deny git -c 'gpg.ssh.program=ssh-keygen' -c user.signingkey=~/.ssh/id commit
+deny git --config-env=commit.gpgsign=V commit
+deny git --config-env commit.gpgsign=V commit
+deny GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false git commit -m x
+deny export GIT_CONFIG_PARAMETERS="'commit.gpgsign'='false'"; git commit -m x
+deny env GIT_CONFIG_GLOBAL=/dev/null git commit -m x
+deny git config commit.gpgsign false
+deny git config --global commit.gpgSign false
+deny git config set --global commit.gpgsign false
+deny git config --global --unset commit.gpgsign
+deny git config unset --global commit.gpgsign
+deny git config --global --remove-section commit
+deny git config --local include.path /tmp/evil
+deny git config includeIf.gitdir:~/x/.path /tmp/evil
+allow git config alias.ci "commit --no-verify"
+deny git config --global --edit
+deny echo "[commit] gpgsign = false" >> .git/config
+deny sed -i 's/gpgsign = true/gpgsign = false/' ~/.gitconfig
+deny printf '...' | tee -a ~/.config/git/config
+deny git tag --no-sign -a v1 -m v1
+deny git mktag < t
+deny git hash-object -t commit -w --stdin < c
+deny git fast-import < stream
+deny git stash create
+deny git replay --onto main main..side
+deny git filter-branch --msg-filter cat HEAD
+deny sh -c 'git -c commit.gpgsign=false commit -m x'
+allow git commit -m "fix: thing"
+allow git commit -S -m x
+allow git log --show-signature -1
+allow git config --get commit.gpgsign
+allow git config get commit.gpgsign
+allow git config --list --show-origin
+allow git config --global --get-regexp '^gpg\.'
+allow grep -rn gpgsign src/
+allow grep -rn -- --no-gpg-sign .claude/
+allow cat ~/.gitconfig
+allow git verify-commit HEAD
+allow git stash
+allow git stash pop
+allow git config core.excludesfile ~/.config/git/ignore
+allow HOME=$(mktemp -d) SHELL=/usr/bin/zsh sh src/install.sh
+allow git -c core.pager=cat log
+allow git log --no-graph
+allow git config --global commit.gpgsign true
+allow git -c commit.gpgsign=true commit -m x
+allow git rebase --no-gpg-sign-please
+allow shellcheck .claude/hooks/no-gpg.sh
+deny git commit-tree -p HEAD -m x abc123
+allow git commit-tree -S -p HEAD -m x abc123
+deny git commit-tree -S --no-gpg-sign -p HEAD -m x abc
+allow git config commit.gpgsign
+allow git config --global user.signingkey
+deny git config --global user.signingkey ~/.ssh/other.pub
+deny git config gpg.ssh.program ssh-keygen
+allow git config --global --get gpg.ssh.program
+deny git -C /repo -c commit.gpgsign=no commit -m x
+allow echo "remember: never pass --no-gpg-sign"
+allow git status && grep -r -- --no-gpg-sign docs/
+deny git status && git commit --no-gpg-sign -m x
+deny git -c alias.x='commit --no-gpg-sign' x
+allow git stash list
+allow git -c user.name=bot log
+deny HOME=/tmp/h git commit -m x
+deny export HOME=/tmp/h; git commit -m x
+allow git -c gpg.ssh.allowedSignersFile=~/.ssh/allowed log --show-signature
+allow git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed
+allow git config --global alias.st status
+allow git -c commit.gpgsign=TRUE commit -m x
+deny git -c COMMIT.GPGSIGN=false commit -m x
+deny git -c commit.gpgsign= commit -m x
+deny GIT_CONFIG_GLOBAL=/dev/null git -c user.name=a -c user.email=b commit -m x
+deny HOME=/nonexistent git commit -m x
+deny env HOME=/tmp/x git commit -m x
+deny cd repo && HOME=/tmp/x git -C . commit -m x
+deny git tag --no-sign v1
+deny git pull --no-gpg-sign
+deny git am --no-gpg-sign < p
+allow HOME=$(mktemp -d) sh src/install.sh && git commit -m x
+allow git commit -m "docs: never use the no-gpg-sign flag"
+allow git log --grep commit --oneline
+allow git status && git diff --stat && git log -3
+allow echo "$HOME"
+allow git commit --amend --no-edit
+allow git tag -s v1 -m v1
+allow git push origin main
+allow jq -r '.hooks' ~/.claude/settings.json
+allow grep -rn 'gpgsign' src/wsl/ubuntu.user-data
+allow cat ~/.claude/hooks/commit_signing_guard.py
+locked-deny git commit -m x
+locked-deny git -C /r commit --amend --no-edit
+locked-deny git merge --no-ff side
+locked-deny git rebase main
+locked-deny git cherry-pick abc
+locked-deny git revert HEAD
+locked-deny git tag -s v1 -m v1
+locked-deny git push --signed origin main
+locked-deny git pull
+locked-deny cd /r && git add -A && git commit -m x
+locked-allow git status
+locked-allow git log --oneline -5
+locked-allow git diff --cached
+locked-allow git add -A
+locked-allow git push origin main
+locked-allow git log --grep commit
+locked-allow git stash
+locked-allow ls -la
+deny HOME=/tmp/h git -c user.name="Claude Code" -c user.email=c@x commit --allow-empty -m x
+deny HOME=/tmp/h GIT_AUTHOR_NAME="Claude Code" git commit -m x
+deny export HOME=/tmp/h && git -c user.name="Claude Code" commit -m x
+deny env -u HOME git -c user.name=a -c user.email=b@c commit --allow-empty -m x
+deny unset HOME; git commit --allow-empty -m x
+deny env -i PATH="$PATH" git -c user.name=a commit -m x
+deny env --unset=HOME git commit -m x
+deny git "-c" "commit.gpgsign=false" commit --allow-empty -m x
+deny git '-c' 'commit.gpgsign=false' commit -m x
+deny git commit "--no-gpg-sign" --allow-empty -m x
+deny git -c commit."gpgsign"=false commit -m x
+deny git config --global --remove-sec commit
+deny git config --global --unset-a commit.gpgsign
+deny git config --global --rename-sec commit nocommit
+deny (cd .git && printf '[commit]\n\tgpgsign = false\n' >> config) && git commit -m x
+deny rm -f "$XDG_RUNTIME_DIR"/claude-commit-signing/"$CLAUDE_CODE_SESSION_ID"
+deny sh -c 'GIT_CONFIG_GLOBAL=/dev/null git commit -m x'
+deny GIT_CONFIG_GLOBAL=/dev/null git commit -m x
+deny cp /tmp/evil ~/.gitconfig
+deny mv ~/.gitconfig ~/.gitconfig.bak
+locked-deny git -c user.name="A B" commit --allow-empty -m x
+locked-deny git --work-tree . commit --allow-empty -m x
+locked-deny git -c core.editor='code --wait' commit
+allow git commit -m "fix(api): retry when the upstream request timed out"
+allow git config user.signingkey 2>/dev/null
+allow git config commit.gpgsign && git config gpg.format
+allow git config --global commit.gpgsign || echo unset
+allow git config --show-origin gpg.format | cat
+allow git config --unset core.hooksPath
+allow git config --unset branch.main.merge
+allow git config --global --unset alias.co
+allow git config --unset-all credential.helper
+allow git commit -m "fix config edit flow in settings"
+allow GIT_CONFIG_GLOBAL=/dev/null git status
+allow GIT_CONFIG_GLOBAL=/dev/null git log
+allow rg -n GIT_CONFIG_GLOBAL= src
+allow git commit -m "test: run harness with GIT_CONFIG_GLOBAL=/dev/null so the real signer is never reached"
+allow rm src/git/config.ts
+allow sed -i "s/a/b/" lib/git/config.py
+allow cat > internal/git/config.go <<EOF
+allow echo x > pkg/git/config.go
+allow cp src/modules/git/templates/.gitconfig /tmp/x
+allow cp ~/.gitconfig ~/.gitconfig.bak
+allow HOME=$(mktemp -d) sh src/install.sh
+allow git config --global --remove-section alias
+locked-allow git tag -l
+locked-allow git tag --contains HEAD
+locked-allow git tag
+locked-allow git rebase --abort
+locked-allow git merge --abort
+locked-allow git cherry-pick --quit
+
+# --- Post events
+lock PostToolUseFailure git commit -m x ||| Exit code 128\nerror: 1Password: failed to fill whole buffer\n\nfatal: failed to write commit object
+lock PostToolUseFailure git commit -m x ||| Exit code 128\nerror: \nfatal: failed to write commit object
+lock PostToolUseFailure git cherry-pick abc ||| Exit code 128\nerror: agent returned an error\nerror: failed to write commit object\nfatal: cherry-pick failed
+lock PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/1)\rerror: 1Password: failed to fill whole buffer\nerror: failed to write commit object
+lock PostToolUseFailure git tag -s v1 -m v1 ||| Exit code 128\nerror: 1Password: x\nerror: unable to sign the tag
+lock PostToolUseFailure git commit -m x ||| Command timed out after 2m 0s
+lock PostToolUse git commit -m x; echo rc=$? ||| error: 1Password: failed to fill whole buffer\nfatal: failed to write commit object\nrc=128
+lock PostToolUseFailure make release ||| Exit code 2\nerror: gpg failed to sign the data:\n(no gpg output)\nfatal: failed to write commit object
+lock PostToolUseFailure git push --signed origin main ||| Exit code 128\nfatal: failed to sign the push certificate
+none PostToolUseFailure git commit -m x ||| Exit code 1\nOn branch main\nnothing to commit, working tree clean
+none PostToolUseFailure git commit -m x ||| Exit code 1\npre-commit hook failed\nshellcheck: SC2086
+none PostToolUseFailure git commit --allow-empty -m x ||| Exit code 128\nerror: insufficient permission for adding an object to repository database .git/objects\nfatal: failed to write commit object
+none PostToolUse cat ~/.claude/hooks/commit_signing_guard.py ||| def signing_failure: "unable to sign the tag|1Password|failed to write commit object"
+none PostToolUse grep -rn 1Password README.md ||| README.md:12: 1Password SSH agent
+none PostToolUseFailure npm test ||| Exit code 1\nCommand timed out after 2m 0s
+none PostToolUse git commit -m x ||| [main abc123] x\n 1 file changed
+none PostToolUse git commit -m "fix(api): retry when the upstream request timed out" ||| [main b082e19] fix(api): retry when the upstream request timed out\n 1 file changed
+none PostToolUse git commit -m "feat: 1Password support via op-ssh-sign" ||| [main b082e19] feat: 1Password support via op-ssh-sign\n 1 file changed
+none PostToolUseFailure git add -A && git commit -m "fix: x" && git push ||| Exit code 128\n[main 1a2b3c4] fix: x\nssh: connect to host github.com port 22: Connection timed out\nfatal: Could not read from remote repository.
+none PostToolUseFailure git pull ||| Exit code 1\nssh: connect to host github.com port 22: Connection timed out
+none PostToolUseFailure npx vitest run && git add -A && git commit -m "feat: y" ||| Exit code 1\nError: Test timed out in 5000ms.
+none PostToolUseFailure diff -u old-rules.md rules/commit-signing.md ||| Exit code 1\n-  1Password with Windows Hello)\n+  1Password with Windows Hello).
+none PostToolUseFailure cat README.md missing.txt ||| Exit code 1\nuse 1Password for signing\ncat: missing.txt: No such file or directory
+lock PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/1)\rerror: 1Password: failed to fill whole buffer\nerror: failed to write commit object
+
+# --- Review round 2: quoting and message text
+deny git commit -m "Fix A & B" --no-gpg-sign
+deny git commit -m "feat: add x; tidy y" --no-gpg-sign
+deny git commit -m "fix: handle a|b" --no-gpg-sign
+deny git merge feature -m "Merge a & b" --no-gpg-sign
+deny git tag -a v1 -m "v1; first" --no-sign
+deny git commit -am "$(cat <<'EOF'{NL}test: unsigned commit{NL}{NL}Body line with don't.{NL}EOF{NL})" --no-gpg-sign
+deny git commit -m x \{NL}  --no-gpg-sign
+deny git -c \{NL} commit.gpgsign=false commit -m x
+allow git commit -m x \{NL}  -S
+allow git commit -m "$(cat <<'EOF'{NL}feat(claude): deny --no-gpg-sign, git -c commit.gpgsign=false and HOME=/x overrides{NL}{NL}State lives in $XDG_RUNTIME_DIR/claude-commit-signing; ~/.gitconfig is never touched.{NL}EOF{NL})"
+allow gh pr create --title "guard" --body "Blocks git commit --no-gpg-sign and git config --global --unset commit.gpgsign"
+allow git commit -m "fix config edit flow in settings"
+allow grep -rn claude-commit-signing src/ docs/
+allow ls $XDG_RUNTIME_DIR/claude-commit-signing
+allow rg "git config --global --unset commit.gpgsign" docs
+allow grep -n 'git config commit.gpgsign false' README.md
+allow cat >> README.md <<'EOF'{NL}Run git config --global commit.gpgsign false to turn it off.{NL}EOF
+allow HOME=$(mktemp -d) zsh -c 'source ~/.zshrc && echo ok'
+allow tmp=$(mktemp -d); HOME=$tmp sh src/install.sh && HOME=$tmp zsh -i -c exit
+allow HOME=$(mktemp -d) bash -c "sh src/install.sh"
+allow sed -i 's/old/new/' src/modules/git/templates/.gitconfig
+allow echo "[user]" > src/modules/git/templates/.gitconfig
+allow printf '[core]\n' > test/fixtures/.gitconfig
+allow cp src/modules/git/templates/.gitconfig "$tmp/.gitconfig"
+allow git grep -c gpgsign
+allow git config --unset core.hooksPath
+allow git config user.signingkey 2>/dev/null
+allow git config --show-origin gpg.format | cat
+allow GIT_CONFIG_GLOBAL=/dev/null git status
+
+# --- Review round 2: bypasses
+deny git config --global commit.gpgsign ""
+deny git config set --global commit.gpgsign ''
+deny git config --global tag.gpgsign ""
+deny perl -p -i -e 's/gpgsign = true/gpgsign = false/' ~/.gitconfig
+deny perl -pe 's/gpgsign = true/gpgsign = false/' -i ~/.gitconfig
+deny awk -i inplace '{sub(/gpgsign = true/,"gpgsign = false")}1' ~/.gitconfig
+deny printf '[commit]\n\tgpgsign = false\n' >> "$(git rev-parse --git-dir)/config"
+deny printf '[commit]\n\tgpgsign = false\n' >> "$(git rev-parse --git-path config)"
+deny rm ~/.claude/hooks/commit_signing_guard.py
+deny chmod 000 ~/.claude/hooks/commit_signing_guard.py
+deny sed -i 's/deny/allow/' ~/.claude/hooks/commit_signing_guard.py
+deny : > ~/.claude/hooks/commit_signing_guard.sh
+deny jq '.disableAllHooks=true' ~/.claude/settings.json > /tmp/s && mv /tmp/s ~/.claude/settings.json
+deny sudo git commit -m x
+deny sudo -u root git commit -m x
+deny sudo -E git commit -m x
+deny sudo -H git -c user.name=a -c user.email=a@b commit -m x
+deny git --config-env commit.gpgsign=VAR commit -m x
+deny git --config-env=commit.gpgsign=VAR commit -m x
+deny env -S 'git commit --no-gpg-sign' -m x
+deny bash -lc 'git commit --no-gpg-sign -m x'
+deny eval "git commit --no-gpg-sign -m x"
+deny git -c alias.ci='!git commit --no-gpg-sign' ci -m x
+deny echo --no-gpg-sign | xargs git commit --allow-empty -m x
+deny timeout 30 git commit --no-gpg-sign -m x
+deny command git commit --no-gpg-sign -m x
+deny /usr/bin/git commit --no-gpg-sign -m x
+deny \git commit --no-gpg-sign -m x
+deny git commit --no-gpg-sign -m "$(cat <<EOF{NL}body{NL}EOF{NL})"
+deny cd ~ && sed -i 's/true/false/' .gitconfig
+deny HOME=/tmp/h git -c user.name="Claude Code" -c user.email=c@x commit --allow-empty -m x
+deny git config --global alias.ci 'commit --no-gpg-sign'
+deny git config --global include.path /tmp/evil
+deny git config --global --unset-all commit.gpgsign
+deny git config --global --uns commit.gpgsign
+deny git config --global --remove-sec commit
+deny git config --global --rename-section gpg nogpg
+deny git config --global -e
+deny git config edit --global
+locked-deny bash -c 'git commit -m x'
+locked-deny git -c user.name="A B" commit --allow-empty -m x
+locked-deny git --work-tree . commit --allow-empty -m x
+locked-deny git -c core.editor='code --wait' commit
+locked-deny git rebase --continue
+locked-allow git tag -d v0.1
+locked-allow git log --oneline --grep "git commit"
+locked-allow gh pr create --title x --body "follow-up to the git merge of main"
+locked-allow git cherry-pick --abort
+
+# --- Review round 2: post events
+none PostToolUseFailure git pull ||| Exit code 1\nssh: connect to host github.com port 22: Connection timed out\nfatal: Could not read from remote repository.
+lock PostToolUseFailure git commit -am x && git push ||| Command timed out after 2m 0s
+none PostToolUseFailure git add -A && git commit -m x && git push ||| Exit code 1\n[main 1a2b3c4] x\n 1 file changed\nCommand timed out after 2m 0s
+none PostToolUseFailure git pull && npm ci && npm test ||| Command timed out after 2m 0s
+none PostToolUseFailure npm test && git commit -m x ||| Command timed out after 2m 0s
+none PostToolUseFailure git tag -l ||| Command timed out after 2m 0s
+lock PostToolUseFailure bash -c 'git commit -m x' ||| Exit code 128\nerror: 1Password: failed to fill whole buffer\nfatal: failed to write commit object
+lock PostToolUse git add a.txt && timeout 30 git commit -m "update a"; echo "exit=$?" ||| exit=124
+lock PostToolUseFailure timeout 30 git commit -m x ||| Exit code 124
+none PostToolUse timeout 30 git commit -m x; echo "exit=$?" ||| [main 1a2b3c4] x\n 1 file changed\nexit=0
+none PostToolUseFailure timeout 30 npm test && git commit -m x ||| Exit code 124
+
+# --- Review round 3: shells fed a script, wrappers, variables
+deny bash <<'EOF'{NL}git commit --no-gpg-sign -m x{NL}EOF
+deny echo 'git commit --no-gpg-sign -m x' | bash
+deny sh <<< 'git -c commit.gpgsign=false commit -m x'
+deny bash <(echo 'git commit --no-gpg-sign -m x')
+deny source <(echo 'git commit --no-gpg-sign -m x')
+deny cat <<'EOF' | bash{NL}git commit --no-gpg-sign -m x{NL}EOF
+deny bash -o pipefail -c 'git commit --no-gpg-sign -m x'
+deny bash -O extglob -c 'git commit --no-gpg-sign -m x'
+deny git config alias.ci commit && git ci --no-gpg-sign -m x
+deny git ci --no-gpg-sign -m x
+deny time -p git commit --no-gpg-sign -m x
+deny git clone -c commit.gpgsign=false /r /tmp/clone
+deny git clone --config commit.gpgsign=false /r /tmp/clone
+deny function f { git commit --no-gpg-sign -m x; }; f
+deny GIT=git; $GIT commit --no-gpg-sign -m x
+deny $(which git) commit --no-gpg-sign -m x
+deny `command -v git` commit --no-gpg-sign -m x
+deny F=--no-gpg-sign; git commit $F -m x
+deny CMD='git commit --no-gpg-sign -m x'; eval "$CMD"
+deny script -qc 'git commit --no-gpg-sign -m x' /dev/null
+deny find . -maxdepth 0 -exec git commit --no-gpg-sign -m x \;
+deny flock /tmp/l git commit --no-gpg-sign -m x
+deny unbuffer git commit --no-gpg-sign -m x
+deny /usr/lib/git-core/git-commit --no-gpg-sign -m x
+deny git commit $'\x2d-no-gpg-sign' -m x
+deny git commit $'\055-no-gpg-sign' -m x
+deny rm -rf ~/.claude
+deny rm -rf "$XDG_RUNTIME_DIR"/claude-commit-signing
+locked-deny bash <<'EOF'{NL}git commit -m x{NL}EOF
+locked-deny bash -o pipefail -c 'git commit -m x'
+locked-deny time -p git commit -m x
+locked-deny function f { git commit -m x; }; f
+locked-deny git config alias.ci commit && git ci -m x
+
+# --- Review round 3: false positives
+allow export HOME=$(mktemp -d) && mkdir -p ~/.claude && echo '{"model":"x","hooks":{}}' > ~/.claude/settings.json && sh src/install.sh && jq . ~/.claude/settings.json
+allow export HOME=$(mktemp -d) && echo '[user]' > ~/.gitconfig
+allow HOME=/tmp/h; export HOME; printf '[core]\n' > "$HOME/.gitconfig"
+allow export CLAUDE_CONFIG_DIR=$(mktemp -d) && echo "{}" > "$CLAUDE_CONFIG_DIR/settings.json"
+allow rm -rf /tmp/claude-commit-signing-test
+allow sed -i s/a/b/ docs/claude-commit-signing.md
+allow pytest -q > /tmp/claude-commit-signing.log
+allow cp CLAUDE.md ~/.claude/
+allow (export HOME=$(mktemp -d) && sh src/install.sh) && git add -A && git commit -m "feat: x"
+allow (cd ~ && git -C dotfiles status); sed -i "s/a/b/" .gitconfig
+allow git config -f src/modules/git/templates/.gitconfig gpg.format ssh
+allow git config --file test/fixtures/gitconfig user.signingkey "<you>"
+allow git -c gpg.ssh.program=ssh-keygen log --show-signature -1
+allow git -c gpg.format=ssh verify-commit HEAD
+allow cp ~/.ssh/config /tmp/x
+allow cp config.yaml ./config
+allow rm -f .git/index.lock
+allow sudo apt-get update && git commit -m x
+allow export FOO=bar && git commit -m x
+deny git config -f ~/.gitconfig gpg.format ssh
+deny export HOME=~ && sed -i s/true/false/ ~/.gitconfig
+
+# --- Review round 3: post events
+none PostToolUseFailure git cherry-pick side ||| Exit code 1\nAuto-merging README.md\nCONFLICT (content): Merge conflict in README.md\nerror: could not apply f1e1045... docs: explain 1Password SSH signing on WSL\nhint: after resolving the conflicts, mark them
+none PostToolUseFailure git rebase main ||| Exit code 1\nRebasing (1/2)\rerror: could not apply f1e1045... docs: 1Password op-ssh-sign notes\nhint: Resolve all conflicts manually
+none PostToolUseFailure timeout 60 git commit -m "fix: x" ||| Exit code 1\nOn branch main\nYour branch is ahead of 'origin/main' by 124 commits.\nnothing to commit, working tree clean
+none PostToolUseFailure timeout 60 git commit -m "fix: x" ||| Exit code 1\nlint.sh:124: error: SC2086
+lock PostToolUseFailure bash <<'EOF'{NL}git commit -m x{NL}EOF ||| Command timed out after 2m 0s

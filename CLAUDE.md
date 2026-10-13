@@ -10,7 +10,7 @@ so it must stay generic.
 | ---- | ---- |
 | `src/install.sh` | Entry point. Runs each `src/modules/<name>/bootstrap.sh` whose `<name>` is a command on `PATH`. |
 | `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). |
-| `src/modules/claude/` | `templates/` is installed as `~/.claude`; `settings.json` is deep-merged in with jq. |
+| `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard hook and rule); `settings.json` is deep-merged in with jq. pytest tests in `tests/`. |
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
 | `src/wsl/` | `.wslconfig`, `ubuntu.user-data` (Jinja cloud-config), `ubuntu.meta-data` (fill-in template). |
@@ -43,7 +43,7 @@ are touched.
 ## Checks
 
 ```sh
-shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh .claude/hooks/*.sh .claude/skills/*/scripts/*.sh
+shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh src/modules/claude/templates/hooks/*.sh .claude/hooks/*.sh .claude/skills/*/scripts/*.sh
 shfmt -d .
 for f in src/modules/zsh/templates/.zshenv src/modules/zsh/templates/.zshrc src/modules/zsh/templates/.zshrc.d/*.zsh; do zsh -n "$f"; done
 uv sync                                                    # dev tools; uses the system python3
