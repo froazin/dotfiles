@@ -19,24 +19,9 @@ create_excludes_file()
         }
     fi
 
-    if [ -L "$excludes_file" ]; then
-        log warning "Existing git configuration for global core.excludesfile <$excludes_file> was found, but it is a symbolic link and will be ignored."
-        return 1
-    fi
+    install_file "$(dirname "$0")/modules/git/templates/.gitignore" "$excludes_file" || return 1
 
-    if [ -f "$excludes_file" ]; then
-        log warning "Existing git configuration for global core.excludesfile <$excludes_file> was found, it will be overwritten."
-    fi
-
-    ensure_dir "$(dirname "$excludes_file")" || return 1
-
-    log debug "Copying .gitignore to <$excludes_file>."
-    cp --force "$(dirname "$0")/modules/git/templates/.gitignore" "$excludes_file" > /dev/null 2>&1 || {
-        log error "Failed to create gitignore file at <$excludes_file>."
-        return 1
-    }
-
-    log info "Global gitignore file created at <$excludes_file>."
+    log info "Global gitignore file installed at <$excludes_file>."
     return 0
 }
 
