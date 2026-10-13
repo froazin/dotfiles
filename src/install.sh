@@ -8,7 +8,8 @@ _LOG_LEVEL=info
 main()
 {
     packages=""
-    errors="false"
+    # Not "errors": modules are eval'ed into this shell and reset their own.
+    install_errors="false"
 
     log info "Bootstrapping dotfiles."
 
@@ -25,7 +26,8 @@ main()
             continue
         fi
 
-        if ! check_commands "$package"; then
+        # A missing module command is an expected skip, not an error.
+        if ! command -v "$package" > /dev/null 2>&1; then
             log debug "Skipping $package, as it is not installed."
             continue
         fi
@@ -39,7 +41,7 @@ main()
         log debug "Loading $package configuration from $btstrpfile."
         eval "$(cat "$btstrpfile")" > /dev/null 2>&1 || {
             log error "Failed to load $package configuration."
-            errors="true"
+            install_errors="true"
             continue
         }
 
@@ -47,7 +49,7 @@ main()
         # shellcheck disable=SC2218 # The bootstrap function is defined in the package's bootstrap.sh file.
         bootstrap || {
             log error "Failed to execute $package configuration."
-            errors="true"
+            install_errors="true"
         }
 
         # We should reset the bootstrap function to avoid running the same
@@ -59,7 +61,7 @@ main()
         }
     done
 
-    if [ "$errors" = "true" ]; then
+    if [ "$install_errors" = "true" ]; then
         return 1
     fi
 
