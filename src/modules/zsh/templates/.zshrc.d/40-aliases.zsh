@@ -2,7 +2,7 @@
 
 if (( $+commands[dircolors] )); then
   if [[ -r $HOME/.dircolors ]]; then
-    eval "$(dircolors -b $HOME/.dircolors)"
+    eval "$(dircolors -b "$HOME/.dircolors")"
   else
     eval "$(dircolors -b)"
   fi
@@ -23,9 +23,9 @@ alias browse='xdg-open'
 alert() {
   local rc=$?
   local cmd=${history[$HISTCMD]:-$(fc -ln -1 2>/dev/null)}
-  cmd=${cmd##[[:space:]]#}                       # trim leading blanks
+  cmd=${cmd##[[:space:]]#}
   cmd=${cmd%%[;&|]##[[:space:]]#alert}           # drop trailing "; && || alert"
-  cmd=${cmd%%[[:space:]]#}                       # trim trailing blanks
+  cmd=${cmd%%[[:space:]]#}
 
   print -n -- $'\a'                              # the bell
   if (( rc == 0 )); then

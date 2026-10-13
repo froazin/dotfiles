@@ -1,14 +1,12 @@
 #!/usr/bin/env zsh
-# External tool hooks.
 
-# direnv and fzf register ZLE widgets, so they must load before
-# zsh-syntax-highlighting (90-plugins.zsh).
 if (( $+commands[direnv] )); then
   eval "$(direnv hook zsh)"
-  DIRENV_WARN_TIMEOUT=60s
-  export DIRENV_WARN_TIMEOUT
+  export DIRENV_WARN_TIMEOUT=60s
 fi
 
+# fzf registers ZLE widgets, so it must load before zsh-syntax-highlighting
+# (90-plugins.zsh).
 if (( $+commands[fzf] )); then
   _fzf_version=$(fzf --version | cut -d' ' -f1)
   _fzf_major_version=$(echo "$_fzf_version" | cut -d. -f1)

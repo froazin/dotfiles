@@ -1,15 +1,7 @@
 #!/usr/bin/env zsh
-# A workspace is a git repository under ~/workspaces, laid out as
-# <provider>/<org>/<repo>, e.g. ~/workspaces/github.com/froazin/dotfiles
-#
-# `-c` prefers a *.code-workspace file at the workspace root over the plain
-# directory, so a repo that defines a multi-root workspace opens as that
-# workspace rather than as a bare folder.
-#
-# Under sudo, workspaces are looked up in the invoking user's home ($SUDO_HOME),
-# so a root shell started with `sudo su` or `sudo -s` still finds them.
+# A workspace is a git repository at <provider>/<org>/<repo> under $WORKSPACE_DIR,
+# default ~/workspaces of the invoking user (sudo sets $SUDO_HOME) so root shells find them.
 
-# Emit the list of workspaces, relative to the workspace root.
 __ws_list() {
   emulate -L zsh
   local workspace_dir=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
@@ -22,13 +14,11 @@ __ws_list() {
     | sort
 }
 
-# Resolve what `code` should be pointed at for a given workspace directory.
+# Prints the *.code-workspace to open (status 0), else the directory (status 1).
 __ws_code_target() {
   emulate -L zsh
   local dir=$1
-  local -a candidates
-
-  candidates=( $dir/*.code-workspace(N) )
+  local -a candidates=( $dir/*.code-workspace(N) )
 
   if (( ! $#candidates )); then
     print -r -- "$dir"
@@ -78,9 +68,6 @@ workspaces() {
     return 1
   fi
 
-  # --select-1 jumps straight there when the query matches exactly one
-  # workspace; --exit-0 gives up quietly when it matches none.
-  #
   # git can run programs a repo's config names (core.fsmonitor, gpg.program),
   # so as root the preview skips git in workspaces root does not own.
   target=$(
@@ -124,13 +111,11 @@ workspaces() {
   fi
 }
 
-# Same thing, but always opens VS Code.
 wsc() { workspaces -c "$@" }
 
 alias workspace=workspaces
 alias ws=workspaces
 
-# --- completion -------------------------------------------------------------
 _ws() {
   local context state line
   local -a ws_candidates

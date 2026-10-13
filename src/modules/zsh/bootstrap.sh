@@ -8,7 +8,7 @@ ZSH_OPTIONAL_SOURCED="nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 
 zsh_have_function()
 {
-    zsh -fc "_f=( \${^fpath}/$1(N) ); (( \${#_f} ))" > /dev/null 2>&1
+    zsh -fc '_f=( ${^fpath}/$1(N) ); (( ${#_f} ))' zsh "$1" > /dev/null 2>&1
 }
 
 zsh_check_soft_deps()

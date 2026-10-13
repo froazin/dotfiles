@@ -1,16 +1,12 @@
 #!/usr/bin/env zsh
-# Shell maintenance.
 
 zshup() {
   emulate -L zsh
 
-  # Single source of truth: the same registry 10-completion.zsh builds from, so
-  # adding a tool there automatically makes it refreshable here.
-  local name rc
+  local name
   for name in ${(ko)ZSH_OPTIONAL_COMPLETIONS}; do
-    zcache_completion -f "$name" "${ZSH_OPTIONAL_COMPLETIONS[$name]}" ${commands[$name]}
-    rc=$?
-    case $rc in
+    zcache_completion -f "$name" "${ZSH_OPTIONAL_COMPLETIONS[$name]}" "${commands[$name]}"
+    case $? in
       0) print -r -- "  _${name}  regenerated" ;;
       2) print -r -- "  _${name}  skipped (not installed)" ;;
       3) print -r -- "  _${name}  FAILED to generate" ;;

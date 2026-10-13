@@ -1,9 +1,5 @@
 #!/usr/bin/env zsh
-# Completion system: fpath, cached tool completions, compinit, styling.
 
-# ---------------------------------------------------------------------------
-# fpath
-# ---------------------------------------------------------------------------
 ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
 [[ -d $ZSH_COMPLETION_DIR ]] || mkdir -p "$ZSH_COMPLETION_DIR"
 
@@ -13,9 +9,8 @@ fpath=(
   $fpath
 )
 
-# ---------------------------------------------------------------------------
-# Cached tool completions.
-# ---------------------------------------------------------------------------
+# Returns 0 regenerated, 1 already current, 2 tool not installed, 3 generation
+# failed; zshup reports these.
 zcache_completion() {
   emulate -L zsh
   local force=0
@@ -26,11 +21,11 @@ zcache_completion() {
   # Outside fpath, so compinit never sees it.
   local failed="$ZSH_COMPLETION_DIR/.failed/$name"
 
-  [[ -n $bin && -x $bin ]] || return 2          # tool not installed
+  [[ -n $bin && -x $bin ]] || return 2
   if (( ! force )); then
-    [[ -f $file && ! $bin -nt $file ]] && return 1      # already current
-    # Don't retry a generator that failed for this same binary on every
-    # startup (e.g. Apache Ant answering to `ant`); zshup forces a retry.
+    [[ -f $file && ! $bin -nt $file ]] && return 1
+    # Don't rerun a generator that failed for this same binary on every startup
+    # (e.g. Apache Ant answering to `ant`); zshup forces a retry.
     [[ -f $failed && ! $bin -nt $failed ]] && return 3
   fi
 
@@ -38,21 +33,17 @@ zcache_completion() {
   # Run from a directory we own, so a tool that reads its working directory
   # (Apache Ant parses ./build.xml) never acts on the project the shell opened in.
   if ( cd -q "$ZSH_COMPLETION_DIR" && eval "$generator" ) > "$tmp" 2>/dev/null && [[ -s $tmp ]]; then
-    # Give a tool a chance to patch its own generated completion. Runs here so
-    # the fix is reapplied automatically on every regeneration, including zshup.
     (( $+functions[_zcache_patch_$name] )) && "_zcache_patch_$name" "$tmp"
     mv -f "$tmp" "$file"
     rm -f "$failed"
-    return 0                                    # regenerated
+    return 0
   fi
   rm -f "$tmp"
   mkdir -p "${failed:h}" && : >| "$failed"
-  return 3                                      # generation failed
+  return 3
 }
 
-# ---------------------------------------------------------------------------
 # uv: fix completion of the command `uv run` is about to execute.
-# ---------------------------------------------------------------------------
 _zcache_patch_uv()  { sed -i 's/::external_command:_default/::external_command:_uv_run_command/g' "$1" }
 _zcache_patch_uvx() { _zcache_patch_uv "$1" }
 
@@ -60,8 +51,7 @@ _uv_run_command() {
   local -a bins
   local venv bindir dir
 
-  # Project-environment commands only make sense for `uv run`. `uvx` and
-  # `uv tool run` execute published tools, not things in the local venv.
+  # `uvx` and `uv tool run` execute published tools, not the project's venv.
   if [[ $curcontext == *:uv-command-run:* ]]; then
     if [[ -n $VIRTUAL_ENV ]]; then
       venv=$VIRTUAL_ENV
@@ -90,7 +80,6 @@ _uv_run_command() {
     'files:file: _files'
 }
 
-# Optional tool completions.
 typeset -gA ZSH_OPTIONAL_COMPLETIONS=(
   uv     'uv generate-shell-completion zsh'
   uvx    'uvx --generate-shell-completion zsh'
@@ -104,14 +93,13 @@ for _zc_tool in ${(ko)ZSH_OPTIONAL_COMPLETIONS}; do
 done
 unset _zc_tool
 
-# ---------------------------------------------------------------------------
-# compinit
-# ---------------------------------------------------------------------------
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-$ZSH_VERSION"
 [[ -d ${ZSH_COMPDUMP:h} ]] || mkdir -p "${ZSH_COMPDUMP:h}"
 
 if zsh_have_function compinit; then
   autoload -Uz compinit
+  # -C (skip the new-function and security checks) only while the dump is under
+  # a day old.
   if [[ -n ${ZSH_COMPDUMP}(#qN.mh+24) || ! -f $ZSH_COMPDUMP ]]; then
     compinit -d "$ZSH_COMPDUMP"
   else
@@ -123,15 +111,11 @@ else
 fi
 
 # /usr/bin/docker here is the podman-docker shim, and `docker completion zsh`
-# emits a file that registers `podman`, not `docker`. Reuse podman's real
-# completion for the docker command name instead.
+# emits a file that registers `podman`, not `docker`.
 if (( ZSH_COMPINIT_OK )) && [[ -e /usr/bin/docker ]] && (( $+functions[_podman] || $+_comps[podman] )); then
   compdef _podman docker
 fi
 
-# ---------------------------------------------------------------------------
-# Completion behaviour and appearance
-# ---------------------------------------------------------------------------
 zmodload zsh/complist # provides the menuselect keymap
 
 zstyle ':completion:*' menu select
@@ -153,22 +137,19 @@ zstyle ':completion:*:messages'     format '%F{#cccccc}-- %d --%f'
 zstyle ':completion:*:warnings'     format '%F{#d54a35}-- no matches --%f'
 zstyle ':completion:*' verbose yes
 
-# Colour filenames in the completion list using LS_COLORS.
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
-# Cache slow completions (apt, systemctl, ...).
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompcache"
 
 zstyle ':completion:*' special-dirs false   # don't offer . and .. as matches
 zstyle ':completion:*' squeeze-slashes true
 
-# Useful process lists for kill/killall.
+# kill: your own processes, PIDs in bold red.
 zstyle ':completion:*:*:kill:*:processes' \
   list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
-# Navigate the completion menu with the arrow keys or hjkl.
 bindkey -M menuselect 'h' vi-backward-char
 bindkey -M menuselect 'j' vi-down-line-or-history
 bindkey -M menuselect 'k' vi-up-line-or-history

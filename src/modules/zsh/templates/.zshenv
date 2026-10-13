@@ -19,12 +19,9 @@ if [[ -d /var/lib/snapd/desktop ]]; then
   xdg_data_dirs=( ${xdg_data_dirs:-/usr/local/share /usr/share} /var/lib/snapd/desktop )
 fi
 
-# Prefer VS Code, but fall back so this file is still correct on a
-# machine without it - it is seeded from dotfiles and has to work
-# on servers and in containers too. Not for root, except in a dev container
-# where VS Code itself runs as root: elsewhere sudo drops the WSL variables the
-# code launcher relies on, and the VS Code server runs as the user, so it could
-# not save root's files anyway.
+# No VS Code for root outside a dev container (where it runs as root itself):
+# sudo drops the WSL variables `code` relies on, and the VS Code server runs as
+# the user, so it could not save root's files anyway.
 if (( $+commands[code] )) && { (( EUID != 0 )) || [[ $REMOTE_CONTAINERS == true ]] }; then
   export EDITOR='code --wait'
 elif (( $+commands[vim] )); then
@@ -45,12 +42,9 @@ fi
 # system VMs or the default NAT network.
 export LIBVIRT_DEFAULT_URI='qemu:///system'
 
-# Point Docker clients (docker compose, Dev Containers, testcontainers) at
-# podman's API, but only while its podman.socket listens: the user unit for a
-# user, the system unit for root, as podman-docker's /etc/profile.d script does
-# (zsh never reads that, and it does not check the socket). Root's own user
-# manager, started by `sudo su`, may run a user podman.socket too; that one is
-# ignored. -O: a socket we own, so root never picks up a user's.
+# Like podman-docker's /etc/profile.d script (zsh never reads it), but only
+# while the socket listens and we own it. Root takes the system socket, never a
+# user podman.socket from the user manager `sudo su` starts for it.
 if [[ -z $DOCKER_HOST ]] && (( $+commands[podman] )); then
   if (( EUID == 0 )); then
     _podman_sock=/run/podman/podman.sock
@@ -65,6 +59,5 @@ fi
 
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# We render the virtualenv name ourselves in the prompt; stop activate scripts
-# from prepending their own "(venv) " to PS1.
+# The prompt renders the virtualenv name itself.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
