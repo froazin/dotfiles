@@ -7,10 +7,8 @@ __ws_list() {
   local workspace_dir=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
   [[ -d $workspace_dir ]] || return 1
 
-  find "$workspace_dir" -mindepth 3 -maxdepth 3 -type d 2>/dev/null \
-    | grep -E "^${workspace_dir}/[^/]+/[^/]+/[^/]+$" \
+  find "$workspace_dir" -mindepth 3 -maxdepth 3 -type d -printf '%P\n' 2>/dev/null \
     | grep -v '\$RECYCLE\.BIN/' \
-    | sed "s|^${workspace_dir}/||" \
     | sort
 }
 
