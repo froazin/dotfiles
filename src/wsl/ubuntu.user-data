@@ -16,10 +16,14 @@
 {% if not gh_user.replace('-', '').isalnum() %}
 {% set gh_user = '' %}
 {% endif %}
-{# This repo, checked out at the path its URL maps to under ~/workspaces. #}
+{# A repo's checkout, relative to ~: the path its URL maps to under ~/workspaces. #}
+{% macro workspace(repo) %}workspaces/{{ repo.split('://', 1)[-1].removesuffix('.git') }}{% endmacro %}
+{# This repo. #}
 {% set dotfiles_repo = 'https://github.com/froazin/dotfiles.git' %}
-{% set dotfiles_rel = 'workspaces/' ~ dotfiles_repo.split('://', 1)[-1].removesuffix('.git') %}
+{% set dotfiles_rel = workspace(dotfiles_repo) %}
 {% set dotfiles_dir = '~/' ~ dotfiles_rel %}
+{% set nvm_repo = 'https://github.com/nvm-sh/nvm.git' %}
+{% set nvm_dir = '~/' ~ workspace(nvm_repo) %}
 {# Quote a value for git config: backslashes and double quotes escaped. #}
 {% macro gitval(value) %}"{{ value | string | replace('\\', '\\\\') | replace('"', '\\"') }}"{% endmacro %}
 
@@ -322,9 +326,13 @@ runcmd:
   # dotfiles' .zshenv puts ~/.local/bin and ~/.pulumi/bin on PATH.
   - [runuser, -l, "{{ user }}", -c, "curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh"]
   - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path"]
-  # nvm's manual install: a git checkout of the latest release tag, updated the
-  # same way. The zsh module sources it from ~/.nvm.
-  - [runuser, -l, "{{ user }}", -c, 'git clone --quiet https://github.com/nvm-sh/nvm.git ~/.nvm && cd ~/.nvm && git checkout --quiet "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")"']
+  # nvm: a workspace checkout of the latest release tag, whose install.sh
+  # fetches that release into ~/.nvm, where the zsh module sources it.
+  # PROFILE=/dev/null keeps it out of the shell profiles. install.sh pins its
+  # own release, so updating means fetching tags, checking out the newest and
+  # rerunning it, which is what this does to an existing checkout. git clone
+  # creates the missing parents.
+  - [runuser, -l, "{{ user }}", -c, 'if [ -d {{ nvm_dir }}/.git ]; then git -C {{ nvm_dir }} fetch --quiet --tags; else git clone --quiet {{ nvm_repo }} {{ nvm_dir }}; fi && cd {{ nvm_dir }} && git checkout --quiet "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")" && PROFILE=/dev/null bash install.sh']
   # Claude Code's native installer needs bash. It installs to ~/.local/bin and
   # updates itself.
   - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://claude.ai/install.sh | bash"]

@@ -158,15 +158,19 @@ configured. Finish setting up the user yourself:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
 curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path
-git clone https://github.com/nvm-sh/nvm.git ~/.nvm
-git -C ~/.nvm checkout "$(git -C ~/.nvm describe --abbrev=0 --tags --match 'v[0-9]*' "$(git -C ~/.nvm rev-list --tags --max-count=1)")"
+git clone https://github.com/nvm-sh/nvm.git ~/workspaces/github.com/nvm-sh/nvm
+cd ~/workspaces/github.com/nvm-sh/nvm
+git checkout "$(git describe --abbrev=0 --tags --match 'v[0-9]*' "$(git rev-list --tags --max-count=1)")"
+# Installs that release into ~/.nvm. The zsh config from these dotfiles loads it, so leave the profiles alone.
+PROFILE=/dev/null bash install.sh
+cd
 curl -fsSL https://claude.ai/install.sh | bash
 v="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/anthropics/anthropic-cli/releases/latest)"; v="${v##*/v}"
 case "$(uname -m)" in aarch64) a=arm64 ;; *) a=amd64 ;; esac
 mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant
 code --install-extension Anthropic.claude-code
 git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
-# Until the dotfiles' ~/.zshenv exists, the installer cannot see tools in ~/.local/bin.
+# Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
 PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
 ```
 
