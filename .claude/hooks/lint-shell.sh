@@ -1,12 +1,8 @@
 #!/usr/bin/env sh
 #
-# PostToolUse hook: lint a shell file Claude just edited and report problems
-# back to Claude (exit 2 surfaces stderr to it). Silent when the file is not a
-# shell file or the linter is not installed.
-#
-#   *.sh            shellcheck, shfmt -d (options come from .shellcheckrc and
-#                   .editorconfig; never pass flags, they override the files)
-#   zsh templates   zsh -n; shellcheck and shfmt cannot parse zsh
+# PostToolUse hook; exit 2 surfaces stderr to Claude. Options live in
+# .shellcheckrc and .editorconfig; any shfmt formatting flag makes it ignore
+# the latter. Neither tool parses zsh, so zsh files only get zsh -n.
 
 file="$(python3 -I -c 'import json, sys; print(json.load(sys.stdin).get("tool_input", {}).get("file_path", ""))' 2> /dev/null)"
 

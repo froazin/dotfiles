@@ -1,3 +1,4 @@
+# zsh files: shellcheck can't parse them, so skip them silently
 disable=SC1103,SC1071
 external-sources=true
 source-path=SCRIPTDIR

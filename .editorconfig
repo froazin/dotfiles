@@ -4,15 +4,15 @@ root = true
 indent_style = space
 indent_size = 4
 
-shell_variant      = posix  # Maps to: -ln=posix
-binary_next_line   = true   # Maps to: -bn
-switch_case_indent = true   # Maps to: -ci
-space_redirects    = true   # Maps to: -sr
-function_next_line = true   # Maps to: -fn
+shell_variant = posix
+binary_next_line = true
+switch_case_indent = true
+space_redirects = true
+function_next_line = true
 
+# zsh, which shfmt cannot parse
 [src/modules/zsh/templates/**]
 ignore = true
 
-# uv's virtualenv: third-party scripts (node, npm) that are not ours to format.
 [.venv/**]
 ignore = true
