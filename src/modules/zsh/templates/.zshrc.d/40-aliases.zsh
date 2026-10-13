@@ -17,7 +17,7 @@ if (( $+commands[dircolors] )); then
   alias egrep='egrep --color=auto'
 fi
 
-alias browse='xdg-open'
+(( $+commands[xdg-open] )) && alias browse='xdg-open'
 
 # Signal that a long-running command finished:  sleep 10; alert
 alert() {

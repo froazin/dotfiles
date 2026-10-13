@@ -64,7 +64,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | `claude` | `claude` | `jq`, `python3` | — |
 | `git`  | `git` | — | — |
 | `podman` | `podman` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open` |
 
 The `claude` module never overwrites `~/.claude/settings.json`, because Claude
 Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The

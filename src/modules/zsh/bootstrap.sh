@@ -3,7 +3,7 @@
 ZSH_SOFT_DEPS="fzf git"
 ZSH_SOFT_FUNCTIONS="vcs_info compinit add-zsh-hook"
 ZSH_SOFT_PLUGINS="/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-ZSH_OPTIONAL_DEPS="op uv pulumi direnv ant podman"
+ZSH_OPTIONAL_DEPS="op uv pulumi direnv ant podman xdg-open"
 ZSH_OPTIONAL_SOURCED="nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 
 zsh_have_function()
