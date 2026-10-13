@@ -113,6 +113,9 @@ packages:
   - jq
   # development
   - gh
+  # VS Code's launcher downloads its WSL server with wget (runcmd's
+  # --install-extension); ubuntu-wsl only pulls it in indirectly.
+  - wget
   - shellcheck
   - shfmt
   # containers
@@ -314,16 +317,31 @@ runcmd:
 {% if gh_user %}
   - [runuser, -u, "{{ user }}", --, mkdir, -p, "/home/{{ user }}/workspaces/github.com/{{ gh_user }}"]
 {% endif %}
-  # Official installers, run as the user so both can update themselves. The
+  # Official installers, run as the user so they can update themselves. The
   # dotfiles' .zshenv puts ~/.local/bin and ~/.pulumi/bin on PATH.
   - [runuser, -l, "{{ user }}", -c, "curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh"]
   - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path"]
   # nvm's manual install: a git checkout of the latest release tag, updated the
   # same way. The zsh module sources it from ~/.nvm.
   - [runuser, -l, "{{ user }}", -c, 'git clone --quiet https://github.com/nvm-sh/nvm.git ~/.nvm && cd ~/.nvm && git checkout --quiet "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")"']
+  # Claude Code's native installer needs bash. It installs to ~/.local/bin and
+  # updates itself.
+  - [runuser, -l, "{{ user }}", -c, "curl -fsSL https://claude.ai/install.sh | bash"]
+  # ant, the Claude Platform CLI, has no installer or self-update: the release
+  # tarball goes into ~/.local/bin, as its docs describe, and rerunning this
+  # updates it. tar -m stamps it with the install time, which is how zsh knows
+  # to regenerate its completion. Never the apt `ant` package (Apache Ant).
+  - [runuser, -l, "{{ user }}", -c, 'v="$(curl -fsSLI -o /dev/null -w "%{url_effective}" https://github.com/anthropics/anthropic-cli/releases/latest)" && v="${v##*/v}" && case "$(uname -m)" in x86_64) a=amd64 ;; aarch64) a=arm64 ;; esac && mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant']
+  # The extension runs on the WSL side, in ~/.vscode-server. VS Code's launcher
+  # only installs it there when WSL_DISTRO_NAME is set, which runuser clears;
+  # the value only labels the remote, so the instance name from wslpath does.
+  # Needs Windows VS Code with its WSL extension.
+  - [runuser, -l, "{{ user }}", -c, '[ -x /usr/local/bin/code ] || exit 0; WSL_DISTRO_NAME="$(basename "$(wslpath -am /)")" code --install-extension Anthropic.claude-code']
   # Runs after the workspace directories above. git clone creates whatever
-  # parents are still missing, and an existing checkout is reused.
-  - [runuser, -l, "{{ user }}", -c, "{ [ -d {{ dotfiles_dir }}/.git ] || git clone {{ dotfiles_repo }} {{ dotfiles_dir }}; } && sh {{ dotfiles_dir }}/src/install.sh"]
+  # parents are still missing, and an existing checkout is reused. ~/.zshenv
+  # does not exist yet, so PATH gets its directories here; otherwise the
+  # installer cannot see claude and skips the claude module.
+  - [runuser, -l, "{{ user }}", -c, "{ [ -d {{ dotfiles_dir }}/.git ] || git clone {{ dotfiles_repo }} {{ dotfiles_dir }}; } && PATH=\"$HOME/.local/bin:$HOME/.pulumi/bin:$PATH\" sh {{ dotfiles_dir }}/src/install.sh"]
   # Root gets its own copies from the user's checkout. runuser -l sets
   # HOME=/root (runcmd has no HOME), so the path cannot use ~.
   - [runuser, -l, root, -c, "sh /home/{{ user }}/{{ dotfiles_rel }}/src/install.sh"]
