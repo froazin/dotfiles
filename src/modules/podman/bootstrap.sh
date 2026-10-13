@@ -2,9 +2,6 @@
 
 podman_create_auth_file()
 {
-    # podman login writes to $XDG_RUNTIME_DIR/containers/auth.json, which is
-    # lost at logout. Credentials not found there are looked up in this
-    # persistent file, which outlives the session.
     auth_file="$1"
 
     if [ -e "$auth_file" ] || [ -L "$auth_file" ]; then
@@ -12,12 +9,7 @@ podman_create_auth_file()
         return 0
     fi
 
-    if ! [ -d "$(dirname "$auth_file")" ]; then
-        mkdir -p "$(dirname "$auth_file")" > /dev/null 2>&1 || {
-            log error "Failed to create directory <$(dirname "$auth_file")>."
-            return 1
-        }
-    fi
+    ensure_dir "$(dirname "$auth_file")" || return 1
 
     # Credentials, so owner-only, as podman login would create it.
     (umask 077 && printf '{\n\t"auths": {}\n}\n' > "$auth_file") > /dev/null 2>&1 || {
@@ -31,8 +23,6 @@ podman_create_auth_file()
 
 podman_link_docker_config()
 {
-    # Docker tooling, such as VS Code Dev Containers pulling private features,
-    # reads credentials from the Docker config, so it gets podman's file.
     auth_file="$1"
     docker_dir="${DOCKER_CONFIG:-$HOME/.docker}"
     docker_config="$docker_dir/config.json"
@@ -54,12 +44,7 @@ podman_link_docker_config()
         return 1
     fi
 
-    if ! [ -d "$docker_dir" ]; then
-        (umask 077 && mkdir -p "$docker_dir") > /dev/null 2>&1 || {
-            log error "Failed to create directory <$docker_dir>."
-            return 1
-        }
-    fi
+    (umask 077 && ensure_dir "$docker_dir") || return 1
 
     ln -s "$auth_file" "$docker_config" > /dev/null 2>&1 || {
         log error "Failed to link <$docker_config> to <$auth_file>."
@@ -73,7 +58,8 @@ podman_link_docker_config()
 bootstrap()
 {
     errors=""
-    # Where podman looks after $XDG_RUNTIME_DIR/containers/auth.json.
+    # podman login writes to $XDG_RUNTIME_DIR/containers/auth.json, which is
+    # lost at logout; podman falls back to this persistent file.
     podman_auth_file="${XDG_CONFIG_HOME:-$HOME/.config}/containers/auth.json"
 
     log info "Bootstrapping podman configuration."
