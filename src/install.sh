@@ -26,6 +26,9 @@ main()
             continue
         fi
 
+        # Otherwise a module without bootstrap() reruns the previous module's.
+        unset -f bootstrap
+
         log debug "Loading $package configuration from $btstrpfile."
         eval "$(cat "$btstrpfile")" > /dev/null 2>&1 || {
             log error "Failed to load $package configuration."
@@ -34,16 +37,9 @@ main()
         }
 
         log debug "Running $package configuration."
-        # shellcheck disable=SC2218 # The bootstrap function is defined in the package's bootstrap.sh file.
         bootstrap || {
             log error "Failed to execute $package configuration."
             install_errors="true"
-        }
-
-        # Reset, so a module without bootstrap() does not rerun this one.
-        bootstrap()
-        {
-            true > /dev/null 2>&1
         }
     done
 
