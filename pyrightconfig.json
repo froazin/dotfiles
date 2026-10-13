@@ -1,0 +1,9 @@
+{
+  "include": ["src"],
+  "exclude": ["**/__pycache__", ".git", ".venv"],
+  "extraPaths": ["src/modules/claude/templates/hooks"],
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "strict",
+  "venvPath": ".",
+  "venv": ".venv"
+}

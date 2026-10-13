@@ -12,3 +12,7 @@ function_next_line = true   # Maps to: -fn
 
 [src/modules/zsh/templates/**]
 ignore = true
+
+# uv's virtualenv: third-party scripts (node, npm) that are not ours to format.
+[.venv/**]
+ignore = true
