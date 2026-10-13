@@ -102,6 +102,9 @@ if zsh_have_function compinit; then
   # a day old.
   if [[ -n ${ZSH_COMPDUMP}(#qN.mh+24) || ! -f $ZSH_COMPDUMP ]]; then
     compinit -d "$ZSH_COMPDUMP"
+    # compinit leaves a still-valid dump untouched, so restart its day here.
+    # -c: never create an empty dump, which -C would trust.
+    touch -c "$ZSH_COMPDUMP" 2>/dev/null
   else
     compinit -C -d "$ZSH_COMPDUMP"
   fi
