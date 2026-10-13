@@ -28,9 +28,11 @@ alert() {
   cmd=${cmd%%[[:space:]]#}
 
   print -n -- $'\a'                              # the bell
+  # $cmd stays out of print -P: under prompt_subst it would run its $(...).
   if (( rc == 0 )); then
-    print -P -- "%F{#2ace84}done%f ${cmd}"
+    print -Pn -- '%F{#2ace84}done%f '
   else
-    print -P -- "%F{#e01b24}failed (${rc})%f ${cmd}"
+    print -Pn -- "%F{#e01b24}failed (${rc})%f "
   fi
+  print -r -- "$cmd"
 }

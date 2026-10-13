@@ -153,7 +153,9 @@ PROMPT+="%F{${_zp_ok}}%(!.#.\$)%f "                                # $, or # as 
 RPROMPT=''
 
 if [[ $TERM != (dumb|linux|) ]]; then
-  _zp_title()         { print -Pn -- "\e]0;%n@%m: $1\a" }
+  # Not print -P on the command line: under prompt_subst it would run any
+  # $(...) in it. Control chars are blanked so they can't end the title early.
+  _zp_title()         { print -rn -- $'\e]0;'"${(%):-%n@%m}: ${1//[[:cntrl:]]/ }"$'\a' }
   _zp_title_preexec() { _zp_title "$1" }
   # Not $SHELL: under `sudo -s` that is root's login shell, not this one.
   _zp_title_precmd()  { _zp_title "$ZSH_NAME" }
