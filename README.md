@@ -41,6 +41,7 @@ matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
@@ -59,8 +60,15 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
+| `claude` | `claude` | `jq` | — |
 | `git`  | `git` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant` |
+
+The `claude` module never overwrites `~/.claude/settings.json`, because Claude
+Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The
+template is deep-merged in with `jq`: its values win, nested objects merge
+key by key, lists are unioned, and every other key is kept. Without `jq` the
+template is only written where no settings exist yet.
 
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
