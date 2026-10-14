@@ -109,13 +109,19 @@ Containers use rootless podman. Root uses the system socket instead
 (`/run/podman/podman.sock`, from `sudo systemctl enable --now podman.socket`).
 A `DOCKER_HOST` you set yourself wins.
 
-`podman login` saves credentials in `$XDG_RUNTIME_DIR/containers/auth.json`,
-which lasts for the session. Credentials not found there are looked up in
-`~/.config/containers/auth.json`, which persists. The `podman` module creates
-that file and links `~/.docker/config.json` to it, so Docker tooling such as
-VS Code Dev Containers (pulling private features) sees the same persistent
-credentials. An existing `~/.docker/config.json` is never replaced: move its
-`auths` into podman's file, delete it, and rerun the installer.
+`podman login` saves credentials in `$XDG_RUNTIME_DIR/containers/auth.json`
+by default, which lasts for the session. The `podman` module creates
+`~/.config/containers/auth.json`, which persists, and links
+`~/.docker/config.json` to it, so Docker tooling such as VS Code Dev
+Containers (pulling private features) sees the same persistent credentials.
+With `podman` installed and that file present, zsh exports
+`REGISTRY_AUTH_FILE` pointing at it, so `podman login`, `buildah` and
+`skopeo` read and write the persistent file instead. A `REGISTRY_AUTH_FILE`
+you set yourself wins. An existing `~/.docker/config.json` is never replaced,
+and while it is a separate file zsh leaves `REGISTRY_AUTH_FILE` unset, since
+setting it would stop podman reading that file's credentials: move its
+`auths` (and any `credHelpers`) into podman's file, delete it, and rerun the
+installer.
 
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
