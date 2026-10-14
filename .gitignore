@@ -3,10 +3,18 @@
 logs
 *.log
 
+# Claude Code
+**/settings.local.json
+.claude/worktrees
+
 # Environments
 .env
 .env.*
+*.env
+*.env.*
 !.env.example
+
+# Python virtual environments
 .venv
 env/
 venv/
@@ -21,7 +29,6 @@ uv.lock
 __pycache__/
 *.py[codz]
 *$py.class
-
 *.so
 
 # Distribution / packaging
@@ -43,7 +50,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
 pip-log.txt
 pip-delete-this-directory.txt
 
@@ -62,7 +68,7 @@ coverage.xml
 # Translations
 *.mo
 *.pot
-
 cython_debug/
 
+# Ruff cache
 .ruff_cache/
