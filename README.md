@@ -148,7 +148,10 @@ instance from scratch:
   meta-data's `vscode_extensions` (Claude Code and Python to start with) into
   the instance's VS Code server (this needs VS Code and its WSL extension on
   Windows);
-- configures git, then clones this repo and runs `install.sh`;
+- configures git, then clones this repo and runs `install.sh`. With a
+  `git_signingkey`, commits are signed, and a literal key (not a key file
+  path) goes in `~/.config/git/allowed_signers`, so
+  `git log --show-signature` can verify them;
 - makes zsh root's login shell and runs `install.sh` for root too, so
   `sudo su` keeps the same shell and prompt. Without a username, root's copy
   comes from a temporary clone.

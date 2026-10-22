@@ -23,7 +23,7 @@ die()
     exit 2
 }
 
-for cmd in cloud-init python3 git shellcheck; do
+for cmd in cloud-init python3 git shellcheck ssh-keygen; do
     command -v "$cmd" > /dev/null 2>&1 || die "missing required command: $cmd"
 done
 
@@ -39,13 +39,28 @@ trap 'rm -rf "$work"' EXIT
 #   git_name  - exact user.name git must read back from the rendered .gitconfig
 #   extensions - VS Code extension IDs installed, in order (default: none)
 #   skipped   - vscode_extensions entries reported as invalid (default: none)
+#   signer    - principal git should verify git_signingkey's signatures as, or
+#               null for no allowed_signers file (default: null)
+#   signer_key - private key that signs for signer (default: the ed25519 key)
+#   ssh_program - gpg.ssh.program git must read back (default: "")
 python3 -I - "$work" "$meta_data" << 'EOF' || exit 2
 import json
+import subprocess
 import sys
 
 import yaml
 
 work, meta_template = sys.argv[1:]
+
+# Real keys, so the rendered allowed_signers is checked by ssh-keygen itself.
+def keygen(name, *opts):
+    subprocess.run(["ssh-keygen", "-q", *opts, "-N", "", "-C", "jane", "-f", f"{work}/{name}"], check=True)
+    with open(f"{work}/{name}.pub") as f:
+        return f.read().strip()
+
+pubkey = keygen("signer", "-t", "ed25519")
+ecdsa = keygen("ecdsa", "-t", "ecdsa", "-b", "256")
+program = "/mnt/c/Users/<you>/op-ssh-sign-wsl.exe"
 
 v1 = {
     "cloud_name": "wsl", "platform": "wsl", "cloud_id": "wsl",
@@ -67,11 +82,43 @@ with open(meta_template) as f:
 cases = {
     "full": ({"username": "jdoe", "git_name": "Jane Doe",
               "git_email": "1+jdoe@users.noreply.github.com",
-              "git_signingkey": "ssh-ed25519 AAAA jane",
-              "git_ssh_program": "/mnt/c/Users/<you>/op-ssh-sign-wsl.exe",
+              "git_signingkey": pubkey,
+              "git_ssh_program": program,
               "vscode_extensions": ["Anthropic.claude-code", "ms-python.python"]},
              {"user": True, "gh_dir": "jdoe", "git_name": "Jane Doe",
-              "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
+              "extensions": ["Anthropic.claude-code", "ms-python.python"],
+              "signer": "1+jdoe@users.noreply.github.com", "ssh_program": program}),
+    "signingkey-no-email": ({"username": "jdoe", "git_signingkey": f"  key::{pubkey}\t"},
+                            {"user": True, "gh_dir": "", "git_name": "", "signer": "*"}),
+    "signingkey-odd-email": ({"username": "jdoe", "git_email": "a,b *@example.com", "git_signingkey": pubkey},
+                             {"user": True, "gh_dir": "", "git_name": "", "signer": "*"}),
+    "signingkey-unicode-email": ({"username": "jdoe", "git_email": "j\u00e4ne@example.com", "git_signingkey": pubkey},
+                                 {"user": True, "gh_dir": "", "git_name": "", "signer": "*"}),
+    "signingkey-ecdsa": ({"username": "jdoe", "git_email": "jane@example.com", "git_signingkey": f"key::{ecdsa}"},
+                         {"user": True, "gh_dir": "", "git_name": "", "signer": "jane@example.com",
+                          "signer_key": f"{work}/ecdsa"}),
+    # git reads a bare non-ssh- key as a file path.
+    "signingkey-bare-ecdsa": ({"username": "jdoe", "git_signingkey": ecdsa},
+                              {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-path": ({"username": "jdoe", "git_email": "jane@example.com",
+                         "git_signingkey": "~/.ssh/id_ed25519.pub", "git_ssh_program": program},
+                        {"user": True, "gh_dir": "", "git_name": "", "ssh_program": program}),
+    "signingkey-hostile": ({"username": "jdoe", "git_signingkey": "ssh-ed25519 AAAA$(id)x jane"},
+                           {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-unknown-type": ({"username": "jdoe", "git_signingkey": "key::foo-ed25519 AAAA"},
+                                {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-bad-type": ({"username": "jdoe", "git_signingkey": 'ssh-ed"25519 AAAA'},
+                            {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-unicode-type": ({"username": "jdoe", "git_signingkey": "ssh-ed\u00b225519 AAAA"},
+                                {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-unicode-data": ({"username": "jdoe", "git_signingkey": "ssh-ed25519 AAAA\u00e9"},
+                                {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-type-only": ({"username": "jdoe", "git_signingkey": "ssh-ed25519"},
+                             {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-list": ({"username": "jdoe", "git_signingkey": [pubkey]},
+                        {"user": True, "gh_dir": "", "git_name": ""}),
+    "signingkey-no-user": ({"git_email": "jane@example.com", "git_signingkey": pubkey},
+                           {"user": False, "gh_dir": "", "git_name": ""}),
     "shipped-meta-data": ({**shipped, "username": "jdoe"},
                           {"user": True, "gh_dir": "", "git_name": "",
                            "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
@@ -105,7 +152,8 @@ cases = {
 with open(f"{work}/cases", "w") as index:
     for name, (meta, expect) in cases.items():
         meta = {"instance-id": "ubuntu-wsl", **meta}
-        expect = {"extensions": [], "skipped": [], **expect}
+        expect = {"extensions": [], "skipped": [], "signer": None, "signer_key": f"{work}/signer",
+                  "ssh_program": "", **expect}
         with open(f"{work}/{name}.json", "w") as f:
             json.dump({"v1": v1, "ds": {"meta_data": meta}}, f)
         with open(f"{work}/{name}.expect.json", "w") as f:
@@ -227,6 +275,58 @@ if gitconfig is not None:
         problems.append(f"git cannot parse .gitconfig: {got.stderr.strip()}")
     elif got.stdout.rstrip("\n") != expect["git_name"]:
         problems.append(f"user.name read back as {got.stdout.rstrip()!r}, expected {expect['git_name']!r}")
+
+signers_path = next((p for p in files if p.endswith("/.config/git/allowed_signers")), None)
+signers = files.get(signers_path)
+if (signers is not None) != (expect["signer"] is not None):
+    problems.append(f"allowed_signers rendered={signers is not None}, expected {expect['signer'] is not None}")
+
+def gitconfig_get(key):
+    return subprocess.run(["git", "config", "-f", prefix + ".gitconfig", "--get", key],
+                          capture_output=True, text=True).stdout.rstrip("\n")
+
+if gitconfig is not None:
+    want_file = "~/.config/git/allowed_signers" if expect["signer"] is not None else ""
+    if (got := gitconfig_get("gpg.ssh.allowedSignersFile")) != want_file:
+        problems.append(f"gpg.ssh.allowedSignersFile is {got!r}, expected {want_file!r}")
+    if (got := gitconfig_get("gpg.ssh.program")) != expect["ssh_program"]:
+        problems.append(f"gpg.ssh.program is {got!r}, expected {expect['ssh_program']!r}")
+    # git signs with a literal key only when it starts with key:: or ssh-.
+    if expect["signer"] is not None and not gitconfig_get("user.signingkey").startswith(("key::", "ssh-")):
+        problems.append(f"user.signingkey {gitconfig_get('user.signingkey')!r} is not a key git reads as literal")
+if signers is not None:
+    if (signers_path, signers.get("owner"), signers.get("defer")) != \
+            ("/home/jdoe/.config/git/allowed_signers", "jdoe:jdoe", True):
+        problems.append("allowed_signers is not a deferred file owned by the user in their home")
+    if len(signers["content"].splitlines()) != 1:
+        problems.append(f"allowed_signers is not one line: {signers['content']!r}")
+    with open(prefix + ".allowed_signers", "w") as f:
+        f.write(signers["content"])
+    # What git does: sign, find the principal for the key, then verify as it.
+    signed = subprocess.run(["ssh-keygen", "-q", "-Y", "sign", "-n", "git", "-f", expect["signer_key"]],
+                            input=b"commit", capture_output=True)
+    with open(prefix + ".sig", "wb") as f:
+        f.write(signed.stdout)
+    found = subprocess.run(["ssh-keygen", "-Y", "find-principals", "-f", prefix + ".allowed_signers",
+                            "-s", prefix + ".sig"], capture_output=True, text=True)
+    principal = found.stdout.strip()
+    verified = subprocess.run(["ssh-keygen", "-Y", "verify", "-f", prefix + ".allowed_signers", "-I", principal,
+                               "-n", "git", "-s", prefix + ".sig"], input="commit", capture_output=True, text=True)
+    if signed.returncode != 0:
+        problems.append(f"could not sign the test message: {signed.stderr.decode().strip()}")
+    elif principal != expect["signer"]:
+        problems.append(f"signer found as {principal!r}, expected {expect['signer']!r}: {found.stderr.strip()}")
+    elif verified.returncode != 0:
+        problems.append(f"signature does not verify: {verified.stderr.strip()}")
+    else:
+        # A signature carries its namespace, so this needs one made for "file".
+        with open(prefix + ".file.sig", "wb") as f:
+            f.write(subprocess.run(["ssh-keygen", "-q", "-Y", "sign", "-n", "file", "-f", expect["signer_key"]],
+                                   input=b"commit", capture_output=True).stdout)
+        if subprocess.run(["ssh-keygen", "-Y", "verify", "-f", prefix + ".allowed_signers", "-I", principal,
+                           "-n", "file", "-s", prefix + ".file.sig"], input=b"commit",
+                          capture_output=True).returncode == 0:
+            problems.append("allowed_signers trusts the key outside the git namespace")
 
 start = files.get("/usr/local/bin/start")
 if start is not None:

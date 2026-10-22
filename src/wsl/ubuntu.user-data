@@ -9,6 +9,9 @@
 {% set git_name = ds.meta_data.git_name or '' %}
 {% set git_email = ds.meta_data.git_email or '' %}
 {% set git_signingkey = ds.meta_data.git_signingkey or '' %}
+{% if git_signingkey is string %}
+{% set git_signingkey = git_signingkey.strip() %}
+{% endif %}
 {% set git_ssh_program = ds.meta_data.git_ssh_program or '' %}
 {% set vscode_extensions = ds.meta_data.vscode_extensions or [] %}
 {% if vscode_extensions is string %}
@@ -31,6 +34,17 @@
 {% set gh_user = gh_local.split('+', 1)[-1] if gh_domain | lower == 'users.noreply.github.com' else '' %}
 {% if not gh_user.replace('-', '').isalnum() %}
 {% set gh_user = '' %}
+{% endif %}
+{# allowed_signers line for a key git reads as literal, "key::<type> <base64> [comment]" or "ssh-<type> ..."; anything else is a key file path to git and gets none. The principal is git_email, or * when it has characters outside [A-Za-z0-9.+_@-]. #}
+{% set literal_key = git_signingkey is string and git_signingkey.startswith(('key::', 'ssh-')) %}
+{% set key_type, key_data = ((git_signingkey | string).removeprefix('key::').split() + ['', ''])[:2] %}
+{% set principal = git_email | string %}
+{% if not (principal.isascii() and principal.replace('.', '').replace('+', '').replace('_', '').replace('-', '').replace('@', '').isalnum()) %}
+{% set principal = '*' %}
+{% endif %}
+{% set allowed_signer = '' %}
+{% if literal_key and key_type.startswith(('ssh-', 'ecdsa-', 'sk-')) and (key_type ~ key_data).isascii() and key_type.replace('-', '').replace('@', '').replace('.', '').isalnum() and key_data.replace('+', '').replace('/', '').replace('=', '').isalnum() %}
+{% set allowed_signer = principal ~ ' namespaces="git" ' ~ key_type ~ ' ' ~ key_data %}
 {% endif %}
 {% macro workspace(repo) %}workspaces/{{ repo.split('://', 1)[-1].removesuffix('.git') }}{% endmacro %}
 {% set dotfiles_repo = 'https://github.com/froazin/dotfiles.git' %}
@@ -310,9 +324,25 @@ write_files:
       [commit]
       	gpgsign = true
 {% endif %}
-{% if git_ssh_program %}
+{% if git_ssh_program or allowed_signer %}
       [gpg "ssh"]
+{% if git_ssh_program %}
       	program = {{ gitval(git_ssh_program) }}
+{% endif %}
+{% if allowed_signer %}
+      	allowedSignersFile = ~/.config/git/allowed_signers
+{% endif %}
+{% endif %}
+{% if allowed_signer %}
+
+  # Lets git verify commits signed with git_signingkey. Parent directories
+  # cloud-init creates here are owned by the user too.
+  - path: /home/{{ user }}/.config/git/allowed_signers
+    owner: "{{ user }}:{{ user }}"
+    permissions: "0644"
+    defer: true
+    content: |
+      {{ allowed_signer }}
 {% endif %}
 {% endif %}
 

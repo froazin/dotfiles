@@ -20,7 +20,7 @@ It renders the template with `cloud-init devel render` against a set of mock
 
 | Case | Proves |
 | ---- | ------ |
-| `full` | every key renders; user, `.gitconfig` and GitHub workspace dir appear |
+| `full` | every key renders; user, `.gitconfig`, `allowed_signers` and GitHub workspace dir appear |
 | `empty-values`, `no-meta-data` | nothing user-specific renders, YAML stays valid |
 | `hostile-name` | `"`, `\`, `#`, `;`, `'` and `{{ }}` in `git_name` read back exactly through `git config` |
 | `legacy-noreply`, `plain-email`, `path-traversal` | the `~/workspaces/github.com/<owner>` extraction only accepts GitHub noreply addresses with a safe owner name |
@@ -28,12 +28,18 @@ It renders the template with `cloud-init devel render` against a set of mock
 | `extensions-string` | a comma/space-separated `vscode_extensions` string installs each ID |
 | `extensions-hostile` | only `publisher.name` IDs reach the shell; every other entry is reported with `printf`, ASCII-escaped, including non-BMP characters and backslashes |
 | `extensions-mapping`, `extensions-number`, `extensions-no-user` | other types install nothing, and nothing installs without a user |
+| `signingkey-ecdsa` | a `key::`-prefixed ECDSA key is trusted for `git_email` |
+| `signingkey-no-email`, `signingkey-odd-email`, `signingkey-unicode-email` | a whitespace-padded key without `git_email`, or with one unsafe as a principal, is trusted for any identity (`*`), and `user.signingkey` is trimmed so git still reads it as a literal key |
+| `signingkey-path`, `signingkey-bare-ecdsa`, `signingkey-hostile`, `signingkey-unknown-type`, `signingkey-bad-type`, `signingkey-unicode-type`, `signingkey-unicode-data`, `signingkey-type-only`, `signingkey-list`, `signingkey-no-user` | only a key git reads as literal (`key::` or `ssh-`) with a valid `<type> <base64>` gets an `allowed_signers` file and `gpg.ssh.allowedSignersFile`, and only with a user; `gpg.ssh.program` is kept without one |
 
 Every case also checks one extension install per expected ID, run as the
 user; that `podman.socket` is enabled with `systemctl --global` before the
 first `runuser -l` starts the user's systemd manager, while root gets the
 system socket and a `ConditionUser=!root` drop-in instead; and that cloud-init can
-write the whole runcmd out as a UTF-8 script.
+write the whole runcmd out as a UTF-8 script. Where an `allowed_signers` file
+is expected, it signs a message with a throwaway key and checks that
+`ssh-keygen` finds the expected principal and verifies it, as git does, but
+not outside the `git` namespace.
 
 It also runs `cloud-init schema` on every render, shellchecks the embedded
 `/usr/local/bin/start`, and fails if a concrete `/mnt/c/Users/<name>/` path
