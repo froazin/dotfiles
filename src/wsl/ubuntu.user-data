@@ -29,6 +29,12 @@
 {% set extensions.invalid = extensions.invalid + [ext | string] %}
 {% endif %}
 {% endfor %}
+{% set ways_of_working = ds.meta_data.ways_of_working or '' %}
+{% if ways_of_working is string %}
+{% set ways_of_working = ways_of_working.strip() %}
+{% endif %}
+{# Written into a YAML block, so only one word of printable ASCII gets through. The zsh config checks that it's a clone URL. #}
+{% set wow_repo = ways_of_working if ways_of_working is string and ways_of_working.isascii() and ways_of_working.isprintable() and ' ' not in ways_of_working else '' %}
 {# GitHub username from a noreply address, ID+user@ or user@. #}
 {% set gh_local, _, gh_domain = (git_email | string).rpartition('@') %}
 {% set gh_user = gh_local.split('+', 1)[-1] if gh_domain | lower == 'users.noreply.github.com' else '' %}
@@ -344,6 +350,17 @@ write_files:
     content: |
       {{ allowed_signer }}
 {% endif %}
+{% if wow_repo %}
+
+  # The dotfiles' zsh config clones this repository on the first login, asking
+  # gh to log in when it's private, and copies its user-config/ into ~/.claude.
+  - path: /home/{{ user }}/.config/ways-of-working/repo
+    owner: "{{ user }}:{{ user }}"
+    permissions: "0644"
+    defer: true
+    content: |
+      {{ wow_repo }}
+{% endif %}
 {% endif %}
 
 # Runs in the final stage, after packages. Each entry runs regardless of the
@@ -398,6 +415,9 @@ runcmd:
 {% for ext in extensions.invalid %}
   - [printf, "Skipped vscode_extensions entry, not a publisher.name ID: %s\n", {{ ext.encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
 {% endfor %}
+{% if ways_of_working and not wow_repo %}
+  - [printf, "Skipped ways_of_working, not a single URL: %s\n", {{ (ways_of_working | string).encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
+{% endif %}
   # ~/.zshenv does not exist yet, so PATH gets its directories here; otherwise
   # the installer cannot see claude and skips the claude module.
   - [runuser, -l, "{{ user }}", -c, "{ [ -d {{ dotfiles_dir }}/.git ] || git clone {{ dotfiles_repo }} {{ dotfiles_dir }}; } && PATH=\"$HOME/.local/bin:$HOME/.pulumi/bin:$PATH\" sh {{ dotfiles_dir }}/src/install.sh"]

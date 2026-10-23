@@ -44,7 +44,7 @@ matching its directory name is on `PATH`.
 | `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
-| `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
+| `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases, the `ws` workspace picker and the first-login setup of a [ways-of-working repository](#ways-of-working). |
 
 ### Dependencies
 
@@ -64,13 +64,41 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | `claude` | `claude` | `jq`, `python3` | — |
 | `git`  | `git` | — | — |
 | `podman` | `podman` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open`, `gh` |
 
 The `claude` module never overwrites `~/.claude/settings.json`, because Claude
 Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The
 template is deep-merged in with `jq`: its values win, nested objects merge
 key by key, lists are unioned, and every other key is kept. Without `jq` the
 template is only written where no settings exist yet.
+
+### Ways of working
+
+A ways-of-working repository holds your shared working practices for Claude
+Code, with a `user-config/` directory that belongs in `~/.claude`. Put its
+clone URL in `~/.config/ways-of-working/repo` (the WSL user-data writes it
+from the meta-data's `ways_of_working`):
+
+```bash
+mkdir -p ~/.config/ways-of-working
+echo https://github.com/OWNER/ways-of-working.git > ~/.config/ways-of-working/repo
+```
+
+Until it's cloned, every zsh with a terminal runs `wow-setup` before its first
+prompt:
+
+1. It clones the repository to `~/workspaces/<host>/<owner>/<repo>`, where
+   `ws` finds it.
+1. If the clone fails and it's an `https` GitHub repository, it runs
+   `gh auth login --web` when gh isn't logged in yet, then clones it with
+   `gh repo clone`. That's how a private repository gets cloned on a new
+   machine.
+1. It copies `user-config/` into `~/.claude` (`CLAUDE_CONFIG_DIR` if set).
+
+Once the clone exists, new shells skip it. Run `wow-setup` again after a
+`git pull` to copy the changes, and delete the config file to stop a failed
+setup from asking again. It never runs as root, or in a shell without a
+terminal, such as the one VS Code starts to read your environment.
 
 ### Commit-signing guard
 
@@ -152,6 +180,9 @@ instance from scratch:
   `git_signingkey`, commits are signed, and a literal key (not a key file
   path) goes in `~/.config/git/allowed_signers`, so
   `git log --show-signature` can verify them;
+- with a `ways_of_working` clone URL, writes it to
+  `~/.config/ways-of-working/repo`, so your first login sets up the
+  [ways-of-working repository](#ways-of-working);
 - makes zsh root's login shell and runs `install.sh` for root too, so
   `sudo su` keeps the same shell and prompt. Without a username, root's copy
   comes from a temporary clone.
@@ -203,6 +234,9 @@ code --install-extension Anthropic.claude-code --install-extension ms-python.pyt
 git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
 # Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
 PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
+# With a ways-of-working repository, your next shell sets it up.
+mkdir -p ~/.config/ways-of-working
+echo https://github.com/OWNER/ways-of-working.git > ~/.config/ways-of-working/repo
 ```
 
 To test changes, copy the files as `ci-test.user-data` and `ci-test.meta-data`

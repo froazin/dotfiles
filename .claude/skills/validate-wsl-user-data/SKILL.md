@@ -20,7 +20,7 @@ It renders the template with `cloud-init devel render` against a set of mock
 
 | Case | Proves |
 | ---- | ------ |
-| `full` | every key renders; user, `.gitconfig`, `allowed_signers` and GitHub workspace dir appear |
+| `full` | every key renders; user, `.gitconfig`, `allowed_signers`, the ways-of-working config and GitHub workspace dir appear |
 | `empty-values`, `no-meta-data` | nothing user-specific renders, YAML stays valid |
 | `hostile-name` | `"`, `\`, `#`, `;`, `'` and `{{ }}` in `git_name` read back exactly through `git config` |
 | `legacy-noreply`, `plain-email`, `path-traversal` | the `~/workspaces/github.com/<owner>` extraction only accepts GitHub noreply addresses with a safe owner name |
@@ -28,6 +28,7 @@ It renders the template with `cloud-init devel render` against a set of mock
 | `extensions-string` | a comma/space-separated `vscode_extensions` string installs each ID |
 | `extensions-hostile` | only `publisher.name` IDs reach the shell; every other entry is reported with `printf`, ASCII-escaped, including non-BMP characters and backslashes |
 | `extensions-mapping`, `extensions-number`, `extensions-no-user` | other types install nothing, and nothing installs without a user |
+| `wow-padded`, `wow-multiline`, `wow-space`, `wow-list`, `wow-unicode`, `wow-no-user` | a trimmed one-word ASCII `ways_of_working` is written to the user's deferred `~/.config/ways-of-working/repo`; anything else is reported with `printf`, ASCII-escaped, and nothing is written without a user |
 | `signingkey-ecdsa` | a `key::`-prefixed ECDSA key is trusted for `git_email` |
 | `signingkey-no-email`, `signingkey-odd-email`, `signingkey-unicode-email` | a whitespace-padded key without `git_email`, or with one unsafe as a principal, is trusted for any identity (`*`), and `user.signingkey` is trimmed so git still reads it as a literal key |
 | `signingkey-path`, `signingkey-bare-ecdsa`, `signingkey-hostile`, `signingkey-unknown-type`, `signingkey-bad-type`, `signingkey-unicode-type`, `signingkey-unicode-data`, `signingkey-type-only`, `signingkey-list`, `signingkey-no-user` | only a key git reads as literal (`key::` or `ssh-`) with a valid `<type> <base64>` gets an `allowed_signers` file and `gpg.ssh.allowedSignersFile`, and only with a user; `gpg.ssh.program` is kept without one |

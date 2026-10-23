@@ -43,6 +43,9 @@ trap 'rm -rf "$work"' EXIT
 #               null for no allowed_signers file (default: null)
 #   signer_key - private key that signs for signer (default: the ed25519 key)
 #   ssh_program - gpg.ssh.program git must read back (default: "")
+#   wow_repo  - URL in ~/.config/ways-of-working/repo, or null for no file
+#               (default: null)
+#   wow_skipped - ways_of_working values reported as invalid (default: none)
 python3 -I - "$work" "$meta_data" << 'EOF' || exit 2
 import json
 import subprocess
@@ -84,10 +87,26 @@ cases = {
               "git_email": "1+jdoe@users.noreply.github.com",
               "git_signingkey": pubkey,
               "git_ssh_program": program,
-              "vscode_extensions": ["Anthropic.claude-code", "ms-python.python"]},
+              "vscode_extensions": ["Anthropic.claude-code", "ms-python.python"],
+              "ways_of_working": "https://github.com/jdoe/ways-of-working.git"},
              {"user": True, "gh_dir": "jdoe", "git_name": "Jane Doe",
               "extensions": ["Anthropic.claude-code", "ms-python.python"],
-              "signer": "1+jdoe@users.noreply.github.com", "ssh_program": program}),
+              "signer": "1+jdoe@users.noreply.github.com", "ssh_program": program,
+              "wow_repo": "https://github.com/jdoe/ways-of-working.git"}),
+    "wow-padded": ({"username": "jdoe", "ways_of_working": " \tgit@example.com:team/wow \n"},
+                   {"user": True, "gh_dir": "", "git_name": "", "wow_repo": "git@example.com:team/wow"}),
+    "wow-multiline": ({"username": "jdoe", "ways_of_working": "https://example.com/a/b\nruncmd: [id]"},
+                      {"user": True, "gh_dir": "", "git_name": "",
+                       "wow_skipped": ["https://example.com/a/b\nruncmd: [id]"]}),
+    "wow-space": ({"username": "jdoe", "ways_of_working": "https://example.com/a/b c"},
+                  {"user": True, "gh_dir": "", "git_name": "", "wow_skipped": ["https://example.com/a/b c"]}),
+    "wow-list": ({"username": "jdoe", "ways_of_working": ["https://example.com/a/b"]},
+                 {"user": True, "gh_dir": "", "git_name": "", "wow_skipped": ["['https://example.com/a/b']"]}),
+    "wow-unicode": ({"username": "jdoe", "ways_of_working": "https://exämple.com/\U0001F600/b"},
+                    {"user": True, "gh_dir": "", "git_name": "",
+                     "wow_skipped": ["https://ex\\xe4mple.com/\\U0001f600/b"]}),
+    "wow-no-user": ({"ways_of_working": "https://example.com/a/b"},
+                    {"user": False, "gh_dir": "", "git_name": ""}),
     "signingkey-no-email": ({"username": "jdoe", "git_signingkey": f"  key::{pubkey}\t"},
                             {"user": True, "gh_dir": "", "git_name": "", "signer": "*"}),
     "signingkey-odd-email": ({"username": "jdoe", "git_email": "a,b *@example.com", "git_signingkey": pubkey},
@@ -153,7 +172,7 @@ with open(f"{work}/cases", "w") as index:
     for name, (meta, expect) in cases.items():
         meta = {"instance-id": "ubuntu-wsl", **meta}
         expect = {"extensions": [], "skipped": [], "signer": None, "signer_key": f"{work}/signer",
-                  "ssh_program": "", **expect}
+                  "ssh_program": "", "wow_repo": None, "wow_skipped": [], **expect}
         with open(f"{work}/{name}.json", "w") as f:
             json.dump({"v1": v1, "ds": {"meta_data": meta}}, f)
         with open(f"{work}/{name}.expect.json", "w") as f:
@@ -227,6 +246,20 @@ if any(c[:3] != ["runuser", "-l", "jdoe"] for c in installs):
 skipped = [c[-1] for c in cmds if c[0] == "printf" and "vscode_extensions" in str(c[1])]
 if skipped != expect["skipped"]:
     problems.append(f"extensions reported as skipped {skipped!r}, expected {expect['skipped']!r}")
+
+wow_paths = [p for p in files if p.endswith("/.config/ways-of-working/repo")]
+wow = files.get(wow_paths[0]) if wow_paths else None
+if (wow is not None) != (expect["wow_repo"] is not None):
+    problems.append(f"ways-of-working config rendered={wow is not None}, expected {expect['wow_repo'] is not None}")
+elif wow is not None:
+    if (wow_paths[0], wow.get("owner"), wow.get("defer")) != \
+            ("/home/jdoe/.config/ways-of-working/repo", "jdoe:jdoe", True):
+        problems.append("the ways-of-working config is not a deferred file owned by the user in their home")
+    if wow["content"] != expect["wow_repo"] + "\n":
+        problems.append(f"ways-of-working config is {wow['content']!r}, expected {expect['wow_repo']!r}")
+wow_skipped = [c[-1] for c in cmds if c[0] == "printf" and "ways_of_working" in str(c[1])]
+if wow_skipped != expect["wow_skipped"]:
+    problems.append(f"ways_of_working reported as skipped {wow_skipped!r}, expected {expect['wow_skipped']!r}")
 
 # The first `runuser -l` starts the user's systemd manager, which only reads
 # global wants when it starts.
