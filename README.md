@@ -41,7 +41,7 @@ matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases, the `ws` workspace picker and the first-login setup of a [ways-of-working repository](#ways-of-working). |
@@ -125,6 +125,27 @@ standard library only) and does nothing without it. It is a guard rail
 against an agent's habits, not a security boundary: a script on disk, another
 interpreter or another git client can still get past it. Its tests are in
 `src/modules/claude/tests/`.
+
+### No session links
+
+Claude Code can add a link to its session (`claude.ai/code/session_...`) to
+commit messages and pull requests, and in a public repository anyone can
+follow it. The `claude` module turns that off with `attribution.sessionUrl:
+false`, and installs a rule, `~/.claude/rules/no-session-links.md`, and a
+hook, `~/.claude/hooks/no_session_links.sh` (logic in the `.py` beside it),
+that denies any tool call that would publish one another way.
+
+- It looks for session URLs, `Claude-Session:` trailers, session IDs and
+  `claude.ai` artifact links.
+- It checks Bash and Monitor commands, the message and body files they pass
+  to `git` and `gh` (`-F`, `--file`, `--body-file`, `--notes-file`), text
+  written with Edit, Write, MultiEdit and NotebookEdit, and every MCP tool's
+  input.
+- On `git push`, it checks the messages of commits no remote has yet.
+
+The `Co-Authored-By:` footer and the "Generated with Claude Code" line are
+fine. Like the guard, it needs `python3`, does nothing without it, and is a
+guard rail rather than a security boundary.
 
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
