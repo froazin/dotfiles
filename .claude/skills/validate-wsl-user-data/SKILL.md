@@ -1,17 +1,17 @@
 ---
 name: validate-wsl-user-data
-description: Render and validate the WSL cloud-init user-data (src/wsl/ubuntu.user-data) against mock meta-data. Use after any change to src/wsl/ubuntu.user-data or src/wsl/ubuntu.meta-data, before saying a change works.
+description: Render and validate the WSL cloud-init user-data (src/wsl/Ubuntu-26.04.user-data) against mock meta-data. Use after any change to src/wsl/Ubuntu-26.04.user-data or src/wsl/Ubuntu-26.04.meta-data, before saying a change works.
 allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/validate.sh *) Bash(${CLAUDE_SKILL_DIR}/scripts/validate.sh)
 ---
 
 # Validate the WSL user-data
 
-`src/wsl/ubuntu.user-data` is a Jinja template (`## template: jinja`), so
+`src/wsl/Ubuntu-26.04.user-data` is a Jinja template (`## template: jinja`), so
 running `cloud-init schema` on the raw file proves nothing. Run:
 
 ```sh
-${CLAUDE_SKILL_DIR}/scripts/validate.sh            # defaults to src/wsl/ubuntu.user-data
-${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/file  # with ubuntu.meta-data beside it
+${CLAUDE_SKILL_DIR}/scripts/validate.sh            # defaults to src/wsl/Ubuntu-26.04.user-data
+${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/file  # with Ubuntu-26.04.meta-data beside it
 ${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/user-data path/to/meta-data
 ```
 
@@ -24,7 +24,7 @@ It renders the template with `cloud-init devel render` against a set of mock
 | `empty-values`, `no-meta-data` | nothing user-specific renders, YAML stays valid |
 | `hostile-name` | `"`, `\`, `#`, `;`, `'` and `{{ }}` in `git_name` read back exactly through `git config` |
 | `legacy-noreply`, `plain-email`, `path-traversal` | the `~/workspaces/github.com/<owner>` extraction only accepts GitHub noreply addresses with a safe owner name |
-| `shipped-meta-data` | the repo's `ubuntu.meta-data` template parses and its `vscode_extensions` install |
+| `shipped-meta-data` | the repo's `Ubuntu-26.04.meta-data` template parses and its `vscode_extensions` install |
 | `extensions-string` | a comma/space-separated `vscode_extensions` string installs each ID |
 | `extensions-hostile` | only `publisher.name` IDs reach the shell; every other entry is reported with `printf`, ASCII-escaped, including non-BMP characters and backslashes |
 | `extensions-mapping`, `extensions-number`, `extensions-no-user` | other types install nothing, and nothing installs without a user |

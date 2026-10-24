@@ -14,7 +14,7 @@ so it must stay generic.
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
 | `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
-| `src/wsl/` | `.wslconfig`, `ubuntu.user-data` (Jinja cloud-config), `ubuntu.meta-data` (fill-in template). |
+| `src/wsl/` | `.wslconfig`, `Ubuntu-26.04.user-data` (Jinja cloud-config), `Ubuntu-26.04.meta-data` (fill-in template). |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. |
 | `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. |
 
@@ -33,7 +33,7 @@ are touched.
   guards every tool at runtime.
 - **Keep the three dependency lists in sync** when adding a tool:
   `src/modules/*/bootstrap.sh`, the README dependency table, and `packages` in
-  `src/wsl/ubuntu.user-data`.
+  `src/wsl/Ubuntu-26.04.user-data`.
 - **Prefer native mechanisms** (cloud-init modules, zsh builtins, official
   installers run as the user so they can self-update) over custom glue.
 - **Don't write outside the repo to test.** Use throwaway `HOME`s

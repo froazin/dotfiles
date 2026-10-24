@@ -1,8 +1,8 @@
-# Identifying inputs and personal choices for src/wsl/ubuntu.user-data.
+# Identifying inputs and personal choices for src/wsl/Ubuntu-26.04.user-data.
 #
-# Copy to %USERPROFILE%\.cloud-init\ubuntu.meta-data and fill in. Keep the
-# filled copy out of this repository. cloud-init only reads meta-data named
-# after the instance, so this matches an instance named "Ubuntu".
+# Copy to %USERPROFILE%\.cloud-init\Ubuntu-26.04.meta-data and fill in. Keep
+# the filled copy out of this repository. cloud-init only reads meta-data named
+# after the instance, so this matches an instance named "Ubuntu-26.04".
 #
 # Leave a value empty to skip it.
 

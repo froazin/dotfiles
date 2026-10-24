@@ -1,14 +1,15 @@
 #!/usr/bin/env sh
 #
-# Render src/wsl/ubuntu.user-data against mock instance-data and validate the
-# result; `cloud-init schema` on the raw Jinja template proves nothing.
+# Render src/wsl/Ubuntu-26.04.user-data against mock instance-data and validate
+# the result; `cloud-init schema` on the raw Jinja template proves nothing.
 #
-# Usage: validate.sh [path/to/ubuntu.user-data [path/to/ubuntu.meta-data]]
+# Usage: validate.sh [path/to/Ubuntu-26.04.user-data
+#                     [path/to/Ubuntu-26.04.meta-data]]
 
 set -u
 
-user_data="${1:-src/wsl/ubuntu.user-data}"
-meta_data="${2:-$(dirname "$user_data")/ubuntu.meta-data}"
+user_data="${1:-src/wsl/Ubuntu-26.04.user-data}"
+meta_data="${2:-$(dirname "$user_data")/Ubuntu-26.04.meta-data}"
 failed="false"
 
 fail()

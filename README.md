@@ -188,8 +188,8 @@ check works on any distribution.
 
 ## WSL provisioning
 
-`src/wsl/ubuntu.user-data` is a cloud-init config that builds an Ubuntu 26.04 WSL
-instance from scratch:
+`src/wsl/Ubuntu-26.04.user-data` is a cloud-init config that builds an Ubuntu
+26.04 WSL instance from scratch:
 
 - installs every package the modules above depend on, plus containers and a
   KVM/libvirt stack for running VMs inside WSL;
@@ -222,14 +222,14 @@ stays on your machine:
 | Repo file | Copy to |
 | --------- | ------- |
 | `src/wsl/.wslconfig` | `%USERPROFILE%\.wslconfig` |
-| `src/wsl/ubuntu.user-data` | `%USERPROFILE%\.cloud-init\ubuntu.user-data` |
-| `src/wsl/ubuntu.meta-data` (fill it in) | `%USERPROFILE%\.cloud-init\ubuntu.meta-data` |
+| `src/wsl/Ubuntu-26.04.user-data` | `%USERPROFILE%\.cloud-init\Ubuntu-26.04.user-data` |
+| `src/wsl/Ubuntu-26.04.meta-data` (fill it in) | `%USERPROFILE%\.cloud-init\Ubuntu-26.04.meta-data` |
 
-cloud-init matches both files by instance name, so install the distro as
-`Ubuntu` from PowerShell:
+cloud-init matches both files by instance name, so install the distro under
+its default name, `Ubuntu-26.04`, from PowerShell:
 
 ```powershell
-wsl --install Ubuntu-26.04 --name Ubuntu
+wsl --install Ubuntu-26.04
 ```
 
 cloud-init runs on first boot only, and the first launch waits for it. When it
@@ -237,7 +237,7 @@ finishes, restart the instance so the `wsl.conf` settings and the new group
 memberships take effect:
 
 ```powershell
-wsl --terminate Ubuntu
+wsl --terminate Ubuntu-26.04
 ```
 
 If the meta-data gives no `username`, WSL asks you to create a user as normal,

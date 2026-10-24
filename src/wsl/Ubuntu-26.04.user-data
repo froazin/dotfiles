@@ -1,9 +1,9 @@
 ## template: jinja
 #cloud-config
 
-# Copy to %USERPROFILE%\.cloud-init\ubuntu.user-data, alongside a filled-in
-# copy of src/wsl/ubuntu.meta-data, before installing the distro. It applies
-# once, on first boot, and the OOBE waits for it.
+# Copy to %USERPROFILE%\.cloud-init\Ubuntu-26.04.user-data, alongside a
+# filled-in copy of src/wsl/Ubuntu-26.04.meta-data, before installing the
+# distro. It applies once, on first boot, and the OOBE waits for it.
 
 {% set user = ds.meta_data.username or '' %}
 {% set git_name = ds.meta_data.git_name or '' %}

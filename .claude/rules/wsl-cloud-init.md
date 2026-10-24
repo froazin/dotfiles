@@ -5,10 +5,11 @@ paths:
 
 # WSL cloud-init (`src/wsl/`)
 
-`ubuntu.user-data` is deployed to `%USERPROFILE%\.cloud-init\ubuntu.user-data`
-next to a filled-in copy of `ubuntu.meta-data`; both match an instance named
-`Ubuntu` (`wsl --install Ubuntu-26.04 --name Ubuntu`). It runs once, on first
-boot, and Ubuntu's OOBE (`/usr/lib/wsl/wsl-setup`) waits for it.
+`Ubuntu-26.04.user-data` is deployed to
+`%USERPROFILE%\.cloud-init\Ubuntu-26.04.user-data` next to a filled-in copy of
+`Ubuntu-26.04.meta-data`; both match an instance named `Ubuntu-26.04`, the
+default name from `wsl --install Ubuntu-26.04`. It runs once, on first boot,
+and Ubuntu's OOBE (`/usr/lib/wsl/wsl-setup`) waits for it.
 
 ## Keep it native
 
@@ -69,8 +70,9 @@ side.
 
 The repo is public. No usernames, emails, signing keys, hostnames or
 `/mnt/c/Users/<name>/` paths in any file here; they belong in the user's
-private meta-data. `ubuntu.meta-data` is a template: identifying values stay
-empty, and only generic defaults such as `vscode_extensions` are filled in.
+private meta-data. `Ubuntu-26.04.meta-data` is a template: identifying values
+stay empty, and only generic defaults such as `vscode_extensions` are filled
+in.
 
 ## Validate
 

@@ -107,7 +107,7 @@ allow git commit --amend --no-edit
 allow git tag -s v1 -m v1
 allow git push origin main
 allow jq -r '.hooks' ~/.claude/settings.json
-allow grep -rn 'gpgsign' src/wsl/ubuntu.user-data
+allow grep -rn 'gpgsign' src/wsl/Ubuntu-26.04.user-data
 allow cat ~/.claude/hooks/commit_signing_guard.py
 locked-deny git commit -m x
 locked-deny git -C /r commit --amend --no-edit
