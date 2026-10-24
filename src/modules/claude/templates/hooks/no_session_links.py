@@ -171,7 +171,7 @@ def decide(payload: dict[str, object]) -> Reply | None:
         "The user never wants Claude Code session links, Claude-Session trailers or claude.ai "
         "links in commits, pull requests, comments, issues, releases or files, even when Claude "
         "Code's attribution guidance asks for them. Remove the link and try again. Keep the "
-        "Co-Authored-By footer and the 'Generated with Claude Code' line. Don't work around this hook."
+        "Co-Authored-By footer. Don't work around this hook."
     )
     return {
         "hookSpecificOutput": {

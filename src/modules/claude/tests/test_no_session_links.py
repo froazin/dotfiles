@@ -217,7 +217,9 @@ def test_wrapper_ignores_shadowing_modules(tmp_path: Path) -> None:
 
 def test_settings_run_every_hook() -> None:
     settings = hook.as_object(json.loads((TEMPLATES / "settings.json").read_text()))
-    assert hook.as_object(settings.get("attribution")).get("sessionUrl") is False
+    attribution = hook.as_object(settings.get("attribution"))
+    assert attribution.get("sessionUrl") is False
+    assert attribution.get("pr") == ""
     pre_tool_use = hook.as_list(hook.as_object(settings.get("hooks")).get("PreToolUse"))
     matchers = {
         hook.as_str(hook.as_object(command).get("command")).rsplit("/", 1)[-1]: hook.as_str(

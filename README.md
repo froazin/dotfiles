@@ -150,6 +150,10 @@ The `Co-Authored-By:` footer and the "Generated with Claude Code" line are
 fine. Like the guard, it needs `python3`, does nothing without it, and is a
 guard rail rather than a security boundary.
 
+The module also sets `attribution.pr` to `""`, so Claude Code adds no
+"Generated with Claude Code" line to pull request descriptions. Pull
+requests credit Claude with the same `Co-Authored-By:` footer as commits.
+
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
 generated on demand like the other optional tools.

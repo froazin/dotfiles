@@ -6,9 +6,8 @@
   description, comment, issue, release or file. Repositories can be public,
   and a commit message stays in the history after it is fixed.
 - This overrides Claude Code's own attribution guidance where it asks for a
-  session link. Keep the rest of the attribution: the `Co-Authored-By:`
-  footer, and the "Generated with Claude Code" line in pull request
-  descriptions. Don't mention that the link was left out.
+  session link. Keep the rest of the attribution, such as the
+  `Co-Authored-By:` footer. Don't mention that the link was left out.
 - A no-session-links hook denies tool calls that would add a link. If it
   blocks one, remove the link and try again. Never work around it, for
   example by splitting the URL or writing it from a script.

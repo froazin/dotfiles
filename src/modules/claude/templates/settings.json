@@ -15,7 +15,8 @@
     ]
   },
   "attribution": {
-    "sessionUrl": false
+    "sessionUrl": false,
+    "pr": ""
   },
   "model": "claude-opus-5-5",
   "theme": "auto",
