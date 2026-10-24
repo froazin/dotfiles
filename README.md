@@ -196,8 +196,8 @@ instance from scratch:
 - enables podman's Docker-compatible API socket (`podman.socket`): rootless
   for every user, and the system socket for root;
 - writes `/etc/wsl.conf` and disables swap to match `src/wsl/.wslconfig`;
-- bridges Windows tools (VS Code, 1Password CLI, OpenSSH) into the Linux
-  `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
+- bridges Windows tools (VS Code, 1Password CLI, OpenSSH, `clip`) into the
+  Linux `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
 - creates the user with zsh and passwordless sudo, when a username is given;
 - installs `uv`, `pulumi`, `nvm`, Claude Code (`claude`) and the Claude
   Platform CLI (`ant`) as that user, and the VS Code extensions listed in the

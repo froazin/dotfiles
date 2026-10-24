@@ -370,6 +370,7 @@ runcmd:
   - [ln, -sfn, "/mnt/c/Program Files/WinGet/Links/op.exe", /usr/local/bin/op]
   - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh.exe", /usr/local/bin/ssh]
   - [ln, -sfn, "/mnt/c/Program Files/OpenSSH/ssh-add.exe", /usr/local/bin/ssh-add]
+  - [ln, -sfn, /mnt/c/Windows/System32/clip.exe, /usr/local/bin/clip]
   - [systemctl, daemon-reload]
   - [systemctl, enable, --now, disable-swap.service, make-root-rshared.service]
   # Not `systemctl --user`: runcmd has no user bus. Keep this above the first
