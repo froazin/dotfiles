@@ -41,7 +41,7 @@ matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, and a `settings.json` merged into whatever Claude Code has already written there. Honours `CLAUDE_CONFIG_DIR`. |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases, the `ws` workspace picker and the first-login setup of a [ways-of-working repository](#ways-of-working). |
@@ -66,11 +66,14 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | `podman` | `podman` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open`, `gh` |
 
-The `claude` module never overwrites `~/.claude/settings.json`, because Claude
-Code writes to it too (`/model`, `/config`, `/permissions`, plugins). The
+The `claude` module never overwrites `~/.claude/settings.json` or
+`~/.claude/keybindings.json`, because Claude Code writes to the first
+(`/model`, `/config`, `/permissions`, plugins) and you edit the second. Each
 template is deep-merged in with `jq`: its values win, nested objects merge
-key by key, lists are unioned, and every other key is kept. Without `jq` the
-template is only written where no settings exist yet.
+key by key, lists are unioned, and every other key is kept. Keybinding
+blocks merge by `context`, so the template's bindings go into your block for
+the same context rather than a second one. Without `jq` a template is only
+written where no file exists yet.
 
 ### Ways of working
 
