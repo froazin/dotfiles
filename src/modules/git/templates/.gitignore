@@ -3,10 +3,28 @@
 # A safe place in any repo for local files that should never be committed
 .local/
 
-.mcp.json
-
 # Personal settings, such as .claude/ and .vscode/settings.local.json
 settings.local.json
+
+# Claude Code: everything in .claude/ is local state, such as worktrees/,
+# except the shared project config re-included below
+**/.claude/*
+!**/.claude/CLAUDE.md
+!**/.claude/AGENTS.md
+!**/.claude/settings.json
+!**/.claude/rules/
+!**/.claude/skills/
+!**/.claude/commands/
+!**/.claude/agents/
+!**/.claude/agent-memory/
+!**/.claude/output-styles/
+!**/.claude/workflows/
+!**/.claude/hooks/
+!**/.claude/loop.md
+!**/.claude/launch.json
+!**/.claude/claude-security-guidance.md
+!**/.claude/security-patterns.*
+CLAUDE.local.md
 
 *.env
 *.envrc
