@@ -14,6 +14,9 @@
       "Read(~/.ssh/**)"
     ]
   },
+  "attribution": {
+    "sessionUrl": false
+  },
   "model": "claude-opus-5-5",
   "theme": "auto",
   "modelSettings": {
@@ -31,6 +34,16 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/hooks/commit_signing_guard.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Monitor|Edit|Write|MultiEdit|NotebookEdit|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/hooks/no_session_links.sh",
             "timeout": 10
           }
         ]

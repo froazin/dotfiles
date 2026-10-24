@@ -44,7 +44,7 @@ claude_check_soft_deps()
         else
             case "$cmd" in
                 jq) log error "Missing dependency: jq is not installed. Settings will only be seeded where none exist, not merged into existing ones." ;;
-                python3) log error "Missing dependency: python3 is not installed. The commit-signing guard hook is installed but does nothing until it is." ;;
+                python3) log error "Missing dependency: python3 is not installed. The commit-signing guard and no-session-links hooks are installed but do nothing until it is." ;;
                 *) log error "Missing dependency: $cmd is not installed." ;;
             esac
             failed="true"

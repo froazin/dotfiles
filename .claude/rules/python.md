@@ -19,7 +19,10 @@ paths:
   and narrow JSON input with `as_object`/`as_str` rather than `Any`.
 - Format and lint with `uv run ruff format` and `uv run ruff check`; their
   settings are in `pyproject.toml`, pyright's in `pyrightconfig.json`.
-- Tests are pytest, next to the module (`src/modules/<name>/tests/`). Hook
-  behaviour cases go in `commit_signing_guard.cases`; add one for every fix.
+- Tests are pytest, next to the module (`src/modules/<name>/tests/`).
+  Commit-signing guard cases go in `commit_signing_guard.cases`, and
+  no-session-links cases in `test_no_session_links.py`; add one for every
+  fix. Build fixture session links from parts, or the installed hook blocks
+  writing the test file.
 - Hooks are run by a `.sh` wrapper with `python3 -I`, so a module beside the
   script or on `PYTHONPATH` can't shadow the standard library.
