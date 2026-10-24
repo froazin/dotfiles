@@ -5,6 +5,9 @@
 
 .mcp.json
 
+# Personal settings, such as .claude/ and .vscode/settings.local.json
+settings.local.json
+
 *.env
 *.envrc
 
