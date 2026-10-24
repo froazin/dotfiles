@@ -13,11 +13,10 @@
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git show *)"
-    ],
-    "ask": [
+      "Bash(git show *)",
       "Bash(git push *)"
-    ]
+    ],
+    "ask": []
   },
   "hooks": {
     "PostToolUse": [
