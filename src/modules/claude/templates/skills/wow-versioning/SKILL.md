@@ -35,7 +35,7 @@ What a commit changes decides the bump, not its type. Start at the top and use t
 - **Source code** is code that's reflected in the final build artifact. CI configuration, tests and docs aren't source code.
 - Content wins over type. A `feat(docs):` commit that doesn't touch the source code doesn't bump the version.
 - A dependency update is a patch when it changes the build artifact, and no bump when it only affects tests or tooling.
-- Mark every breaking change with both a `!` and a `BREAKING CHANGE:` footer, whatever its type and whatever the version (load the wow-commits skill).
+- Mark every breaking change with a `!` in the header, and start the body with what breaks, why, who is affected and what to do instead, whatever its type and whatever the version (load the wow-commits skill).
 - For flags, load the wow-feature-flags skill.
 
 ## Before the stable release
@@ -85,6 +85,6 @@ Reviewers check this in the pull request.
 Before you decide a bump, check that:
 
 - You looked at what the commit changes, not only its type.
-- A breaking change is marked with `!` and a `BREAKING CHANGE:` footer.
+- A breaking change is marked with `!` in the header, and its body starts with what breaks, why, who is affected and what to do instead.
 - The bump follows the alpha, beta or `v1.0.0` rules, as the project's current version needs.
 - A Go module moving to `v2` or later also changes its module path.
