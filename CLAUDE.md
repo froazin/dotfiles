@@ -4,19 +4,31 @@ Public dotfiles for a zsh workstation on Ubuntu (WSL first), plus a cloud-init
 config that builds that WSL instance from scratch. People copy from this repo,
 so it must stay generic.
 
+## Contents
+
+1. [Layout](#layout)
+1. [Ground rules](#ground-rules)
+1. [Checks](#checks)
+1. [Commits](#commits)
+
 ## Layout
 
-| Path | What |
-| ---- | ---- |
-| `src/install.sh` | Entry point. Runs each `src/modules/<name>/bootstrap.sh` whose `<name>` is a command on `PATH`. |
-| `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). |
-| `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard and no-session-links hooks and rules); `settings.json` and `keybindings.json` are deep-merged in with jq. pytest tests in `tests/`. |
-| `src/modules/git/` | Global gitignore, sets `core.excludesfile`. |
-| `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. |
-| `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. |
-| `src/wsl/` | `.wslconfig`, `Ubuntu-26.04.user-data` (Jinja cloud-config), `Ubuntu-26.04.meta-data` (fill-in template). |
-| `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. |
-| `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. |
+Before you change a path, read the design doc in its row. The docs in `docs/`
+describe the code on the same branch: update them in the same commit as a
+change that makes them out of date.
+
+| Path | What | Read first |
+| ---- | ---- | ---------- |
+| `src/install.sh` | Entry point. Runs each `src/modules/<name>/bootstrap.sh` whose `<name>` is a command on `PATH`. | [docs/installer.md](docs/installer.md) |
+| `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). | [docs/installer.md](docs/installer.md) |
+| `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard and no-session-links hooks and rules); `settings.json` and `keybindings.json` are deep-merged in with jq. pytest tests in `tests/`. | [docs/claude/overview.md](docs/claude/overview.md), then [commit-signing-guard.md](docs/claude/commit-signing-guard.md) or [no-session-links.md](docs/claude/no-session-links.md) for a hook |
+| `src/modules/git/` | Global gitignore, sets `core.excludesfile`. | [docs/git-module.md](docs/git-module.md) |
+| `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. | [docs/podman-module.md](docs/podman-module.md) |
+| `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. | [docs/zsh/overview.md](docs/zsh/overview.md), and [ways-of-working-setup.md](docs/zsh/ways-of-working-setup.md) for `70-ways-of-working.zsh` |
+| `src/wsl/` | `.wslconfig`, `Ubuntu-26.04.user-data` (Jinja cloud-config), `Ubuntu-26.04.meta-data` (fill-in template). | [docs/wsl/overview.md](docs/wsl/overview.md), and [meta-data.md](docs/wsl/meta-data.md) for a meta-data key |
+| `docs/` | Design docs for engineers changing the code. | — |
+| `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. | — |
+| `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. | — |
 
 Path-specific guidance lives in `.claude/rules/` and loads when those files
 are touched.
