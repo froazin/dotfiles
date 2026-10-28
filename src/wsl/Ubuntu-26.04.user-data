@@ -29,6 +29,29 @@
 {% set extensions.invalid = extensions.invalid + [ext | string] %}
 {% endif %}
 {% endfor %}
+{% set gh_extensions = ds.meta_data.gh_extensions or [] %}
+{% if gh_extensions is string %}
+{% set gh_extensions = gh_extensions.replace(',', ' ').split() %}
+{% elif gh_extensions is mapping or gh_extensions is not sequence %}
+{% set gh_extensions = [] %}
+{% endif %}
+{# Only [https://][host/]owner/repo, each part [A-Za-z0-9][A-Za-z0-9._-]*, reach the shell. #}
+{% set gh_exts = namespace(valid=[], invalid=[]) %}
+{% for ext in gh_extensions %}
+{% set url = (ext | string).startswith('https://') %}
+{% set parts = (ext | string).removeprefix('https://').split('/') %}
+{% set check = namespace(ok=ext is string and parts | length in ((3,) if url else (2, 3))) %}
+{% for part in parts %}
+{% if not (part[:1].isalnum() and part.isascii() and part.replace('.', '').replace('_', '').replace('-', '').isalnum()) %}
+{% set check.ok = false %}
+{% endif %}
+{% endfor %}
+{% if check.ok %}
+{% set gh_exts.valid = gh_exts.valid + [ext] %}
+{% else %}
+{% set gh_exts.invalid = gh_exts.invalid + [ext | string] %}
+{% endif %}
+{% endfor %}
 {% set ways_of_working = ds.meta_data.ways_of_working or '' %}
 {% if ways_of_working is string %}
 {% set ways_of_working = ways_of_working.strip() %}
@@ -415,6 +438,14 @@ runcmd:
 {# ASCII first: tojson writes non-BMP characters as surrogate pairs, which YAML decodes to lone surrogates that fail all of runcmd. printf, not echo: dash's echo interprets backslashes. #}
 {% for ext in extensions.invalid %}
   - [printf, "Skipped vscode_extensions entry, not a publisher.name ID: %s\n", {{ ext.encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
+{% endfor %}
+  # gh needs no login to install a public extension, and skips one that is
+  # already installed.
+{% for ext in gh_exts.valid %}
+  - [runuser, -l, "{{ user }}", -c, "gh extension install {{ ext }}"]
+{% endfor %}
+{% for ext in gh_exts.invalid %}
+  - [printf, "Skipped gh_extensions entry, not an [https://][host/]owner/repo: %s\n", {{ ext.encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]
 {% endfor %}
 {% if ways_of_working and not wow_repo %}
   - [printf, "Skipped ways_of_working, not a single URL: %s\n", {{ (ways_of_working | string).encode('ascii', 'backslashreplace').decode('ascii') | tojson }}]

@@ -31,10 +31,10 @@ side.
   breaks YAML. Never write `{#`, `{{` or `{%` inside embedded shell.
 - Undefined meta-data keys are falsy; read them as `ds.meta_data.x or ''`.
   Values rendered into `.gitconfig` go through the `gitval` macro. Meta-data
-  is YAML, so a key can be a list (`vscode_extensions`); normalise its type
-  first, and let only validated items into shell. Report the rest with
-  `printf %s` and an ASCII-escaped `tojson` value: a non-BMP character
-  otherwise becomes lone surrogates that fail all of runcmd.
+  is YAML, so a key can be a list (`vscode_extensions`, `gh_extensions`);
+  normalise its type first, and let only validated items into shell. Report
+  the rest with `printf %s` and an ASCII-escaped `tojson` value: a non-BMP
+  character otherwise becomes lone surrogates that fail all of runcmd.
 - runcmd runs as root with no user bus, so `systemctl --user` fails there;
   enable user units with `systemctl --global enable`. The first
   `runuser -l <user>` entry starts the user's manager (pam_systemd), which
@@ -71,8 +71,8 @@ side.
 The repo is public. No usernames, emails, signing keys, hostnames or
 `/mnt/c/Users/<name>/` paths in any file here; they belong in the user's
 private meta-data. `Ubuntu-26.04.meta-data` is a template: identifying values
-stay empty, and only generic defaults such as `vscode_extensions` are filled
-in.
+stay empty, and only generic defaults such as `vscode_extensions` and
+`gh_extensions` are filled in.
 
 ## Validate
 

@@ -204,6 +204,9 @@ check works on any distribution.
   meta-data's `vscode_extensions` (Claude Code and Python to start with) into
   the instance's VS Code server (this needs VS Code and its WSL extension on
   Windows);
+- installs the GitHub CLI extensions listed in the meta-data's
+  `gh_extensions` (`gh act`, to run GitHub Actions workflows locally, to start
+  with) as that user. Public extensions install before you log in to gh;
 - configures git, then clones this repo and runs `install.sh`. With a
   `git_signingkey`, commits are signed, and a literal key (not a key file
   path) goes in `~/.config/git/allowed_signers`, so
@@ -215,9 +218,9 @@ check works on any distribution.
   `sudo su` keeps the same shell and prompt. Without a username, root's copy
   comes from a temporary clone.
 
-The user-data holds nothing personal. Your username, git identity and VS Code
-extensions go in the meta-data, which cloud-init reads alongside it and which
-stays on your machine:
+The user-data holds nothing personal. Your username, git identity, VS Code
+extensions and gh extensions go in the meta-data, which cloud-init reads
+alongside it and which stays on your machine:
 
 | Repo file | Copy to |
 | --------- | ------- |
@@ -259,6 +262,8 @@ case "$(uname -m)" in aarch64) a=arm64 ;; *) a=amd64 ;; esac
 mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant
 # The extensions in your meta-data's vscode_extensions, e.g.:
 code --install-extension Anthropic.claude-code --install-extension ms-python.python
+# The extensions in your meta-data's gh_extensions, for example:
+gh extension install https://github.com/nektos/gh-act
 git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
 # Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
 PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
