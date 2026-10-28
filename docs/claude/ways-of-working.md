@@ -28,14 +28,14 @@ The zsh module exports `WORKSPACE_DIR` (see [zsh module](../zsh/overview.md#how-
 ```mermaid
 flowchart TD
     accTitle: How the ways of working parts fit together
-    accDescr: Claude Code runs wow_marker.sh with a mode for each hook event. The hook looks for a .wow marker under the workspace root, keeps per-session state and adds a Ways of working line to Claude's context when the state changes. The always-loaded wow-core rule reads the latest line and routes each task to a wow-* skill. The pre-skill mode denies a wow-* skill when nothing touched in the session is marked.
-    events["Claude Code hook events"] -->|"a mode argument and JSON on stdin"| hook["wow_marker.sh"]
-    hook -->|"walks up from the touched directory"| marker[".wow under WORKSPACE_DIR"]
-    hook -->|"last state key and on-flag"| state[("claude-wow state directory")]
-    hook -->|"a Ways of working line, only on a change"| context["Claude's context"]
+    accDescr: Claude Code runs wow_marker.sh with a mode and the event JSON for each hook event. The hook walks up to a .wow marker under the workspace root, keeps per-session state and adds an on or off line to Claude's context when the state changes. The always-loaded wow-core rule reads the latest line, and Claude loads the wow-* skill for the task. The pre-skill mode denies a wow-* skill when nothing touched in the session is marked.
+    events["Claude Code hook events"] -->|"mode and JSON"| hook["wow_marker.sh"]
+    hook -->|"walks up to"| marker[".wow under WORKSPACE_DIR"]
+    hook -->|"keeps"| state[("claude-wow state directory")]
+    hook -->|"on or off, on change"| context["Claude's context"]
     rule["rules/wow-core.md, always loaded"] -->|"reads the latest line"| context
-    rule -->|"routes each task to"| skills["skills/wow-*"]
-    hook -->|"pre-skill: exit 2 when nothing touched is on"| skills
+    context -->|"Claude loads one for the task"| skills["skills/wow-*"]
+    hook -->|"pre-skill can deny"| skills
 ```
 
 ## How it works
