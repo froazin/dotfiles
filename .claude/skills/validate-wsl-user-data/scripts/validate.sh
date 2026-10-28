@@ -40,6 +40,8 @@ trap 'rm -rf "$work"' EXIT
 #   git_name  - exact user.name git must read back from the rendered .gitconfig
 #   extensions - VS Code extension IDs installed, in order (default: none)
 #   skipped   - vscode_extensions entries reported as invalid (default: none)
+#   gh_extensions - gh extensions installed, in order (default: none)
+#   gh_skipped - gh_extensions entries reported as invalid (default: none)
 #   signer    - principal git should verify git_signingkey's signatures as, or
 #               null for no allowed_signers file (default: null)
 #   signer_key - private key that signs for signer (default: the ed25519 key)
@@ -79,6 +81,10 @@ hostile = "O'Hara \"Q\" \\ # ; {{ x }}"
 bad_extensions = ["a.b; rm -rf ~", "$(id).x", "a.b'c", 'a"b.c', "no-dot", ".x", "x.",
                   "-a.b", "a.b.c", "a b.c", "a\nb.c", "\u00fcn.code", "\U0001F600.x",
                   "C:\\new\\cext.vsix", "{{ x }}", 42, None]
+bad_gh_extensions = ["a/b; rm -rf ~", "$(id)/x", "a/b'c", 'a"b/c', "no-slash", "/a/b", "a/b/", "-a/b",
+                     "a/b/c/d", "a b/c", "a\nb/c", ".", "./gh-x", "../a/b", "a/.b", "\u00fcn/gh-x",
+                     "\U0001F600/x", "http://github.com/a/gh-b", "https://github.com/a",
+                     "https://a/b/c/d", "git@github.com:a/gh-b", "C:\\x\\gh-y", "a/{{ x }}", 42, None]
 
 with open(meta_template) as f:
     shipped = yaml.safe_load(f)
@@ -89,9 +95,11 @@ cases = {
               "git_signingkey": pubkey,
               "git_ssh_program": program,
               "vscode_extensions": ["Anthropic.claude-code", "ms-python.python"],
+              "gh_extensions": ["https://github.com/nektos/gh-act", "jdoe/gh-x"],
               "ways_of_working": "https://github.com/jdoe/ways-of-working.git"},
              {"user": True, "gh_dir": "jdoe", "git_name": "Jane Doe",
               "extensions": ["Anthropic.claude-code", "ms-python.python"],
+              "gh_extensions": ["https://github.com/nektos/gh-act", "jdoe/gh-x"],
               "signer": "1+jdoe@users.noreply.github.com", "ssh_program": program,
               "wow_repo": "https://github.com/jdoe/ways-of-working.git"}),
     "wow-padded": ({"username": "jdoe", "ways_of_working": " \tgit@example.com:team/wow \n"},
@@ -141,7 +149,8 @@ cases = {
                            {"user": False, "gh_dir": "", "git_name": ""}),
     "shipped-meta-data": ({**shipped, "username": "jdoe"},
                           {"user": True, "gh_dir": "", "git_name": "",
-                           "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
+                           "extensions": ["Anthropic.claude-code", "ms-python.python"],
+                           "gh_extensions": ["https://github.com/nektos/gh-act"]}),
     "extensions-string": ({"username": "jdoe", "vscode_extensions": "Anthropic.claude-code, ms-python.python"},
                           {"user": True, "gh_dir": "", "git_name": "",
                            "extensions": ["Anthropic.claude-code", "ms-python.python"]}),
@@ -156,6 +165,23 @@ cases = {
                           {"user": True, "gh_dir": "", "git_name": ""}),
     "extensions-no-user": ({"vscode_extensions": ["Anthropic.claude-code"]},
                            {"user": False, "gh_dir": "", "git_name": ""}),
+    "gh-extensions-string": ({"username": "jdoe", "gh_extensions": "nektos/gh-act, github.com/jdoe/gh-x"},
+                             {"user": True, "gh_dir": "", "git_name": "",
+                              "gh_extensions": ["nektos/gh-act", "github.com/jdoe/gh-x"]}),
+    "gh-extensions-hostile": ({"username": "jdoe",
+                               "gh_extensions": ["a/gh-b", *bad_gh_extensions, "example.com/Org_1/gh-x.y",
+                                                 "https://github.com/nektos/gh-act.git"]},
+                              {"user": True, "gh_dir": "", "git_name": "",
+                               "gh_extensions": ["a/gh-b", "example.com/Org_1/gh-x.y",
+                                                 "https://github.com/nektos/gh-act.git"],
+                               "gh_skipped": [str(e).encode("ascii", "backslashreplace").decode("ascii")
+                                              for e in bad_gh_extensions]}),
+    "gh-extensions-mapping": ({"username": "jdoe", "gh_extensions": {"a": "b/c"}},
+                              {"user": True, "gh_dir": "", "git_name": ""}),
+    "gh-extensions-number": ({"username": "jdoe", "gh_extensions": 5},
+                             {"user": True, "gh_dir": "", "git_name": ""}),
+    "gh-extensions-no-user": ({"gh_extensions": ["nektos/gh-act"]},
+                              {"user": False, "gh_dir": "", "git_name": ""}),
     "empty-values": ({"username": None, "git_name": None},
                      {"user": False, "gh_dir": "", "git_name": ""}),
     "no-meta-data": ({}, {"user": False, "gh_dir": "", "git_name": ""}),
@@ -172,7 +198,7 @@ cases = {
 with open(f"{work}/cases", "w") as index:
     for name, (meta, expect) in cases.items():
         meta = {"instance-id": "ubuntu-wsl", **meta}
-        expect = {"extensions": [], "skipped": [], "signer": None, "signer_key": f"{work}/signer",
+        expect = {"extensions": [], "skipped": [], "gh_extensions": [], "gh_skipped": [], "signer": None, "signer_key": f"{work}/signer",
                   "ssh_program": "", "wow_repo": None, "wow_skipped": [], **expect}
         with open(f"{work}/{name}.json", "w") as f:
             json.dump({"v1": v1, "ds": {"meta_data": meta}}, f)
@@ -247,6 +273,16 @@ if any(c[:3] != ["runuser", "-l", "jdoe"] for c in installs):
 skipped = [c[-1] for c in cmds if c[0] == "printf" and "vscode_extensions" in str(c[1])]
 if skipped != expect["skipped"]:
     problems.append(f"extensions reported as skipped {skipped!r}, expected {expect['skipped']!r}")
+
+gh_installs = [c for c in cmds if str(c[-1]).startswith("gh extension install ")]
+gh_installed = [str(c[-1]).removeprefix("gh extension install ") for c in gh_installs]
+if gh_installed != expect["gh_extensions"]:
+    problems.append(f"gh extensions installed {gh_installed}, expected {expect['gh_extensions']}")
+if any(c[:4] != ["runuser", "-l", "jdoe", "-c"] for c in gh_installs):
+    problems.append("a gh extension install does not run as the user")
+gh_skipped = [c[-1] for c in cmds if c[0] == "printf" and "gh_extensions" in str(c[1])]
+if gh_skipped != expect["gh_skipped"]:
+    problems.append(f"gh extensions reported as skipped {gh_skipped!r}, expected {expect['gh_skipped']!r}")
 
 wow_paths = [p for p in files if p.endswith("/.config/ways-of-working/repo")]
 wow = files.get(wow_paths[0]) if wow_paths else None

@@ -39,3 +39,9 @@ ways_of_working:
 vscode_extensions:
   - Anthropic.claude-code
   - ms-python.python
+
+# GitHub CLI extensions to install, as a repository URL
+# (https://github.com/owner/gh-name), host/owner/gh-name or owner/gh-name.
+# Needs a username. Add your own.
+gh_extensions:
+  - https://github.com/nektos/gh-act
