@@ -4,6 +4,9 @@ skip_global_compinit=1
 
 typeset -U path fpath
 
+# Root of the <host>/<owner>/<repo> clones; Claude Code hooks and ws read it.
+export WORKSPACE_DIR=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
+
 path=(
   "$HOME/.local/bin"
   "$HOME/bin"

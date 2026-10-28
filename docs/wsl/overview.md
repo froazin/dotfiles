@@ -91,7 +91,7 @@ Anything that needs a package, or a group a package creates such as `libvirt`, i
 | `/etc/systemd/user/podman.socket.d/10-not-root.conf` | `ConditionUser=!root`, so root's user manager doesn't start a second rootful podman API |
 | `/usr/local/bin/start` | Opens a URL or file with its Windows handler through PowerShell `Start-Process`. Used as `$BROWSER` |
 
-With a username, three deferred files go into the user's home: `~/.gitconfig`, `~/.config/git/allowed_signers` and `~/.config/ways-of-working/repo`. [WSL meta-data](meta-data.md) says when each is written.
+With a username, two deferred files go into the user's home: `~/.gitconfig` and `~/.config/git/allowed_signers`. [WSL meta-data](meta-data.md) says when each is written.
 
 ### runcmd
 
@@ -125,7 +125,6 @@ flowchart TD
 - **Windows tools:** `runcmd` links `code`, `op`, `ssh`, `ssh-add` and `clip` from fixed paths under `/mnt/c/` into `/usr/local/bin/`. A link to a missing program is left dangling.
 - **The dotfiles:** the user-data expects [`src/install.sh`](../../src/install.sh) at a fixed path in this repository, and `~/.zshenv` from the [zsh module](../zsh/overview.md) to put `~/.local/bin` and `~/.pulumi/bin` on `PATH` later. `~/.zshenv` also exports `BROWSER=/usr/local/bin/start` when that file is executable.
 - **Workspaces:** `~/workspaces/<host>/<owner>/<repo>` is the layout the zsh `ws` picker reads. The user-data clones nvm and this repository there.
-- **Ways of working:** the user-data only writes the clone URL to `~/.config/ways-of-working/repo`. The zsh module clones it on the first login, as [Ways-of-working setup](../zsh/ways-of-working-setup.md) describes.
 
 ## Errors and logging
 

@@ -55,6 +55,7 @@ On a rerun with nothing changed, `install_file` logs at debug level that the fil
 - `.local/` anywhere, as a place in any repository for files that are never committed.
 - `settings.local.json` anywhere, such as `.claude/settings.local.json` and `.vscode/settings.local.json`.
 - Everything under any `.claude/` directory (`**/.claude/*`), then re-includes the shared project config that Claude Code reads from a repository, such as `CLAUDE.md`, `settings.json`, `rules/`, `skills/` and `hooks/`. `CLAUDE.local.md` is ignored anywhere too.
+- `.wow` anywhere (`**/.wow`): the marker that turns the claude module's ways of working on for its directory and everything below it (see [Claude Code module](claude/overview.md)).
 - Environment and secret files: `*.env`, `*.envrc`, `*.*_pass`, `*.*_password` and `*.*_passphrase`.
 - The `*.secrets`, `*.vars` and `*.inputs` files that nektos/act reads.
 - Windows and macOS metadata, such as `Thumbs.db`, `*:Zone.Identifier` and `.DS_Store`.
@@ -99,6 +100,7 @@ Every failure ends with the error `Failed to create gitignore file.` from `boots
 - **Treat only exit status 1 as unset.** Any other failure is reported, so the module never overwrites the user's setting or writes to a path it misread.
 - **Install through `install_file`.** A rerun with an unchanged file is silent and a changed file is overwritten with a warning. A symbolic link is never followed. Someone who manages the file another way, such as with another dotfiles tool, can link it and keep control (inferred reason).
 - **Ignore `.claude/` by default.** Claude Code keeps local state in `.claude/`, such as `worktrees/`, so the template ignores the directory and re-includes the shared files. `.mcp.json` sits outside `.claude/` and isn't ignored, because it holds team-shared MCP servers.
+- **Ignore `.wow` markers.** A marker is one person's opt-in, so it's never committed: a committed marker would turn the ways of working on for everyone who clones the repository.
 - **Ignore `settings.local.json` globally.** Claude Code adds `**/.claude/settings.local.json` to the global excludes file the first time it writes one, unless a repository already ignores it. The template already covers it, so Claude Code shouldn't need to change the file (inferred, untested).
 
 ## Limits

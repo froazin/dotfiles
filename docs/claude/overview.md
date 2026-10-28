@@ -17,12 +17,13 @@ How the `claude` module installs Claude Code's user configuration, how it merges
 
 ## Overview
 
-The module writes the Claude Code configuration directory: `$CLAUDE_CONFIG_DIR` when it's set, otherwise `~/.claude`. It installs two hooks and the rules that go with them, and merges in shared settings and keybindings. It doesn't install Claude Code itself: the WSL user-data does that (see [WSL overview](../wsl/overview.md)).
+The module writes the Claude Code configuration directory: `$CLAUDE_CONFIG_DIR` when it's set, otherwise `~/.claude`. It installs three hooks, the rules that go with them and the ways of working skills, and merges in shared settings and keybindings. It doesn't install Claude Code itself: the WSL user-data does that (see [WSL overview](../wsl/overview.md)).
 
 [`src/install.sh`](../../src/install.sh) runs the module only when `claude` is on `PATH` (see [Installer](../installer.md)). Each hook has its own design doc:
 
 - [Commit-signing guard](commit-signing-guard.md): stops agents bypassing commit signing, and makes them stop when signing fails.
 - [No-session-links hook](no-session-links.md): keeps Claude Code session links out of commits, pull requests and files.
+- [Ways of working](ways-of-working.md): turns the `wow-core` rule and the `wow-*` skills on for directories with a `.wow` marker.
 
 ## Layout
 
@@ -32,9 +33,10 @@ src/modules/claude/
 ├── templates/                   installed as the config directory
 │   ├── settings.json            merged, never copied over
 │   ├── keybindings.json         merged, never copied over
-│   ├── hooks/                   commit_signing_guard.{sh,py}, no_session_links.{sh,py}
-│   └── rules/                   commit-signing.md, no-session-links.md
-└── tests/                       pytest tests for both hooks
+│   ├── hooks/                   commit_signing_guard.{sh,py}, no_session_links.{sh,py}, wow_marker.sh
+│   ├── rules/                   commit-signing.md, no-session-links.md, wow-core.md
+│   └── skills/                  wow-*/SKILL.md, and references/ for the longer ones
+└── tests/                       pytest tests for the hooks and the ways of working content
 ```
 
 The templates sit directly in `templates/`, not in `templates/.claude/`, because pyright skips any path with a dot-directory in it.
@@ -46,12 +48,12 @@ This flowchart shows the functions in [`bootstrap.sh`](../../src/modules/claude/
 ```mermaid
 flowchart TD
     accTitle: How the claude module installs its configuration
-    accDescr: install.sh calls bootstrap, which checks the soft dependencies and then runs claude_install_config. That creates the config directory, copies every template except the two JSON files and merges settings.json and keybindings.json with jq.
+    accDescr: install.sh calls bootstrap, which checks the soft dependencies and then runs claude_install_config. That creates the config directory, copies every template except the two JSON files, including the hooks, rules and skills, and merges settings.json and keybindings.json with jq.
     install["src/install.sh"] -->|"claude is on PATH, so it calls"| bootstrap["bootstrap()"]
     bootstrap -->|"checks jq and python3"| deps["claude_check_soft_deps()"]
     bootstrap -->|"then calls"| config["claude_install_config()"]
     config -->|"creates the directory, mode 0700"| dirs["claude_create_dirs()"]
-    config -->|"copies hooks and rules"| tpl["claude_install_templates()"]
+    config -->|"copies hooks, rules and skills"| tpl["claude_install_templates()"]
     config -->|"settings.json, then keybindings.json"| merge["claude_merge_json()"]
     tpl -->|"each file through"| install_file["install_file()"]
     merge -->|"missing or empty file: copies through"| install_file
@@ -62,7 +64,7 @@ flowchart TD
 
 - `claude_create_dirs` creates the config directory, sets it to mode `0700` and creates `agents`, `commands`, `skills`, `rules`, `output-styles` and `hooks` in it (`CLAUDE_SUBDIRS`).
 - `claude_install_templates` lists every file under `templates/` with `find`, leaving out `settings.json`, `keybindings.json`, `__pycache__/` and `*.pyc`. It copies each one with `install_file` from [`common.sh`](../../src/internal/common.sh), which overwrites a changed file, skips an identical one and leaves a symbolic link alone.
-- A template that's executable in the repository is set to mode `755` once it's copied. That's how the two `.sh` hook wrappers stay runnable.
+- A template that's executable in the repository is set to mode `755` once it's copied. That's how the `.sh` hooks stay runnable.
 - Templates are copied, not linked, so a change in the repository takes effect when the installer runs again.
 
 ### Merging settings and keybindings
@@ -103,19 +105,28 @@ Observed in a throwaway home: an existing `"model"` was replaced by the template
 | --- | --- | --- |
 | `PreToolUse` | `Bash\|Monitor\|Edit\|Write\|MultiEdit\|NotebookEdit` | `commit_signing_guard.sh` |
 | `PreToolUse` | `Bash\|Monitor\|Edit\|Write\|MultiEdit\|NotebookEdit\|mcp__.*` | `no_session_links.sh` |
+| `PreToolUse` | `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|Monitor` | `wow_marker.sh pre-tool` |
+| `PreToolUse` | `Skill` | `wow_marker.sh pre-skill` |
 | `PostToolUse` | `Bash` | `commit_signing_guard.sh` |
+| `PostToolUse` | `Bash` | `wow_marker.sh post-bash` |
 | `PostToolUseFailure` | `Bash` | `commit_signing_guard.sh` |
 | `UserPromptSubmit` | none | `commit_signing_guard.sh` |
+| `SessionStart` | none | `wow_marker.sh session-start` |
+| `SubagentStart` | none | `wow_marker.sh subagent-start` |
+| `UserPromptExpansion` | none | `wow_marker.sh expand` |
+| `SessionEnd` | none | `wow_marker.sh session-end` |
 
-Each hook's `command` is `"${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/hooks/<name>.sh`, so it finds the hook wherever the config directory is.
+Each hook's `command` is `"${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/hooks/<name>.sh`, plus a mode argument for `wow_marker.sh`. It finds the hook wherever the config directory is.
 
 [`keybindings.json`](../../src/modules/claude/templates/keybindings.json) binds, in the `Chat` context, <kbd>Enter</kbd> to `chat:newline` and <kbd>Ctrl</kbd>+<kbd>Enter</kbd> and <kbd>Shift</kbd>+<kbd>Enter</kbd> to `chat:submit`.
+
+The files in [`rules/`](../../src/modules/claude/templates/rules/) have no `paths` frontmatter, so Claude Code loads them in every session: `commit-signing.md`, `no-session-links.md` and `wow-core.md`. The eleven `wow-*` skills in [`skills/`](../../src/modules/claude/templates/skills/) load on demand, and only apply where a `.wow` marker turns the ways of working on (see [Ways of working](ways-of-working.md)).
 
 ## Errors and logging
 
 The module logs with `log` from [`logging.sh`](../../src/internal/logging.sh) and follows the installer's dependency grading:
 
-- `claude_check_soft_deps` logs an error for a missing `jq` or `python3`, and `bootstrap` returns 1, but the configuration is still installed. Without `python3`, both hooks are installed and do nothing.
+- `claude_check_soft_deps` logs an error for a missing `jq` or `python3`, and `bootstrap` returns 1, but the configuration is still installed. Without `python3`, both Python hooks are installed and do nothing. `wow_marker.sh` needs only `sh` and basic utilities, so it works without either.
 - Each step sets a failure flag rather than stopping, so one failed file doesn't stop the rest.
 - A `jq` error is reduced to its first line, with `"` and `\` removed, so it fits in the JSON log line.
 - A failed merge removes its temporary file and leaves the destination unchanged.
@@ -124,7 +135,8 @@ The module logs with `log` from [`logging.sh`](../../src/internal/logging.sh) an
 
 - The config directory is mode `0700`, because Claude Code keeps credentials and session history there in plain text (per the comment in `claude_create_dirs`).
 - The `permissions.deny` rules keep common secret files out of Claude's `Read` tool. They don't stop a shell command from reading them.
-- The hook wrappers run `python3 -I`, so a module next to the hook or on `PYTHONPATH` can't shadow the standard library. The hooks use the standard library only.
+- The Python hooks' wrappers run `python3 -I`, so a module next to the hook or on `PYTHONPATH` can't shadow the standard library. Those hooks use the standard library only.
+- `wow_marker.sh` never puts an absolute path in Claude's context (see [Ways of working](ways-of-working.md#security-and-privacy)).
 - The templates hold no identifying data, and the module never reads any.
 
 ## Tests
@@ -138,8 +150,9 @@ uv run pytest
 - [`pyproject.toml`](../../pyproject.toml) puts `src/modules/claude/templates/hooks` on the import path, so the tests import the hooks as modules. [`pyrightconfig.json`](../../pyrightconfig.json) does the same for type checking.
 - [`conftest.py`](../../src/modules/claude/tests/conftest.py) turns off bytecode writing, so no `__pycache__` appears in `templates/hooks/`.
 - [`test_commit_signing_guard.py`](../../src/modules/claude/tests/test_commit_signing_guard.py) runs the one-line cases in [`commit_signing_guard.cases`](../../src/modules/claude/tests/commit_signing_guard.cases), whose header explains the format, plus structural tests.
-- [`test_no_session_links.py`](../../src/modules/claude/tests/test_no_session_links.py) builds its fixture links from parts, so the installed hook doesn't block writing the file. It also checks the `attribution` settings and that every `PreToolUse` hook is executable.
-- Observed: 422 tests passed on this branch.
+- [`test_no_session_links.py`](../../src/modules/claude/tests/test_no_session_links.py) builds its fixture links from parts, so the installed hook doesn't block writing the file. It also checks the `attribution` settings and that every `PreToolUse` hook's script is executable, ignoring any mode argument.
+- [`test_wow_marker.py`](../../src/modules/claude/tests/test_wow_marker.py) runs `wow_marker.sh` in a throwaway home, and [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the `wow-*` rule and skills (see [Ways of working](ways-of-working.md#tests)).
+- Observed: 599 tests passed on this branch.
 
 ## Decisions
 
@@ -147,7 +160,7 @@ uv run pytest
 - **Replace hooks by command.** A plain array union would keep an outdated copy of a template hook next to the new one. Each hook runs through a `.sh` wrapper so its command stays the same (per the comment in each wrapper), and the merge can find and replace it.
 - **Merge keybindings by context.** A union would add a second block for a context whenever the template's block changed.
 - **Slurp each file on its own** with its own `--slurpfile`, so one file's contents can never shift the other's (per the comment on `CLAUDE_JSON_MERGE`).
-- **Python behind a shell wrapper.** The wrapper exits 0 without `python3`, which Claude Code treats as no decision, so a missing interpreter never blocks a tool.
+- **Python behind a shell wrapper.** The wrapper exits 0 without `python3`, which Claude Code treats as no decision, so a missing interpreter never blocks a tool. `wow_marker.sh` is plain `sh` instead, because it runs on almost every tool call (see [Ways of working](ways-of-working.md#decisions)).
 
 ## Limits
 

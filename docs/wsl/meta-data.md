@@ -22,17 +22,15 @@ The header turns each key into the variables the cloud-config uses. This flowcha
 ```mermaid
 flowchart LR
     accTitle: Where each meta-data key ends up
-    accDescr: The username gates everything in the user's home. Git keys go into .gitconfig through gitval, and a literal signing key also goes into allowed_signers. A GitHub noreply email gives a workspace directory. Extension lists become one runcmd install each, and ways_of_working becomes a config file. Rejected values become printf lines.
+    accDescr: The username gates everything in the user's home. Git keys go into .gitconfig through gitval, and a literal signing key also goes into allowed_signers. A GitHub noreply email gives a workspace directory. Extension lists become one runcmd install each, and rejected entries become printf lines.
     username["username"] -->|"users: and runuser"| home["/home/username"]
     git["git_name, git_email, git_signingkey, git_ssh_program"] -->|gitval| gitconfig["~/.gitconfig"]
     git -->|"literal key only"| signers["~/.config/git/allowed_signers"]
     git -->|"noreply git_email"| ghdir["~/workspaces/github.com/owner"]
     vscode["vscode_extensions"] -->|"valid IDs"| codeinstall["code --install-extension"]
     gh["gh_extensions"] -->|"valid IDs"| ghinstall["gh extension install"]
-    wow["ways_of_working"] -->|"one ASCII word"| repo["~/.config/ways-of-working/repo"]
     vscode -->|rejected| printf["runcmd printf"]
     gh -->|rejected| printf
-    wow -->|rejected| printf
 ```
 
 ## Keys
@@ -46,7 +44,6 @@ Every key apart from `instance-id` needs `username`: without one, the user-data 
 | `git_name`, `git_email` | String | Empty | `[user]` in `~/.gitconfig` |
 | `git_signingkey` | String | Empty | `user.signingkey`, `gpg.format`, `commit.gpgsign`, `gpg.ssh.allowedSignersFile` and `allowed_signers` |
 | `git_ssh_program` | String | Empty | `gpg.ssh.program` |
-| `ways_of_working` | String | Empty | `~/.config/ways-of-working/repo` |
 | `vscode_extensions` | List or string | `Anthropic.claude-code`, `ms-python.python` | One `code --install-extension` per ID |
 | `gh_extensions` | List or string | `https://github.com/nektos/gh-act` | One `gh extension install` per ID |
 
@@ -100,18 +97,13 @@ flowchart TD
 
 Each install is its own `runcmd` entry, so one failure doesn't stop the rest.
 
-### `ways_of_working`
-
-A string value is trimmed. It passes when it's one word of printable ASCII: no space, tab or newline. Any other type, such as a list, is rejected. The user-data writes it, with a trailing newline, to `~/.config/ways-of-working/repo` as a deferred file the user owns. It doesn't check that the value is a clone URL: the zsh module does that on the first login, as [Ways-of-working setup](../zsh/ways-of-working-setup.md) describes.
-
 ## Reporting rejected values
 
-Each rejected list entry, and a rejected `ways_of_working`, gets its own `runcmd` entry that prints why it was skipped:
+Each rejected list entry gets its own `runcmd` entry that prints why it was skipped:
 
 ```text
 Skipped vscode_extensions entry, not a publisher.name ID: %s
 Skipped gh_extensions entry, not an [https://][host/]owner/repo: %s
-Skipped ways_of_working, not a single URL: %s
 ```
 
 - The value is the entry's string form, with non-ASCII characters escaped by Python's `backslashreplace` and then quoted by Jinja's `tojson`. A non-string entry, such as `42`, prints as `42`.

@@ -26,6 +26,9 @@ settings.local.json
 !**/.claude/security-patterns.*
 CLAUDE.local.md
 
+# Claude Code ways of working: a .wow marker is local opt-in state
+**/.wow
+
 *.env
 *.envrc
 

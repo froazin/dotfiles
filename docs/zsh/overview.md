@@ -1,6 +1,6 @@
 # zsh module
 
-How the `zsh` module installs its configuration and how that configuration loads, for engineers changing anything under [src/modules/zsh/](../../src/modules/zsh/). The first-login setup of a ways-of-working repository has its own doc, [Ways-of-working setup](ways-of-working-setup.md).
+How the `zsh` module installs its configuration and how that configuration loads, for engineers changing anything under [src/modules/zsh/](../../src/modules/zsh/).
 
 ## Contents
 
@@ -48,7 +48,9 @@ When a template starts depending on a new tool, update the lists in `bootstrap.s
 
 ## How it loads
 
-zsh reads [.zshenv](../../src/modules/zsh/templates/.zshenv) in every shell, including scripts. It sets `skip_global_compinit`, `path` (with `~/.local/bin`, `~/bin` and `~/.pulumi/bin` first and `/snap/bin` last), `XDG_DATA_DIRS` for snap desktop files, `EDITOR` and `VISUAL`, `BROWSER` (when a Windows bridge exists), `LIBVIRT_DEFAULT_URI`, `GCC_COLORS` and `VIRTUAL_ENV_DISABLE_PROMPT`. It also sets `DOCKER_HOST` and `REGISTRY_AUTH_FILE` for podman, each only when unset and `podman` is installed (see [podman module](../podman-module.md)).
+zsh reads [.zshenv](../../src/modules/zsh/templates/.zshenv) in every shell, including scripts. It sets `skip_global_compinit`, `WORKSPACE_DIR`, `path` (with `~/.local/bin`, `~/bin` and `~/.pulumi/bin` first and `/snap/bin` last), `XDG_DATA_DIRS` for snap desktop files, `EDITOR` and `VISUAL`, `BROWSER` (when a Windows bridge exists), `LIBVIRT_DEFAULT_URI`, `GCC_COLORS` and `VIRTUAL_ENV_DISABLE_PROMPT`. It also sets `DOCKER_HOST` and `REGISTRY_AUTH_FILE` for podman, each only when unset and `podman` is installed (see [podman module](../podman-module.md)).
+
+`.zshenv` exports `WORKSPACE_DIR` as `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`, the root of the `<host>/<owner>/<repo>` clones. A value already in the environment wins, and a root shell under `sudo` gets the invoking user's `~/workspaces`. The `ws` picker reads it, and so do Claude Code hooks, because Claude Code started from zsh inherits it (see [Claude Code module](../claude/overview.md)).
 
 Interactive shells then read [.zshrc](../../src/modules/zsh/templates/.zshrc), which only sources `~/.zshrc.d/*.zsh(N)` in name order. Each topic lives in one drop-in:
 
@@ -62,7 +64,6 @@ Interactive shells then read [.zshrc](../../src/modules/zsh/templates/.zshrc), w
 | [40-aliases.zsh](../../src/modules/zsh/templates/.zshrc.d/40-aliases.zsh) | Colour aliases for `ls` and `grep`, `browse` and `alert` |
 | [50-functions.zsh](../../src/modules/zsh/templates/.zshrc.d/50-functions.zsh) | The `workspaces` picker, its aliases `ws` and `workspace`, `wsc` and `_ws` |
 | [60-maintenance.zsh](../../src/modules/zsh/templates/.zshrc.d/60-maintenance.zsh) | `zshup` and `zshreload` |
-| [70-ways-of-working.zsh](../../src/modules/zsh/templates/.zshrc.d/70-ways-of-working.zsh) | `wow-setup` (see [Ways-of-working setup](ways-of-working-setup.md)) |
 | [90-plugins.zsh](../../src/modules/zsh/templates/.zshrc.d/90-plugins.zsh) | zsh-autosuggestions and zsh-syntax-highlighting |
 
 The order matters because later drop-ins use what earlier ones define. This diagram shows the main dependencies, including the Zsh Line Editor (ZLE) widgets the plugins wrap:
@@ -76,7 +77,6 @@ flowchart LR
     options -->|zsh_have_function| keys["05-keybindings.zsh"]
     options -->|zsh_have_function| completion["10-completion.zsh"]
     options -->|add-zsh-hook| prompt["30-prompt.zsh"]
-    options -->|add-zsh-hook| wow["70-ways-of-working.zsh"]
     completion -->|compdef| tools["20-tools.zsh"]
     completion -->|ZSH_COMPINIT_OK| functions["50-functions.zsh"]
     completion -->|"zcache_completion, ZSH_OPTIONAL_COMPLETIONS"| maintenance["60-maintenance.zsh"]
@@ -88,7 +88,7 @@ flowchart LR
 - Anything that calls `compdef` loads after `10-completion.zsh` and checks first that `compinit` ran, such as nvm's `bash_completion` and `_ws`.
 - `compinit` runs with `-C`, which skips its checks, only while `$ZSH_COMPDUMP` is under a day old. Otherwise it runs in full and `touch -c` restarts the day.
 - The prompt is a native zsh port of the devcontainers `common-utils` theme. `vcs_info` never checks for changes and is disabled under `/mnt`. A repository opts in with `git config zsh-theme.show-dirty 1` or hides the segment with `git config zsh-theme.hide-status 1`, and `_zp_repo_cfg` caches both on the config file's modification time.
-- `ws` lists directories exactly three levels below `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`, which is the `<host>/<owner>/<repo>` layout, and picks one with fzf.
+- `ws` lists directories exactly three levels below `$WORKSPACE_DIR`, which is the `<host>/<owner>/<repo>` layout, and picks one with fzf.
 
 ## Completion registry
 
@@ -116,15 +116,14 @@ Root gets its own copy of these files when the installer runs as root, as the WS
 - `EDITOR` is `code --wait` only when `code` is on `PATH` and the shell is a user's, or root's inside a dev container (`REMOTE_CONTAINERS=true`). Otherwise it's `vim`, then `vi`. `ws -c` follows the same rule.
 - `DOCKER_HOST` points at `/run/podman/podman.sock` for root and at the user's socket otherwise, and only when the socket exists and the shell's user owns it.
 - The prompt's dirty marker and the `ws` preview run `git status` only in repositories root owns, because git can run programs a repository's config names.
-- `ws` finds the invoking user's workspaces through `$SUDO_HOME`.
-- `wow-setup` never runs on its own as root.
+- `WORKSPACE_DIR` and `ws` find the invoking user's workspaces through `$SUDO_HOME`.
 - The window title uses `$ZSH_NAME`, because under `sudo -s` `$SHELL` is root's login shell.
 
 ## Errors and logging
 
 - `bootstrap.sh` logs through `log` from [logging.sh](../../src/internal/logging.sh) (see [Installer](../installer.md)). A missing soft dependency is an error and an optional one a warning (a debug message for root). The messages say the shell still works, or that the tool's integration stays dormant until it's installed.
 - `install_file` warns before it overwrites a file that differs, and fails, leaving the file alone, when the destination is a symbolic link. A failed copy or a link makes `zsh_install_config` fail, after it has tried every template.
-- At runtime the templates skip a missing tool without a message. The exception is `wow-setup`, which says so when it needs `git` to clone (see [Ways-of-working setup](ways-of-working-setup.md#errors-and-logging)). Commands the user runs, such as `ws`, print their errors to standard error and return non-zero.
+- At runtime the templates skip a missing tool without a message. Commands the user runs, such as `ws`, print their errors to standard error and return non-zero.
 
 ## Security and privacy
 
