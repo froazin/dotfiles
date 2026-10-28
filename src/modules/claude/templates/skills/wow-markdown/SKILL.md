@@ -32,7 +32,7 @@ How to write Markdown in a project: GitHub Flavored Markdown (GFM), the GitHub f
 | --- | --- | --- |
 | Alert | `> [!NOTE]` and four other types | Something the reader would regret missing. See [Alerts](#alerts) |
 | Collapsed section | `<details>` and `<summary>` | Optional detail most readers skip. See [Collapsed sections](#collapsed-sections) |
-| Diagram | A `mermaid` code block | Structure, flow, sequence or state. Load the wow-diagrams skill |
+| Diagram | A `mermaid` code block | Anything easier to see than to read, in any type Mermaid documents, such as an architecture, flow, sequence, state machine or data model. Load the wow-diagrams skill |
 | Task list | `- [ ]` and `- [x]` | The state of work in an issue or PR description |
 | Footnote | `[^1]` in the text and `[^1]: Note.` at the end | A source or an aside that would break the sentence |
 | Math | `$...$` inline, `$$...$$` or a `math` code block | A formula |

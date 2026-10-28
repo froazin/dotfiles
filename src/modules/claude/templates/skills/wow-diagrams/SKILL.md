@@ -12,11 +12,11 @@ How to draw diagrams in a project: always in Mermaid, with the diagram type that
 - Draw every diagram as a ```` ```mermaid ```` fenced code block. GitHub renders Mermaid in files, issues, PRs, discussions and wikis.
 - Don't use images of diagrams, ASCII art or another diagram language such as PlantUML or Graphviz. GitHub doesn't render them as diagrams, and an image can't be reviewed in a diff.
 - A directory tree is the exception: write it as a `text` code block.
-- Add a diagram wherever structure, flow, sequence or state is easier to see than to read. Every design doc has at least one (load the wow-repo-docs skill).
+- Add a diagram wherever something is easier to see than to read, such as how services and networks fit together, a flow, a sequence, a lifecycle, a data model or a timeline. Every design doc has at least one (load the wow-repo-docs skill).
 
 ## Pick the type
 
-Use any diagram type Mermaid documents. Pick the one that matches what you're showing:
+Use any diagram type Mermaid documents, and pick the most specific one for what you're showing. Don't draw everything as a flowchart: an architecture diagram shows services, groups and the links between them better than a flowchart of boxes does.
 
 | To show | Type | Keyword |
 | --- | --- | --- |
@@ -38,6 +38,7 @@ Use any diagram type Mermaid documents. Pick the one that matches what you're sh
 - Check the keyword and syntax in [Mermaid's syntax docs](https://mermaid.js.org/intro/) before you use a type for the first time. Mermaid marks its newer types as new, and many of their keywords end in `-beta`.
 - GitHub renders Mermaid with its own version, which can be older than Mermaid's docs. GitHub's docs say to check the version by rendering a `mermaid` block that holds only `info`. A type or syntax newer than that version shows an error instead of a diagram.
 - Before you commit a `-beta` type or other new syntax, check that it renders on GitHub, for example in the PR's rendered view of the file.
+- `architecture-beta` renders on GitHub, including groups and its built-in icons such as `internet`, `server` and `cloud` (observed).
 
 ## Validate every diagram
 
