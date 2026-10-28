@@ -280,5 +280,21 @@ wsl --install Ubuntu-26.04 --name ci-test
 wsl --unregister ci-test
 ```
 
+## Design docs
+
+How each part works, and why it's built that way, for anyone changing the
+code:
+
+- [Installer](docs/installer.md): `install.sh`, module discovery and the
+  shared helpers.
+- [git module](docs/git-module.md) and [podman module](docs/podman-module.md).
+- [zsh module](docs/zsh/overview.md), and its
+  [ways-of-working setup](docs/zsh/ways-of-working-setup.md).
+- [claude module](docs/claude/overview.md), the
+  [commit-signing guard](docs/claude/commit-signing-guard.md) and
+  [no session links](docs/claude/no-session-links.md).
+- [WSL provisioning](docs/wsl/overview.md) and its
+  [meta-data](docs/wsl/meta-data.md).
+
 ---
 Happy coding! :rocket:
