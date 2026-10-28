@@ -114,6 +114,7 @@ What a breaking change does to the version depends on whether the project has re
 - Use the attribution lines the session gives, exactly as given, such as the `Co-Authored-By:` line and any other trailers. The session's line usually names the model. The examples in this skill show only the form. The user's own rules still come first (see the wow-core rule).
 - Write the `Co-Authored-By:` value as `Name <email>`, with the email address inside angle brackets: `Co-Authored-By: Claude <noreply@anthropic.com>`. GitHub only credits a co-author written in this form. If a session's line leaves out the brackets, add them.
 - Put footers in the final paragraph, after any `BREAKING CHANGE:` footer, with nothing after them. Git and GitHub only read trailers from the last paragraph.
+- In a squash-merged PR, the footer goes on each commit on the branch, not in the PR description: GitHub adds it from the commits when it merges (load the wow-pull-requests skill).
 
 ## Commits made by tools
 

@@ -97,7 +97,7 @@ Prose that mentions them is fine: `claude.ai/code/session_...`, `Claude-Session:
 ## Decisions
 
 - **Settings first, hook second.** `attribution.sessionUrl: false` stops Claude Code adding the link itself. The hook catches a link that arrives any other way, such as text an agent writes into a file, a message file or an MCP call.
-- **Keep the `Co-Authored-By:` footer.** Pull requests credit Claude with the same footer as commits, which is why `attribution.pr` is `""` rather than a custom line.
+- **Keep the `Co-Authored-By:` footer.** Commits credit Claude with it, and a squash-merged pull request credits Claude through the `Co-authored-by:` trailer GitHub adds from the branch's commits. That's why `attribution.pr` is `""` rather than a custom line.
 - **Check unpushed commits on push.** A link already committed is still fixable until it's pushed. Once a remote has the commit, rewording it is the user's call, so the hook lets the push through.
 - **Plain `shlex` splitting.** The hook scans the raw command text for links, and only needs words to find `git`, `gh`, `push` and the file flags, so it doesn't use the [commit-signing guard](commit-signing-guard.md)'s shell lexer (inferred: the code doesn't say why).
 - **Fail open**: a broken hook must never break Claude Code.
