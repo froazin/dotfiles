@@ -3,9 +3,10 @@
 logs
 *.log
 
-# Claude Code
+# Claude Code (.wow is a local ways of working opt-in marker)
 **/settings.local.json
 .claude/worktrees
+.wow
 
 # Environments
 .env

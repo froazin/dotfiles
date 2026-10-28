@@ -21,10 +21,10 @@ change that makes them out of date.
 | ---- | ---- | ---------- |
 | `src/install.sh` | Entry point. Runs each `src/modules/<name>/bootstrap.sh` whose `<name>` is a command on `PATH`. | [docs/installer.md](docs/installer.md) |
 | `src/internal/` | Shared POSIX sh helpers: `logging.sh` (`log`), `common.sh` (`check_commands`, `install_file`, `is_wsl`, ...). | [docs/installer.md](docs/installer.md) |
-| `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard and no-session-links hooks and rules); `settings.json` and `keybindings.json` are deep-merged in with jq. pytest tests in `tests/`. | [docs/claude/overview.md](docs/claude/overview.md), then [commit-signing-guard.md](docs/claude/commit-signing-guard.md) or [no-session-links.md](docs/claude/no-session-links.md) for a hook |
+| `src/modules/claude/` | `templates/` is installed as `~/.claude` (commit-signing guard and no-session-links hooks and rules; the `wow_marker.sh` hook, `wow-core.md` rule and `wow-*` skills, on where a `.wow` marker is); `settings.json` and `keybindings.json` are deep-merged in with jq. pytest tests in `tests/`. | [docs/claude/overview.md](docs/claude/overview.md), then [commit-signing-guard.md](docs/claude/commit-signing-guard.md), [no-session-links.md](docs/claude/no-session-links.md) or [ways-of-working.md](docs/claude/ways-of-working.md) for a hook, rule or skill |
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. | [docs/git-module.md](docs/git-module.md) |
 | `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. | [docs/podman-module.md](docs/podman-module.md) |
-| `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. | [docs/zsh/overview.md](docs/zsh/overview.md), and [ways-of-working-setup.md](docs/zsh/ways-of-working-setup.md) for `70-ways-of-working.zsh` |
+| `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. | [docs/zsh/overview.md](docs/zsh/overview.md) |
 | `src/wsl/` | `.wslconfig`, `Ubuntu-26.04.user-data` (Jinja cloud-config), `Ubuntu-26.04.meta-data` (fill-in template). | [docs/wsl/overview.md](docs/wsl/overview.md), and [meta-data.md](docs/wsl/meta-data.md) for a meta-data key |
 | `docs/` | Design docs for engineers changing the code. | — |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. | — |

@@ -230,4 +230,6 @@ def test_settings_run_every_hook() -> None:
     }
     assert set(matchers["no_session_links.sh"].split("|")) >= {"Bash", "Monitor", "Write", "Edit", "mcp__.*"}
     for name in matchers:
-        assert os.access(HOOKS / name, os.X_OK), name
+        # A command may pass the script an argument, such as a mode.
+        script = name.split(" ", 1)[0]
+        assert os.access(HOOKS / script, os.X_OK), script

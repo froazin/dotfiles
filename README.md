@@ -41,10 +41,10 @@ matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. |
 | `git`  | Global gitignore (`core.excludesfile`). |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
-| `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases, the `ws` workspace picker and the first-login setup of a [ways-of-working repository](#ways-of-working). |
+| `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
 ### Dependencies
 
@@ -77,31 +77,25 @@ written where no file exists yet.
 
 ### Ways of working
 
-A ways-of-working repository holds your shared working practices for Claude
-Code, with a `user-config/` directory that belongs in `~/.claude`. Put its
-clone URL in `~/.config/ways-of-working/repo` (the WSL user-data writes it
-from the meta-data's `ways_of_working`):
+The `claude` module also installs a set of house defaults for contributing
+and writing: a rule, `~/.claude/rules/wow-core.md`, and the `wow-*` skills
+for commit messages, pull requests, branching, versioning, docs, Markdown,
+diagrams and GitHub wikis. They apply only where you opt in. A `.wow` file
+turns them on for the directory that holds it and everything below it,
+inside `~/workspaces` (`$WORKSPACE_DIR`, which `~/.zshenv` sets):
 
 ```bash
-mkdir -p ~/.config/ways-of-working
-echo https://github.com/OWNER/ways-of-working.git > ~/.config/ways-of-working/repo
+touch ~/workspaces/.wow                        # every repository
+touch ~/workspaces/github.com/.wow             # every GitHub repository
+touch ~/workspaces/github.com/OWNER/REPO/.wow  # one repository
 ```
 
-Until it's cloned, every zsh with a terminal runs `wow-setup` before its first
-prompt:
-
-1. It clones the repository to `~/workspaces/<host>/<owner>/<repo>`, where
-   `ws` finds it.
-1. If the clone fails and it's an `https` GitHub repository, it runs
-   `gh auth login --web` when gh isn't logged in yet, then clones it with
-   `gh repo clone`. That's how a private repository gets cloned on a new
-   machine.
-1. It copies `user-config/` into `~/.claude` (`CLAUDE_CONFIG_DIR` if set).
-
-Once the clone exists, new shells skip it. Run `wow-setup` again after a
-`git pull` to copy the changes, and delete the config file to stop a failed
-setup from asking again. It never runs as root, or in a shell without a
-terminal, such as the one VS Code starts to read your environment.
+A hook, `~/.claude/hooks/wow_marker.sh`, tells Claude when a directory it
+works in turns on or off, and denies the `wow-*` skills while nothing it has
+touched is marked. Without a marker nothing changes: Claude ignores them and
+follows each project's own guidance. A project's `CLAUDE.md` can override
+any default. The global gitignore ignores `.wow`, so a marker stays local.
+Delete it to turn them off again.
 
 ### Commit-signing guard
 
@@ -151,8 +145,9 @@ fine. Like the guard, it needs `python3`, does nothing without it, and is a
 guard rail rather than a security boundary.
 
 The module also sets `attribution.pr` to `""`, so Claude Code adds no
-"Generated with Claude Code" line to pull request descriptions. Pull
-requests credit Claude with the same `Co-Authored-By:` footer as commits.
+"Generated with Claude Code" line to pull request descriptions. When GitHub
+squash-merges a pull request, it credits Claude from the `Co-Authored-By:`
+footer on the branch's commits.
 
 `ant` is the [Claude Platform CLI](https://github.com/anthropics/anthropic-cli),
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
@@ -211,9 +206,6 @@ check works on any distribution.
   `git_signingkey`, commits are signed, and a literal key (not a key file
   path) goes in `~/.config/git/allowed_signers`, so
   `git log --show-signature` can verify them;
-- with a `ways_of_working` clone URL, writes it to
-  `~/.config/ways-of-working/repo`, so your first login sets up the
-  [ways-of-working repository](#ways-of-working);
 - makes zsh root's login shell and runs `install.sh` for root too, so
   `sudo su` keeps the same shell and prompt. Without a username, root's copy
   comes from a temporary clone.
@@ -267,9 +259,6 @@ gh extension install https://github.com/nektos/gh-act
 git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
 # Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
 PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
-# With a ways-of-working repository, your next shell sets it up.
-mkdir -p ~/.config/ways-of-working
-echo https://github.com/OWNER/ways-of-working.git > ~/.config/ways-of-working/repo
 ```
 
 To test changes, copy the files as `ci-test.user-data` and `ci-test.meta-data`
@@ -288,11 +277,11 @@ code:
 - [Installer](docs/installer.md): `install.sh`, module discovery and the
   shared helpers.
 - [git module](docs/git-module.md) and [podman module](docs/podman-module.md).
-- [zsh module](docs/zsh/overview.md), and its
-  [ways-of-working setup](docs/zsh/ways-of-working-setup.md).
+- [zsh module](docs/zsh/overview.md).
 - [claude module](docs/claude/overview.md), the
-  [commit-signing guard](docs/claude/commit-signing-guard.md) and
-  [no session links](docs/claude/no-session-links.md).
+  [commit-signing guard](docs/claude/commit-signing-guard.md),
+  [no session links](docs/claude/no-session-links.md) and the
+  [ways of working](docs/claude/ways-of-working.md).
 - [WSL provisioning](docs/wsl/overview.md) and its
   [meta-data](docs/wsl/meta-data.md).
 

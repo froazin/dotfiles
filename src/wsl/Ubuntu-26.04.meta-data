@@ -27,12 +27,6 @@ git_signingkey:
 # /mnt/c/Users/<you>/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe
 git_ssh_program:
 
-# Clone URL of a ways-of-working repository whose user-config/ is copied into
-# ~/.claude, e.g. https://github.com/<you>/ways-of-working.git. Your first
-# login clones it to ~/workspaces/<host>/<owner>/<repo>, and asks you to log
-# in with gh first when it's a private GitHub repository. Needs a username.
-ways_of_working:
-
 # VS Code extensions to install into the instance's VS Code server, by
 # Marketplace ID (publisher.name). Needs a username, and VS Code with its WSL
 # extension on Windows.
