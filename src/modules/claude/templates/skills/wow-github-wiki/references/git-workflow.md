@@ -21,7 +21,7 @@ Where the wiki repository lives, how changes get published, and how to check and
 
 - GitHub's docs: every wiki is its own Git repository, cloned from `https://github.com/OWNER/REPO.wiki.git`. It can be cloned only after a first page has been created on GitHub.
 - The wiki is published at `https://github.com/OWNER/REPO/wiki`.
-- Clone it as a standalone repository at `<wiki>/`, usually next to the Source clone at `<source>/`. The `## Ways of working` section of the project's `CLAUDE.md` gives the paths if they differ.
+- Clone it as a standalone repository at `<wiki>/`, usually next to the Source clone at `<source>/`. The project's `CLAUDE.md` gives the paths if they differ.
 - Every wiki edit, from the web editor or a push, is a commit in the wiki repository. Wiki commits never land in Source.
 - Run Git commands with `-C`, for example `git -C <wiki> status`, so each one shows which repository it acts on.
 
@@ -56,7 +56,7 @@ git -C <wiki> pull --ff-only
 - GitHub's wiki docs describe only two ways to change a wiki: the web editor and a direct push. Neither involves a pull request.
 - That wikis can't take pull requests isn't stated by GitHub. It comes from community sources, which describe the wiki as allowing only direct commits.
 - Projects that want review of wiki changes have to arrange it themselves. Some wikis' footers, for example, send contributors to a separate repository for pull requests (observed).
-- In the user's projects, the review step is the user's go-ahead before a push.
+- Here, the review step is the user's go-ahead before a push.
 
 ## Every Markdown file is published
 

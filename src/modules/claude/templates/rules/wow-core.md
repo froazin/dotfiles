@@ -1,7 +1,7 @@
 # Ways of working
 
-The user's house defaults for contributing and writing, held in this rule
-and the `wow-*` skills.
+House defaults for contributing and writing, held in this rule and the
+`wow-*` skills.
 
 ## When it applies
 
@@ -21,14 +21,26 @@ and the `wow-*` skills.
 
 1. The user's instructions in the session.
 1. The user's other rules, such as commit signing.
-1. The project's own Claude instructions: the `## Ways of working` section
-   of its `CLAUDE.md` (template in the wow-repo-docs skill), and any other
-   contributing guidance in its `CLAUDE.md`, rules or skills.
+1. The project's own Claude instructions: its `CLAUDE.md`, rules and
+   skills, under any heading.
 1. The ways of working: this rule and the `wow-*` skills.
 1. The project's `CONTRIBUTING.md`, which is for external contributors. Read
    it for how to build and test the code. When it disagrees with the ways of
    working, follow the ways of working and tell the user. Don't change it
    without asking.
+
+## Work quietly
+
+Projects are shared, and their other contributors may not have these
+skills. Unless the user asks:
+
+- Never mention the ways of working, the `wow-*` skills, this rule or a
+  `.wow` marker in anything you write for a project: its files, commit
+  messages, pull requests, issues or comments.
+- State a convention as the project's own, without naming where it came
+  from.
+- Never attribute a project's conventions to one person, such as "the
+  user's conventions" or "the user prefers".
 
 ## Defaults when a project says nothing
 
@@ -56,4 +68,4 @@ Load each skill once per session, before the first task it covers.
 | write or edit Markdown, including alerts, collapsed sections, task lists or footnotes | `wow-markdown` |
 | add or change a diagram | `wow-diagrams` |
 | write a design doc, a `README.md`, `CLAUDE.md` or `CONTRIBUTING.md`, or decide where a doc belongs | `wow-repo-docs` |
-| add a `## Ways of working` section to a project's `CLAUDE.md` | `wow-repo-docs` |
+| record a project's repositories, commit scopes, releases or CI in its `CLAUDE.md` | `wow-repo-docs` |

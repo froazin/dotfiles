@@ -5,7 +5,7 @@ description: "House rules for squash-merged pull requests: the title written as 
 
 # Pull requests
 
-How to title and describe a pull request (PR), and how it lands on the default branch. These are house defaults: where the `## Ways of working` section of the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
+How to title and describe a pull request (PR), and how it lands on the default branch. These are house defaults: where the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
 
 Only code repositories take PRs. Direct-commit repositories and GitHub wikis don't (the wow-contributing skill describes the kinds of repository). For the header format, load the wow-commits skill. For branches and rebasing, load the wow-branching skill.
 

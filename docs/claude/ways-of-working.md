@@ -17,7 +17,7 @@ How the `.wow` marker turns the `claude` module's ways of working on for a direc
 
 ## Overview
 
-The ways of working are the user's house defaults for contributing and writing: commit messages, pull requests, branching, versioning, docs, Markdown, diagrams and GitHub wikis. The module installs them everywhere, but they apply only where the user opts in. A `.wow` file turns them on for the directory that holds it and everything below it, inside the workspace root `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`. Only the file's presence counts: its contents are never read.
+The ways of working are house defaults for contributing and writing: commit messages, pull requests, branching, versioning, docs, Markdown, diagrams and GitHub wikis. The module installs them everywhere, but they apply only where the user opts in. A `.wow` file turns them on for the directory that holds it and everything below it, inside the workspace root `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`. Only the file's presence counts: its contents are never read.
 
 - **Hook:** `wow_marker.sh` finds the marker for each directory Claude works in and tells Claude when the state changes. It also denies a `wow-*` skill when nothing touched in the session is marked.
 - **Rule:** `wow-core.md` loads in every session. It says how to read the hook's lines, which guidance wins and which skill to load for each task.
@@ -139,9 +139,9 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 
 ## Content
 
-- **[`wow-core.md`](../../src/modules/claude/templates/rules/wow-core.md)** has no `paths` frontmatter, so it loads in every session. It covers when the ways of working apply (the most recent line is the state, no line means off and a denied skill means off), the order in which guidance wins, the defaults when a project says nothing and a "Before you ... | Load" table with a row for every skill.
+- **[`wow-core.md`](../../src/modules/claude/templates/rules/wow-core.md)** has no `paths` frontmatter, so it loads in every session. It covers when the ways of working apply (the most recent line is the state, no line means off and a denied skill means off), the order in which guidance wins, working quietly, the defaults when a project says nothing and a "Before you ... | Load" table with a row for every skill.
 - **The skills** are `wow-contributing`, `wow-commits`, `wow-pull-requests`, `wow-branching`, `wow-feature-flags`, `wow-versioning`, `wow-writing-style`, `wow-markdown`, `wow-diagrams`, `wow-repo-docs` and `wow-github-wiki`. Each is `skills/<name>/SKILL.md` with only `name` and `description` in its frontmatter. `wow-repo-docs` and `wow-github-wiki` keep longer material in `references/`.
-- Every skill frames its rules as house defaults that a project's `## Ways of working` section in its `CLAUDE.md` can override. Skills name each other ("load the wow-commits skill") and never link to each other.
+- Every skill frames its rules as house defaults that a project's `CLAUDE.md` can override, under any heading. `wow-repo-docs` keeps a template for an optional `## Contributing` section that records a project's repositories, commit scopes, releases and CI. Skills name each other ("load the wow-commits skill") and never link to each other.
 - [`.claude/rules/wow-content.md`](../../.claude/rules/wow-content.md) holds the rules for editing this content, and loads when an agent touches it.
 
 ## Errors and logging
@@ -171,6 +171,7 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 - **POSIX `sh` and one `sed`.** The hook runs on almost every tool call, so it avoids `jq` and `python3` and keeps to builtins.
 - **Fail off and fail towards telling.** A broken hook must never block normal work. A lock it can't take still announces, because a repeated line is harmless and a missing one isn't.
 - **Modes, not separate scripts.** The settings merge replaces a hook by its `command` (see [Claude module](overview.md#decisions)), so each `wow_marker.sh <mode>` string stays fixed.
+- **Work quietly.** Nothing the skills write into a project mentions the ways of working, the `wow-*` skills or a `.wow` marker, or says whose conventions the project follows, unless the user asks. Projects are shared and often public, and their other contributors don't have the skills, so a convention is stated as the project's own. `test_wow_content.py` checks the code blocks in the skills, which are the templates and examples projects copy.
 - **One small rule, skills on demand.** Only `wow-core.md` loads in every session, including for people with no marker.
 
 ## Limits
@@ -186,8 +187,8 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 ## Tests
 
 - [`test_wow_marker.py`](../../src/modules/claude/tests/test_wow_marker.py) runs the hook with `subprocess` in a throwaway home, workspace root and `XDG_RUNTIME_DIR`. It covers every mode, markers at and above the root, symbolic links, a Git submodule, missing directories, unsafe paths, subagents, a held lock, malformed input, odd ids and a `PATH` that holds only the six programs the hook needs. It also checks that `settings.json` registers each mode once, on the right event and matcher.
-- [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the skills and `wow-core.md`: names, frontmatter, descriptions, the routing table, the context-line prefixes, links and anchors, line limits, home paths and email addresses.
-- Observed: 94 and 83 tests passed on this branch.
+- [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the skills and `wow-core.md`: names, frontmatter, descriptions, the routing table, the context-line prefixes, links and anchors, line limits, home paths, email addresses and that no code block mentions the ways of working or "the user's".
+- Observed: 97 and 100 tests passed on this branch.
 
 ## Sources
 

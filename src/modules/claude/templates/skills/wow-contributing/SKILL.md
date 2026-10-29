@@ -5,7 +5,7 @@ description: "House contributing rules for internal contributors (the user and C
 
 # Contributing
 
-How changes land in the user's repositories: the principles, the kinds of repository and the rules for every commit and push. It's for internal contributors, meaning the user and Claude agents. External contributors follow the project's own `CONTRIBUTING.md`.
+How changes land in a project's repositories: the principles, the kinds of repository and the rules for every commit and push. It's for internal contributors, meaning the user and Claude agents working with these skills. External contributors follow the project's own `CONTRIBUTING.md`.
 
 Load this skill first, then the skill for the task:
 
@@ -27,9 +27,9 @@ Load this skill first, then the skill for the task:
 
 ## Project specifics come first
 
-The rules in this skill and the other contributing skills are house defaults. A project can state its own specifics and overrides in the `## Ways of working` section of its `CLAUDE.md`. The section is optional. The wow-core rule gives the full order of precedence and the defaults when a project says nothing.
+The rules in this skill and the other contributing skills are house defaults. A project can state its own specifics in its `CLAUDE.md`, usually in an optional `## Contributing` section (load the wow-repo-docs skill). The wow-core rule gives the full order of precedence and the defaults when a project says nothing.
 
-- Where the project's section and these rules disagree, follow the project.
+- Where the project's `CLAUDE.md` and these rules disagree, follow the project.
 - Where the project's `CONTRIBUTING.md` and these rules disagree, follow these rules, and tell the user about the difference. `CONTRIBUTING.md` is written for external contributors.
 
 ## Kinds of repository

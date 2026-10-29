@@ -33,6 +33,9 @@ HOME_PATH = re.compile(r"(?:(?:^|[\s`'\"(=:<\[,])/(?:home|Users|root)|/mnt/[a-z]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})(:?)")
 ALLOWED_EMAILS = {"noreply@anthropic.com"}
 ALLOWED_EMAIL_DOMAINS = ("example.com", "example.org")
+# Words that would name the ways of working, or one person, in a project's
+# files. Code blocks in the skills are templates and examples for projects.
+PROJECT_LEAKS = re.compile(r"ways[ -]of[ -]working|\bwow[-_]|\.wow\b|\bthe user'?s\b", re.IGNORECASE)
 
 
 def skill_dirs() -> list[Path]:
@@ -112,6 +115,25 @@ def prose_lines(path: Path, keep_code: bool = False) -> list[str]:
                 fence = None
             continue
         out.append(line if keep_code else CODE_SPAN.sub("", line))
+    return out
+
+
+def code_block_lines(path: Path) -> list[tuple[int, str]]:
+    """The numbered lines inside fenced code blocks, the complement of
+    prose_lines."""
+    out: list[tuple[int, str]] = []
+    fence: str | None = None
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        match = FENCE.match(line.lstrip())
+        if fence is None:
+            if match:
+                fence = match.group(1)
+            continue
+        closing = match.group(1) if match else ""
+        if closing[:1] == fence[0] and len(closing) >= len(fence) and not line.strip()[len(closing) :].strip():
+            fence = None
+            continue
+        out.append((number, line))
     return out
 
 
@@ -232,3 +254,13 @@ def test_no_email_addresses(path: Path) -> None:
             if any(domain == d or domain.endswith(f".{d}") for d in ALLOWED_EMAIL_DOMAINS):
                 continue
             pytest.fail(f"{rel(path)}:{number}: email address {address!r}; use one at example.com")
+
+
+@pytest.mark.parametrize("path", markdown_files(), ids=rel)
+def test_templates_work_quietly(path: Path) -> None:
+    for number, line in code_block_lines(path):
+        match = PROJECT_LEAKS.search(line)
+        assert not match, (
+            f"{rel(path)}:{number}: {match.group(0)!r} in a code block; projects never mention "
+            "the ways of working or whose conventions they follow"
+        )

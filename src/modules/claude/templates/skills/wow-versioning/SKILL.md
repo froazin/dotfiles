@@ -5,9 +5,9 @@ description: "House Semantic Versioning rules for code repositories: how what a 
 
 # Versioning
 
-How a commit changes a project's version, how releases are tagged and what changes at `v1.0.0`. These are house defaults: where the `## Ways of working` section of the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
+How a commit changes a project's version, how releases are tagged and what changes at `v1.0.0`. These are house defaults: where the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
 
-Only code repositories have versions. Commits in direct-commit repositories and GitHub wikis never change a version (the wow-contributing skill describes the kinds of repository). A project without releases says so in its `## Ways of working` section. Its commits still follow these rules, so the history is right when releases start.
+Only code repositories have versions. Commits in direct-commit repositories and GitHub wikis never change a version (the wow-contributing skill describes the kinds of repository). A project without releases says so in its `CLAUDE.md`. Its commits still follow these rules, so the history is right when releases start.
 
 ## Semantic Versioning
 
@@ -66,7 +66,7 @@ The project is considered stable:
 - Tag each release in Git with its version and a `v` prefix, such as `v1.0.2`. Always include the `v`.
 - Tags are signed, like commits. Don't create or push a release tag unless the user asks.
 - Releases are made from the default branch. There are no release branches.
-- Where a project has continuous delivery, each commit that bumps the version is released when it lands, and a commit that doesn't bump it, such as a README fix, isn't. The project's `## Ways of working` section says whether it has this, and whether it's only planned.
+- Where a project has continuous delivery, each commit that bumps the version is released when it lands, and a commit that doesn't bump it, such as a README fix, isn't. The project's `CLAUDE.md` says whether it has this, and whether it's only planned.
 
 ## Go modules
 
