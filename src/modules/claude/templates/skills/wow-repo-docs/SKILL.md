@@ -1,6 +1,6 @@
 ---
 name: wow-repo-docs
-description: "Where a project's docs belong and how to write a code repository's docs. Applies only when ways of working is on. Use whenever a task writes or changes a design doc in docs/, a Contents list or a code repository's README.md, CLAUDE.md or CONTRIBUTING.md; decides whether a doc belongs in docs/, the GitHub wiki, the README, CONTRIBUTING.md, CLAUDE.md or a code comment; updates docs alongside a code change; or adds or edits the optional \"## Ways of working\" section (project profile) in a project's CLAUDE.md, such as its repositories table, commit scopes, feature flag prefix, releases, CI or overrides."
+description: "Where a project's docs belong and how to write a code repository's docs. Applies only when ways of working is on. Use whenever a task writes or changes a design doc in docs/, a Contents list or a code repository's README.md, CLAUDE.md or CONTRIBUTING.md; decides whether a doc belongs in docs/, the GitHub wiki, the README, CONTRIBUTING.md, CLAUDE.md or a code comment; updates docs alongside a code change; or adds or edits the optional \"## Contributing\" section (project profile) in a project's CLAUDE.md, such as its repositories table, commit scopes, feature flag prefix, releases or CI, or renames an older \"## Ways of working\" section."
 ---
 
 # Repository docs
@@ -20,7 +20,8 @@ Where each kind of documentation lives in a project, and how to write the docs i
 
 - Put each fact in one of these, and link to it from the others.
 - Never put user docs in `docs/`, or design, build or test docs in the wiki. `docs/` is never a copy of the wiki.
-- Shared practices, such as commit messages and branching, live in the ways of working (the `wow-*` skills), not in a project's docs. `CONTRIBUTING.md` summarises them for external contributors.
+- Shared practices, such as commit messages and branching, live in the `wow-*` skills, not in a project's docs. `CONTRIBUTING.md` summarises them for external contributors, as the project's own rules.
+- Never mention the ways of working, the `wow-*` skills or a `.wow` marker in a project's docs, unless the user asks. Other contributors may not have them (the wow-core rule).
 - If the project has no wiki, ask the user where user docs go before you write any.
 
 ## Design docs
@@ -111,14 +112,14 @@ Don't copy `CLAUDE.md`'s layout map into the README. Describe the parts at the l
 1. `## Contents`, as [Contents lists](#contents-lists) describes.
 1. `## Layout`: each folder or package, what it holds, and the design doc to read before you change it, written as a trigger, such as `` Before you change `internal/store/`, read [docs/store.md](docs/store.md). ``
 1. `## Conventions`: rules for the code that an agent must follow, such as where tests go or which dependencies are allowed. Link to `CONTRIBUTING.md` for build and test commands rather than copying them.
-1. `## Ways of working`: the optional project profile. Copy it from [references/project-profile.md](references/project-profile.md).
+1. `## Contributing`: the optional project profile, with the project's repositories, commit scopes, releases and CI. Copy it from [references/project-profile.md](references/project-profile.md).
 
 `CLAUDE.md` holds no design of its own. It points to `docs/`.
 
 ## CONTRIBUTING.md
 
 - It's written for external contributors, and it's where the project documents how to build and test the code and what CI runs. Internal contributors use those facts too, though it ranks last for internal work (the wow-core rule sets which guidance wins).
-- Cover reporting a problem, proposing a change, building, testing (including tests that need a special environment), CI, and a summary of the commit, branch and PR rules.
+- Cover reporting a problem, proposing a change, building, testing (including tests that need a special environment), CI, and a summary of the commit, branch and PR rules, stated as the project's own.
 - Link to `docs/` for design. Don't explain the design in `CONTRIBUTING.md`.
 
 ## Checklist
@@ -130,3 +131,4 @@ Before you finish a change to a code repository's docs, check that:
 - The docs match the code on the branch, and anything planned is described as planned.
 - The README sends users to the wiki first, if there is one.
 - `CLAUDE.md`'s Layout names the design doc for every part that has one.
+- No doc mentions the ways of working or the `wow-*` skills, or says whose conventions the project follows.

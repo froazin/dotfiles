@@ -19,7 +19,8 @@ The house style for everything written in a project: docs, READMEs, `CONTRIBUTIN
 - Don't use a serial comma: "Docker, Podman and Buildah".
 - Don't write "please", "simply", "just" or "easy".
 - Spell out an abbreviation the first time a doc uses it, such as "pull request (PR)", unless every reader knows it, such as Git, URL or CI.
-- Refer to people by role: the user, the maintainer, external contributors, reviewers. Use "they" for anyone whose pronouns you don't know.
+- Refer to people by role: users, maintainers, contributors, reviewers. Use "they" for anyone whose pronouns you don't know.
+- In a project's files, state conventions as the project's own. Projects are shared, so never attribute them to one person, such as "the user's conventions", and never mention the ways of working or the `wow-*` skills unless the user asks.
 
 ## Structure
 

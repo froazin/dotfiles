@@ -5,7 +5,7 @@ description: "House trunk-based branching for code repositories: branching from 
 
 # Branching
 
-How changes move from a short-lived branch to the default branch in a code repository: trunk-based development, branch names, rebasing and working from a fork. These are house defaults: where the `## Ways of working` section of the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
+How changes move from a short-lived branch to the default branch in a code repository: trunk-based development, branch names, rebasing and working from a fork. These are house defaults: where the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
 
 Direct-commit repositories and GitHub wikis have no branches to name: commit on the default branch (the wow-contributing skill describes the kinds of repository).
 
@@ -53,7 +53,7 @@ other/update-readme
 - Use only these three types. Unlike [GitVersion](https://gitversion.net/), which inspired the names, there's no `release` type.
 - Keep the slug short, and describe the one change the branch carries.
 - Don't use uppercase letters, underscores, dots or extra `/` separators in the slug.
-- The rules apply to branches in the user's repositories, not to branches in an external contributor's fork.
+- The rules apply to branches in the project's own repositories, not to branches in an external contributor's fork.
 
 ## Working on a branch
 
@@ -90,7 +90,7 @@ git rebase origin/main
 
 ## Working from a fork
 
-External contributors can't create branches in the user's repositories. They fork the repository, work on a branch in the fork and open a PR from it to the default branch. The project's `CONTRIBUTING.md` tells them how.
+External contributors can't create branches in the project's repositories. They fork the repository, work on a branch in the fork and open a PR from it to the default branch. The project's `CONTRIBUTING.md` tells them how.
 
 When you work on a fork's PR, the upstream repository is usually the `upstream` remote, so a fork rebases with:
 

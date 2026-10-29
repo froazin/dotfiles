@@ -5,7 +5,7 @@ description: "House rules for feature flags in code repositories: when new or un
 
 # Feature flags
 
-How to keep the default branch releasable while new behaviour is built: when to use a feature flag, how to add one and how flags affect the version. These are house defaults: where the `## Ways of working` section of the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
+How to keep the default branch releasable while new behaviour is built: when to use a feature flag, how to add one and how flags affect the version. These are house defaults: where the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
 
 Feature flags apply only to code repositories (the wow-contributing skill describes the kinds of repository).
 
@@ -23,7 +23,7 @@ Every commit on the default branch must be releasable, and a project can release
 
 ## Naming
 
-- If the project's `## Ways of working` section names a prefix for flag variables, use it.
+- If the project's `CLAUDE.md` names a prefix for flag variables, use it.
 - If the project has no flags yet and no convention, ask the user before you name the first one.
 
 ## Splitting large work

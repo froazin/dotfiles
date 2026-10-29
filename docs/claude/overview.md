@@ -152,7 +152,7 @@ uv run pytest
 - [`test_commit_signing_guard.py`](../../src/modules/claude/tests/test_commit_signing_guard.py) runs the one-line cases in [`commit_signing_guard.cases`](../../src/modules/claude/tests/commit_signing_guard.cases), whose header explains the format, plus structural tests.
 - [`test_no_session_links.py`](../../src/modules/claude/tests/test_no_session_links.py) builds its fixture links from parts, so the installed hook doesn't block writing the file. It also checks the `attribution` settings and that every `PreToolUse` hook's script is executable, ignoring any mode argument.
 - [`test_wow_marker.py`](../../src/modules/claude/tests/test_wow_marker.py) runs `wow_marker.sh` in a throwaway home, and [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the `wow-*` rule and skills (see [Ways of working](ways-of-working.md#tests)).
-- Observed: 599 tests passed on this branch.
+- Observed: 619 tests passed on this branch.
 
 ## Decisions
 

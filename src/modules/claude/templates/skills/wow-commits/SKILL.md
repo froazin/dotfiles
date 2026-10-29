@@ -5,7 +5,7 @@ description: "House commit message format: Conventional Commits headers ending i
 
 # Commit messages
 
-How to write a commit message: the header format, the body, issue references, `[skip ci]`, breaking changes and the AI co-author footer. The format is a house default: where the `## Ways of working` section of the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
+How to write a commit message: the header format, the body, issue references, `[skip ci]`, breaking changes and the AI co-author footer. The format is a house default: where the project's `CLAUDE.md` says otherwise, follow the project (see the wow-core rule).
 
 The format applies to every kind of repository (the wow-contributing skill describes the kinds). Issue references, `[skip ci]` and version effects only matter in code repositories. In a code repository, pull requests (PRs) are squash-merged, so a PR's title and description are written in this format too (load the wow-pull-requests skill).
 
@@ -47,7 +47,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 | ` (#123)` | No | The issue the commit relates to. See [Issue references](#issue-references) | `: Add a version flag (#123)` |
 
 - **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. The type doesn't decide the version bump: what the commit changes does (load the wow-versioning skill).
-- **Scope.** Include one whenever the change has a clear area. A project can list its usual scopes in its `## Ways of working` section.
+- **Scope.** Include one whenever the change has a clear area. A project can list its usual scopes in its `CLAUDE.md`.
 - **Description.** Write it as an instruction, starting with a capital letter: "Add a timestamp to log messages", "Fix typo in readme". Don't end it with a full stop.
 - **Ending.** `[skip ci]` and the issue reference are part of the description as far as Conventional Commits is concerned. When a header has both, put `[skip ci]` first: `chore(docs): Fix typo in readme [skip ci] (#123)`. That's the order GitHub produces when it adds a PR number (observed).
 

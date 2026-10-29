@@ -13,7 +13,7 @@ These are house defaults. A project's own `CLAUDE.md` can override them.
 
 | Placeholder | Means | Usually |
 | --- | --- | --- |
-| `OWNER/REPO` | The GitHub repository the wiki belongs to | Given in the `## Ways of working` section of the project's `CLAUDE.md`, or by `git remote -v` |
+| `OWNER/REPO` | The GitHub repository the wiki belongs to | Given in the project's `CLAUDE.md`, or by `git remote -v` |
 | Source | That repository: the project's code | |
 | `<source>/` | The local clone of Source | The project root |
 | `<wiki>/` | The local clone of the wiki, `https://github.com/OWNER/REPO.wiki.git` | `<repo>.wiki/`, next to `<source>/` |

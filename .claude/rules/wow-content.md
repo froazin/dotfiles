@@ -6,8 +6,8 @@ paths:
 
 # Ways of working content
 
-The `wow-*` skills and rules in the claude module hold the user's house
-defaults, and people copy them from this public repository.
+The `wow-*` skills and rules in the claude module hold house defaults, and
+people copy them from this public repository.
 
 ## Keep it generic and publishable
 
@@ -24,7 +24,11 @@ defaults, and people copy them from this public repository.
   observed. Cite official docs, such as docs.github.com, or describe the
   behaviour generically.
 - Frame the house style as defaults that a project's own `CLAUDE.md` can
-  override.
+  override, under any heading.
+- Never tell an agent to mention the ways of working, the `wow-*` skills or
+  a `.wow` marker in a project's files, or to attribute a project's
+  conventions to one person. Templates and examples in code blocks are
+  copied into projects, and a test checks them.
 
 ## Structure
 

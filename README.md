@@ -94,8 +94,11 @@ A hook, `~/.claude/hooks/wow_marker.sh`, tells Claude when a directory it
 works in turns on or off, and denies the `wow-*` skills while nothing it has
 touched is marked. Without a marker nothing changes: Claude ignores them and
 follows each project's own guidance. A project's `CLAUDE.md` can override
-any default. The global gitignore ignores `.wow`, so a marker stays local.
-Delete it to turn them off again.
+any default. Unless you ask, Claude never mentions the rule, the skills or a
+marker in what it writes for a project (files, commits, pull requests,
+issues and comments), so other contributors don't need them. The global
+gitignore ignores `.wow`, so a marker stays local. Delete it to turn them
+off again.
 
 ### Commit-signing guard
 
