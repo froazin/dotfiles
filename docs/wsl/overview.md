@@ -165,6 +165,7 @@ It doesn't prove a real first boot. Only a throwaway instance, as the README des
 - The Windows tool paths are fixed. A tool installed elsewhere gets a dangling link.
 - `ant`'s architecture is chosen only for `x86_64` and `aarch64`.
 - Without a username, the user the OOBE creates gets zsh and the groups, but none of the tools, extensions or dotfiles. The README lists the commands to finish it.
+- WSL instances share one cgroup tree. While one instance running systemd has a user manager for uid 1000, another instance's `user@1000.service` fails with "Failed to spawn executor: Device or resource busy", and WSL reports "Failed to start the systemd user session". The user's `podman.socket` then doesn't start (observed with a Fedora instance beside an Ubuntu one; inferred for a second Ubuntu instance, such as a throwaway `ci-test`).
 
 ## Sources
 

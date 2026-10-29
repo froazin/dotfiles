@@ -180,7 +180,7 @@ with open(f"{work}/cases", "w") as index:
     for name, (meta, expect) in cases.items():
         meta = {"instance-id": "ubuntu-wsl", **meta}
         expect = {"extensions": [], "skipped": [], "gh_extensions": [], "gh_skipped": [], "signer": None, "signer_key": f"{work}/signer",
-                  "ssh_program": "", **expect}
+                  "ssh_program": "", "username": meta.get("username"), **expect}
         with open(f"{work}/{name}.json", "w") as f:
             json.dump({"v1": v1, "ds": {"meta_data": meta}}, f)
         with open(f"{work}/{name}.expect.json", "w") as f:
@@ -230,6 +230,8 @@ has_user = "users" in doc
 
 if has_user != expect["user"]:
     problems.append(f"users rendered={has_user}, expected {expect['user']}")
+elif has_user and [u.get("name") for u in doc["users"]] != [expect["username"]]:
+    problems.append(f"users {doc['users']!r}, expected only {expect['username']!r}")
 if (gitconfig is not None) != expect["user"]:
     problems.append(f".gitconfig rendered={gitconfig is not None}, expected {expect['user']}")
 
