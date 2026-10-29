@@ -187,8 +187,8 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 ## Tests
 
 - [`test_wow_marker.py`](../../src/modules/claude/tests/test_wow_marker.py) runs the hook with `subprocess` in a throwaway home, workspace root and `XDG_RUNTIME_DIR`. It covers every mode, markers at and above the root, symbolic links, a Git submodule, missing directories, unsafe paths, subagents, a held lock, malformed input, odd ids and a `PATH` that holds only the six programs the hook needs. It also checks that `settings.json` registers each mode once, on the right event and matcher.
-- [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the skills and `wow-core.md`: names, frontmatter, descriptions, the routing table, the context-line prefixes, links and anchors, line limits, home paths, email addresses and that no code block mentions the ways of working or "the user's".
-- Observed: 97 and 100 tests passed on this branch.
+- [`test_wow_content.py`](../../src/modules/claude/tests/test_wow_content.py) checks the skills and `wow-core.md`: names, frontmatter, descriptions, the routing table, the context-line prefixes, links and anchors, line limits, home paths, email addresses and that no code block mentions the ways of working or "the user's". It also checks that the example commit messages and PR descriptions wrap at 72 characters.
+- Observed: 97 and 102 tests passed on this branch.
 
 ## Sources
 

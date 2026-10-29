@@ -60,10 +60,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 The body is optional, except for a breaking change (see [Breaking changes](#breaking-changes)). Use it to explain what changed and why, in more detail than the header allows.
 
+- Wrap the body at 72 characters: break each line at the last space that keeps it within 72, and leave a blank line between paragraphs. GitHub breaks any longer line at 72 when it squash-merges a PR, without reflowing the rest of the paragraph, which leaves ragged line breaks (observed).
+- Never break a URL, a path, a trailer, a Markdown link, a table row or a line in a code block. Put one that's too long on a line of its own, and leave it long.
+
 ```text
 fix(ipc): Bounds check the piped input string (#123)
 
-Check the length of piped input before reading it, so a long input can't overflow the buffer.
+Check the length of piped input before reading it, so a long input
+can't overflow the buffer.
 
 Closes #123
 
@@ -145,6 +149,7 @@ Some commits are made by tools, such as Dependabot's dependency updates, which a
 Before you commit, check that:
 
 - The header follows `type(scope)!: Description`, with the type and scope in lowercase. Any `[skip ci]` and `(#123)` end the description, in that order.
+- Body lines are at most 72 characters, except a URL, path, trailer, Markdown link, table row or code line that can't be broken.
 - A `Closes #123` line goes in the body, only when the commit fully resolves the issue, and never as the last paragraph.
 - `[skip ci]` is used only in a special case, and not on a commit that bumps the version.
 - A breaking change has a `!` in the header and a body that starts with what breaks, why, who is affected and what to do instead.

@@ -33,6 +33,9 @@ HOME_PATH = re.compile(r"(?:(?:^|[\s`'\"(=:<\[,])/(?:home|Users|root)|/mnt/[a-z]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})(:?)")
 ALLOWED_EMAILS = {"noreply@anthropic.com"}
 ALLOWED_EMAIL_DOMAINS = ("example.com", "example.org")
+# Example commit messages and PR descriptions wrap like the real thing.
+MESSAGE_SKILLS = ("wow-commits", "wow-pull-requests")
+MAX_MESSAGE_WIDTH = 72
 # Words that would name the ways of working, or one person, in a project's
 # files. Code blocks in the skills are templates and examples for projects.
 PROJECT_LEAKS = re.compile(r"ways[ -]of[ -]working|\bwow[-_]|\.wow\b|\bthe user'?s\b", re.IGNORECASE)
@@ -263,4 +266,13 @@ def test_templates_work_quietly(path: Path) -> None:
         assert not match, (
             f"{rel(path)}:{number}: {match.group(0)!r} in a code block; projects never mention "
             "the ways of working or whose conventions they follow"
+        )
+
+
+@pytest.mark.parametrize("skill", MESSAGE_SKILLS)
+def test_message_examples_wrap(skill: str) -> None:
+    path = SKILLS / skill / "SKILL.md"
+    for number, line in code_block_lines(path):
+        assert len(line) <= MAX_MESSAGE_WIDTH, (
+            f"{rel(path)}:{number}: {len(line)} characters in an example; wrap commit bodies at {MAX_MESSAGE_WIDTH}"
         )

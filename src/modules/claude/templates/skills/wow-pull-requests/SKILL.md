@@ -46,7 +46,7 @@ The PR number links the commit to its review. This is the same place a direct co
 
 ## Write the description
 
-Write the description as the body of a commit message: what changed on the branch and why. Add no footers.
+Write the description as the body of a commit message: what changed on the branch and why. Add no footers. Wrap it at 72 characters, as the wow-commits skill says for a body, so GitHub has no lines to break when it squash-merges.
 
 ```text
 Add a --version flag that prints the version the binary was built with.
@@ -113,7 +113,7 @@ Load the wow-versioning skill for the version bump, and for the Go module path r
 Before you ask for a review, check that:
 
 - The title is a valid commit header, without the PR number or any issue reference.
-- The description reads as a commit body, with no footers.
+- The description reads as a commit body, wrapped at 72 characters, with no footers.
 - Any issue the PR closes is referenced in the description with a closing keyword, such as `Closes #123`.
 - A breaking change has `!` in the title and a description that starts with what breaks, why, who is affected and what to do instead.
 - A Go module PR that moves to `v2` or later adds the major version suffix to the module path.
