@@ -269,6 +269,11 @@ wsl --install Ubuntu-26.04 --name ci-test
 wsl --unregister ci-test
 ```
 
+WSL instances share one cgroup tree, so stop your main instance first if
+you're testing the user's systemd services, such as `podman.socket`. While
+another instance runs a systemd session for the same uid, the test
+instance's user session fails to start.
+
 ## Design docs
 
 How each part works, and why it's built that way, for anyone changing the
