@@ -107,7 +107,7 @@ flowchart TD
     sys -->|then| virsh["virsh net-autostart default"]
     virsh -->|then| shells["DSHELL and usermod -s for root"]
     shells -->|username set| prep["usermod -aG libvirt, mkdir workspaces"]
-    prep -->|runuser -l| tools["uv, pulumi, nvm, claude, ant"]
+    prep -->|runuser -l| tools["uv, pulumi, biome, nvm, claude, ant"]
     tools -->|runuser -l| ext["code --install-extension, gh extension install"]
     ext -->|runuser -l| userinstall["install.sh as the user"]
     userinstall -->|runuser -l root| rootinstall["install.sh as root"]
@@ -138,7 +138,7 @@ flowchart TD
 - The repository is public. The user-data holds no personal usernames, emails, signing keys, hostnames or `/mnt/c/Users/<name>/` paths: they come from the user's private meta-data. The only account name in it is this repository's own URL.
 - Only validated meta-data values reach shell commands. `username` is the exception: it's trusted as written (see [WSL meta-data](meta-data.md#limits)).
 - The GitHub CLI apt key is embedded in the file, with its fingerprint in a comment, rather than fetched at boot.
-- `uv`, `pulumi`, Claude Code and `ant` are fetched over HTTPS and run as the user. Their integrity rests on those hosts and TLS.
+- `uv`, `pulumi`, Biome, Claude Code and `ant` are fetched over HTTPS and run as the user. Their integrity rests on those hosts and TLS.
 - `/usr/local/bin/start` passes its target to PowerShell in an environment variable through `WSLENV`, never in the command, so the target is never parsed as code.
 - The user named by `username` gets passwordless sudo, and their password is locked.
 
