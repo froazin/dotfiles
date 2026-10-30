@@ -100,8 +100,8 @@ cloud-init writes `runcmd` out as one `#!/bin/sh` script with no `set -e`, so ea
 ```mermaid
 flowchart TD
     accTitle: runcmd order
-    accDescr: runcmd links the Windows tools, enables system units and the global podman socket, sets zsh for new users and root, then either sets up the named user and runs install.sh for the user and root, or runs install.sh for root from a temporary clone.
-    links["ln -sfn Windows tools"] -->|then| units["systemctl daemon-reload, enable --now disable-swap, make-root-rshared"]
+    accDescr: runcmd links the Windows tools and fd, enables system units and the global podman socket, sets zsh for new users and root, then either sets up the named user and runs install.sh for the user and root, or runs install.sh for root from a temporary clone.
+    links["ln -sfn Windows tools and fd"] -->|then| units["systemctl daemon-reload, enable --now disable-swap, make-root-rshared"]
     units -->|then| global["systemctl --global enable podman.socket"]
     global -->|then| sys["systemctl enable --now podman.socket"]
     sys -->|then| virsh["virsh net-autostart default"]
@@ -114,6 +114,7 @@ flowchart TD
     shells -->|no username| tmp["install.sh as root from a mktemp clone"]
 ```
 
+- Ubuntu installs `fd-find`'s command as `fdfind`, because another package owns the name `fd`. `runcmd` links `/usr/local/bin/fd` to `/usr/bin/fdfind`, which apt has installed by then.
 - The global `podman.socket` enable comes before the first `runuser -l`. That entry starts the user's systemd manager, which reads global wants only when it starts.
 - `DSHELL=/usr/bin/zsh` and root's `usermod -s` run only when `/usr/bin/zsh` is executable, so a failed package install can't leave a login shell that doesn't exist. Root's shell is set before root's install, so the zsh module's `$SHELL` check sees zsh and doesn't warn.
 - The user's install puts `~/.local/bin` and `~/.pulumi/bin` on `PATH` itself, because `~/.zshenv` doesn't exist yet. Without that, `install.sh` can't find `claude` and skips the claude module.
