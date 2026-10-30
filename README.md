@@ -186,97 +186,10 @@ check works on any distribution.
 
 ## WSL provisioning
 
-`src/wsl/Ubuntu-26.04.user-data` is a cloud-init config that builds an Ubuntu
-26.04 WSL instance from scratch:
-
-- installs every package the modules above depend on, plus containers and a
-  KVM/libvirt stack for running VMs inside WSL;
-- enables podman's Docker-compatible API socket (`podman.socket`): rootless
-  for every user, and the system socket for root;
-- writes `/etc/wsl.conf` and disables swap to match `src/wsl/.wslconfig`;
-- bridges Windows tools (VS Code, 1Password CLI, OpenSSH, `clip`) into the
-  Linux `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
-- creates the user with zsh and passwordless sudo, when a username is given;
-- installs `uv`, `pulumi`, Biome (`biome`), `nvm`, Claude Code (`claude`) and
-  the Claude Platform CLI (`ant`) as that user, and the VS Code extensions
-  listed in the meta-data's `vscode_extensions` (Claude Code and Python to
-  start with) into the instance's VS Code server (this needs VS Code and its
-  WSL extension on Windows);
-- installs the GitHub CLI extensions listed in the meta-data's
-  `gh_extensions` (`gh act`, to run GitHub Actions workflows locally, to start
-  with) as that user. Public extensions install before you log in to gh;
-- configures git, then clones this repo and runs `install.sh`. With a
-  `git_signingkey`, commits are signed, and a literal key (not a key file
-  path) goes in `~/.config/git/allowed_signers`, so
-  `git log --show-signature` can verify them;
-- makes zsh root's login shell and runs `install.sh` for root too, so
-  `sudo su` keeps the same shell and prompt. Without a username, root's copy
-  comes from a temporary clone.
-
-The user-data holds nothing personal. Your username, git identity, VS Code
-extensions and gh extensions go in the meta-data, which cloud-init reads
-alongside it and which stays on your machine:
-
-| Repo file | Copy to |
-| --------- | ------- |
-| `src/wsl/.wslconfig` | `%USERPROFILE%\.wslconfig` |
-| `src/wsl/Ubuntu-26.04.user-data` | `%USERPROFILE%\.cloud-init\Ubuntu-26.04.user-data` |
-| `src/wsl/Ubuntu-26.04.meta-data` (fill it in) | `%USERPROFILE%\.cloud-init\Ubuntu-26.04.meta-data` |
-
-cloud-init matches both files by instance name, so install the distro under
-its default name, `Ubuntu-26.04`, from PowerShell:
-
-```powershell
-wsl --install Ubuntu-26.04
-```
-
-cloud-init runs on first boot only, and the first launch waits for it. When it
-finishes, restart the instance so the `wsl.conf` settings and the new group
-memberships take effect:
-
-```powershell
-wsl --terminate Ubuntu-26.04
-```
-
-If the meta-data gives no `username`, WSL asks you to create a user as normal,
-and that user gets zsh and the virtualisation groups. Root is already
-configured. Finish setting up the user yourself:
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
-curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path
-curl -fsSL https://biomejs.dev/install | bash -s -- --no-modify-path
-git clone https://github.com/nvm-sh/nvm.git ~/workspaces/github.com/nvm-sh/nvm
-cd ~/workspaces/github.com/nvm-sh/nvm
-git checkout "$(git describe --abbrev=0 --tags --match 'v[0-9]*' "$(git rev-list --tags --max-count=1)")"
-# Installs that release into ~/.nvm. The zsh config from these dotfiles loads it, so leave the profiles alone.
-PROFILE=/dev/null bash install.sh
-cd
-curl -fsSL https://claude.ai/install.sh | bash
-v="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/anthropics/anthropic-cli/releases/latest)"; v="${v##*/v}"
-case "$(uname -m)" in aarch64) a=arm64 ;; *) a=amd64 ;; esac
-mkdir -p ~/.local/bin && curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v$v/ant_${v}_linux_$a.tar.gz" | tar -xzmf - -C ~/.local/bin ant
-# The extensions in your meta-data's vscode_extensions, e.g.:
-code --install-extension Anthropic.claude-code --install-extension ms-python.python
-# The extensions in your meta-data's gh_extensions, for example:
-gh extension install https://github.com/nektos/gh-act
-git clone https://github.com/froazin/dotfiles.git ~/workspaces/github.com/froazin/dotfiles
-# Until the ~/.zshenv from these dotfiles exists, the installer cannot see tools in ~/.local/bin.
-PATH="$HOME/.local/bin:$HOME/.pulumi/bin:$PATH" sh ~/workspaces/github.com/froazin/dotfiles/src/install.sh
-```
-
-To test changes, copy the files as `ci-test.user-data` and `ci-test.meta-data`
-to match a throwaway instance:
-
-```powershell
-wsl --install Ubuntu-26.04 --name ci-test
-wsl --unregister ci-test
-```
-
-WSL instances share one cgroup tree, so stop your main instance first if
-you're testing the user's systemd services, such as `podman.socket`. While
-another instance runs a systemd session for the same uid, the test
-instance's user session fails to start.
+[froazin/wsl](https://github.com/froazin/wsl) holds a cloud-init config
+that builds an Ubuntu 26.04 WSL instance from scratch, with every package
+these modules depend on, and installs these dotfiles into it for the user
+and for root. Its README has the install steps.
 
 ## Design docs
 
@@ -291,8 +204,6 @@ code:
   [commit-signing guard](docs/claude/commit-signing-guard.md),
   [no session links](docs/claude/no-session-links.md) and the
   [ways of working](docs/claude/ways-of-working.md).
-- [WSL provisioning](docs/wsl/overview.md) and its
-  [meta-data](docs/wsl/meta-data.md).
 
 ---
 Happy coding! :rocket:

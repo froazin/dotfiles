@@ -19,7 +19,7 @@ How the `zsh` module installs its configuration and how that configuration loads
 
 - [bootstrap.sh](../../src/modules/zsh/bootstrap.sh) copies the templates into `$HOME` and reports which dependencies are missing. The [installer](../installer.md) runs it only when `zsh` is on `PATH`.
 - The templates configure the shell at runtime: `PATH`, editor, prompt, completion, keybindings, aliases, the `ws` workspace picker, maintenance commands and plugins.
-- It never runs `chsh`. It only warns when `$SHELL` isn't zsh. The WSL user-data sets the login shells (see [WSL provisioning](../wsl/overview.md)).
+- It never runs `chsh`. It only warns when `$SHELL` isn't zsh. The WSL user-data sets the login shells (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 - It doesn't install packages. The templates check for each tool at runtime and skip what's missing, so a missing tool doesn't stop the shell starting.
 
 ## How it installs
@@ -44,7 +44,7 @@ flowchart TD
 - **Optional dependencies** (`ZSH_OPTIONAL_DEPS`, `ZSH_OPTIONAL_SOURCED`): `op`, `uv`, `pulumi`, `direnv`, `ant`, `podman`, `xdg-open` and `gh`. nvm is listed as `name:file` (`nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh`). A missing one logs a warning, or a debug message when `is_root`.
 - **Templates** are found from `$(dirname "$0")`, which is `src/` because the installer evaluates the module into its own shell. Every `templates/.zshrc.d/*.zsh` is installed, so a new drop-in needs no change to `bootstrap.sh`.
 
-When a template starts depending on a new tool, update the lists in `bootstrap.sh`, the README dependency table and, for an apt package, `packages` in the WSL user-data.
+When a template starts depending on a new tool, update the lists in `bootstrap.sh`, the README dependency table and, for an apt package, `packages` in the [WSL user-data](https://github.com/froazin/wsl/blob/main/src/Ubuntu-26.04.user-data).
 
 ## How it loads
 

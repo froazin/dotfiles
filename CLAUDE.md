@@ -1,8 +1,8 @@
 # Dotfiles
 
-Public dotfiles for a zsh workstation on Ubuntu (WSL first), plus a cloud-init
-config that builds that WSL instance from scratch. People copy from this repo,
-so it must stay generic.
+Public dotfiles for a zsh workstation on Ubuntu (WSL first). The cloud-init
+config that builds the WSL instance and installs these dotfiles into it lives
+in [froazin/wsl](https://github.com/froazin/wsl). People copy from this repo, so it must stay generic.
 
 ## Contents
 
@@ -25,7 +25,6 @@ change that makes them out of date.
 | `src/modules/git/` | Global gitignore, sets `core.excludesfile`. | [docs/git-module.md](docs/git-module.md) |
 | `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. | [docs/podman-module.md](docs/podman-module.md) |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. | [docs/zsh/overview.md](docs/zsh/overview.md) |
-| `src/wsl/` | `.wslconfig`, `Ubuntu-26.04.user-data` (Jinja cloud-config), `Ubuntu-26.04.meta-data` (fill-in template). | [docs/wsl/overview.md](docs/wsl/overview.md), and [meta-data.md](docs/wsl/meta-data.md) for a meta-data key |
 | `docs/` | Design docs for engineers changing the code. | — |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. | — |
 | `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. | — |
@@ -37,7 +36,7 @@ are touched.
 
 - **Never commit identifying data.** No real names, emails, usernames,
   signing keys, hostnames, or `/mnt/c/Users/<name>/` paths in any file. They
-  go in the user's private `<Instance>.meta-data` (WSL) or local config. Use
+  go in the user's local config, or their private WSL meta-data. Use
   placeholders like `<you>` or `jdoe` in examples.
 - **Dependencies are graded, never fatal.** A module is skipped only when its
   own command is missing. Soft dependencies log errors and fail the module, but
@@ -45,18 +44,17 @@ are touched.
   guards every tool at runtime.
 - **Keep the three dependency lists in sync** when adding a tool:
   `src/modules/*/bootstrap.sh`, the README dependency table, and `packages` in
-  `src/wsl/Ubuntu-26.04.user-data`.
-- **Prefer native mechanisms** (cloud-init modules, zsh builtins, official
+  froazin/wsl's `src/Ubuntu-26.04.user-data`, which needs its own pull request.
+- **Prefer native mechanisms** (zsh builtins, official
   installers run as the user so they can self-update) over custom glue.
 - **Don't write outside the repo to test.** Use throwaway `HOME`s
-  (`HOME=$(mktemp -d) sh src/install.sh`). Writing to the Windows profile
-  (`%USERPROFILE%\.cloud-init`, `.wslconfig`) or installing/unregistering WSL
+  (`HOME=$(mktemp -d) sh src/install.sh`). Installing or unregistering WSL
   instances needs the user's go-ahead.
 
 ## Checks
 
 ```sh
-shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh src/modules/claude/templates/hooks/*.sh .claude/hooks/*.sh .claude/skills/*/scripts/*.sh
+shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh src/modules/claude/templates/hooks/*.sh .claude/hooks/*.sh
 shfmt -d .
 for f in src/modules/zsh/templates/.zshenv src/modules/zsh/templates/.zshrc src/modules/zsh/templates/.zshrc.d/*.zsh; do zsh -n "$f"; done
 uv sync                                                    # dev tools; uses the system python3
@@ -64,7 +62,6 @@ uv run ruff format --check && uv run ruff check
 uv run pyright
 uv run pytest
 HOME=$(mktemp -d) SHELL=/usr/bin/zsh sh src/install.sh     # end-to-end install into a scratch home
-.claude/skills/validate-wsl-user-data/scripts/validate.sh  # after any src/wsl change
 ```
 
 ShellCheck and shfmt read their options from `.shellcheckrc` and
