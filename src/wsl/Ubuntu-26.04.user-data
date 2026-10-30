@@ -181,6 +181,7 @@ packages:
   - skopeo
   # utilities
   - btop
+  - tree
   - nmap
   - ncat
   # virtualisation; qemu-kvm is a virtual package and must not be listed
