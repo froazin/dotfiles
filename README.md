@@ -197,11 +197,11 @@ check works on any distribution.
 - bridges Windows tools (VS Code, 1Password CLI, OpenSSH, `clip`) into the
   Linux `PATH`, and sets `$BROWSER` so `xdg-open` opens things in Windows;
 - creates the user with zsh and passwordless sudo, when a username is given;
-- installs `uv`, `pulumi`, `nvm`, Claude Code (`claude`) and the Claude
-  Platform CLI (`ant`) as that user, and the VS Code extensions listed in the
-  meta-data's `vscode_extensions` (Claude Code and Python to start with) into
-  the instance's VS Code server (this needs VS Code and its WSL extension on
-  Windows);
+- installs `uv`, `pulumi`, Biome (`biome`), `nvm`, Claude Code (`claude`) and
+  the Claude Platform CLI (`ant`) as that user, and the VS Code extensions
+  listed in the meta-data's `vscode_extensions` (Claude Code and Python to
+  start with) into the instance's VS Code server (this needs VS Code and its
+  WSL extension on Windows);
 - installs the GitHub CLI extensions listed in the meta-data's
   `gh_extensions` (`gh act`, to run GitHub Actions workflows locally, to start
   with) as that user. Public extensions install before you log in to gh;
@@ -245,6 +245,7 @@ configured. Finish setting up the user yourself:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
 curl -fsSL https://get.pulumi.com | sh -s -- --no-edit-path
+curl -fsSL https://biomejs.dev/install | bash -s -- --no-modify-path
 git clone https://github.com/nvm-sh/nvm.git ~/workspaces/github.com/nvm-sh/nvm
 cd ~/workspaces/github.com/nvm-sh/nvm
 git checkout "$(git describe --abbrev=0 --tags --match 'v[0-9]*' "$(git rev-list --tags --max-count=1)")"
