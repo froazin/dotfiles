@@ -18,7 +18,7 @@ How the `git` module installs a global gitignore and points git at it. It's for 
 The module does one thing: it makes sure git's `core.excludesfile` names a file, and that the file holds the repository's template, [`templates/.gitignore`](../src/modules/git/templates/.gitignore). Git then ignores those patterns in every repository on the machine.
 
 - [`src/install.sh`](../src/install.sh) runs the module only when `git` is on `PATH`, like every other module (see [Installer](installer.md)). It has no soft or optional dependencies.
-- It doesn't set any other git config. The WSL user-data writes the user's `~/.gitconfig`, with settings such as the identity, signing key and default branch, and leaves `core.excludesfile` to this module (see [WSL provisioning](wsl/overview.md)).
+- It doesn't set any other git config. The WSL user-data writes the user's `~/.gitconfig`, with settings such as the identity, signing key and default branch, and leaves `core.excludesfile` to this module (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 - It runs for whoever runs the installer, so `sudo -H sh ./src/install.sh` gives root its own copy.
 
 ## How it works

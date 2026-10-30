@@ -34,7 +34,7 @@ flowchart LR
     install -.->|"does not source"| github["github.sh"]
 ```
 
-People run it by hand as the [README](../README.md#usage) describes, and again with `sudo -H` to give root its own copy. The WSL user-data runs it for the new user and then for root, or only for root from a temporary clone when no username is given (see [WSL provisioning](wsl/overview.md)).
+People run it by hand as the [README](../README.md#usage) describes, and again with `sudo -H` to give root its own copy. The WSL user-data runs it for the new user and then for root, or only for root from a temporary clone when no username is given (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 
 ## How it works
 

@@ -19,7 +19,7 @@ How the `podman` module keeps container registry credentials in one persistent f
 
 - [`src/install.sh`](../src/install.sh) runs the module only when `podman` is on `PATH` (see [Installer](installer.md)). It has no other dependencies.
 - It never logs in, stores a credential or edits an existing file.
-- The zsh environment does the runtime part: it exports `REGISTRY_AUTH_FILE` and `DOCKER_HOST` (see [Zsh module](zsh/overview.md)). The WSL user-data installs podman and enables `podman.socket` (see [WSL provisioning](wsl/overview.md)).
+- The zsh environment does the runtime part: it exports `REGISTRY_AUTH_FILE` and `DOCKER_HOST` (see [Zsh module](zsh/overview.md)). The WSL user-data installs podman and enables `podman.socket` (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 
 This diagram shows who reads and writes the file once the module and the zsh config are installed:
 

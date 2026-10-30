@@ -1,10 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "allow": [
-      "Bash(.claude/skills/validate-wsl-user-data/scripts/validate.sh)",
-      "Bash(.claude/skills/validate-wsl-user-data/scripts/validate.sh *)"
-    ],
+    "allow": [],
     "ask": []
   },
   "hooks": {

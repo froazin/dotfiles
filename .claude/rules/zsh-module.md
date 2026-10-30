@@ -24,7 +24,7 @@ paths:
 - When a template starts depending on a new tool, update all three:
   the dependency lists in `bootstrap.sh` (soft vs optional; sourced tools go
   in `ZSH_OPTIONAL_SOURCED`), the README dependency table, and the package
-  list in `src/wsl/Ubuntu-26.04.user-data` if it comes from apt.
+  list in froazin/wsl's `src/Ubuntu-26.04.user-data` if it comes from apt.
 - The installer never runs `chsh`; it only reports the login shell.
 - Root gets its own copy of these files (and zsh as its login shell on WSL),
   and reaches them via `sudo su`/`sudo -s` with the user's repos under

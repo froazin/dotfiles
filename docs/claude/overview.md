@@ -17,7 +17,7 @@ How the `claude` module installs Claude Code's user configuration, how it merges
 
 ## Overview
 
-The module writes the Claude Code configuration directory: `$CLAUDE_CONFIG_DIR` when it's set, otherwise `~/.claude`. It installs three hooks, the rules that go with them and the ways of working skills, and merges in shared settings and keybindings. It doesn't install Claude Code itself: the WSL user-data does that (see [WSL overview](../wsl/overview.md)).
+The module writes the Claude Code configuration directory: `$CLAUDE_CONFIG_DIR` when it's set, otherwise `~/.claude`. It installs three hooks, the rules that go with them and the ways of working skills, and merges in shared settings and keybindings. It doesn't install Claude Code itself: the WSL user-data does that (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 
 [`src/install.sh`](../../src/install.sh) runs the module only when `claude` is on `PATH` (see [Installer](../installer.md)). Each hook has its own design doc:
 
