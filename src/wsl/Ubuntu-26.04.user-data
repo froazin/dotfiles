@@ -182,6 +182,8 @@ packages:
   # utilities
   - btop
   - tree
+  - ripgrep
+  - fd-find
   - nmap
   - ncat
   # virtualisation; qemu-kvm is a virtual package and must not be listed
