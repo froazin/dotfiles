@@ -45,7 +45,7 @@ New code behind a flag that's off is a patch, even when the commit type is `feat
 | A breaking change, before `v1.0.0` | Patch | Minor |
 | A breaking change, from `v1.0.0` | Not allowed | Not allowed |
 
-In alpha (`0.0.x`), every commit is a patch, including the one that turns a flag on. Load the wow-versioning skill for the full rules.
+Load the wow-versioning skill for the full rules.
 
 ## Checklist
 

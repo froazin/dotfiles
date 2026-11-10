@@ -46,7 +46,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 | ` [skip ci]` | No | Skips CI for the commit. See [Skipping CI](#skipping-ci) | `: Fix typo in readme [skip ci]` |
 | ` (#123)` | No | The issue the commit relates to. See [Issue references](#issue-references) | `: Add a version flag (#123)` |
 
-- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `perf` (a change that improves performance), `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. The type doesn't decide the version bump: what the commit changes does (load the wow-versioning skill).
+- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `perf` (a change that improves performance), `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. Choose the type by what the commit changes: commitizen works out the version bump from the types (load the wow-versioning skill).
 - **Scope.** Include one whenever the change has a clear area. A project can list its usual scopes in its `CLAUDE.md`.
 - **Description.** Write it as an instruction, starting with a capital letter: "Add a timestamp to log messages", "Fix typo in readme". Don't end it with a full stop.
 - **Ending.** `[skip ci]` and the issue reference are part of the description as far as Conventional Commits is concerned. When a header has both, put `[skip ci]` first: `chore(docs): Fix typo in readme [skip ci] (#123)`. That's the order GitHub produces when it adds a PR number (observed).
@@ -108,7 +108,7 @@ chore(docs): Fix typo in readme [skip ci]
 
 Mark a change that isn't backward compatible with a `!` straight before the colon in the header, and nothing else: never a `BREAKING CHANGE:` footer.
 
-- The `!` sits in the header, which no merge rewrites. Conventional Commits 1.0.0 allows it on its own, and tools that follow that spec read it as a breaking change, such as commitlint, release-please, git-cliff and semantic-release with the `conventionalcommits` preset. semantic-release's default `angular` preset doesn't read `!`.
+- The `!` sits in the header, which no merge rewrites. Conventional Commits 1.0.0 allows it on its own, and tools that follow that spec read it as a breaking change, such as commitizen, commitlint, release-please, git-cliff and semantic-release with the `conventionalcommits` preset. semantic-release's default `angular` preset doesn't read `!`.
 - A footer stops being a Git trailer once GitHub adds its `---------` line and co-author trailers after a PR description. One marker in the header avoids two that can disagree.
 - Don't start any body line with `BREAKING CHANGE:` either: release tools would still read it as a footer.
 - Write the header's description as the change users will notice. With `!`, the spec makes the description describe the breaking change.
