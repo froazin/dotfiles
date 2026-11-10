@@ -39,14 +39,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 | Part | Required | What it is | Example |
 | --- | --- | --- | --- |
-| `type` | Yes | The kind of change. Lowercase only | `feat`, `fix`, `refactor`, `chore` |
+| `type` | Yes | The kind of change. Lowercase only | `feat`, `fix`, `perf`, `refactor`, `chore` |
 | `(scope)` | No, but recommended | The area of the project the change affects. Lowercase only | `(logging)`, `(docs)`, `(claude)` |
 | `!` | Only for breaking changes | Marks a breaking change. Goes straight before the colon | `feat(sdk)!:` |
 | `: Description` | Yes | A colon, one space, then a short summary written as an instruction | `: Add a timestamp to log messages` |
 | ` [skip ci]` | No | Skips CI for the commit. See [Skipping CI](#skipping-ci) | `: Fix typo in readme [skip ci]` |
 | ` (#123)` | No | The issue the commit relates to. See [Issue references](#issue-references) | `: Add a version flag (#123)` |
 
-- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. The type doesn't decide the version bump: what the commit changes does (load the wow-versioning skill).
+- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `perf` (a change that improves performance), `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. The type doesn't decide the version bump: what the commit changes does (load the wow-versioning skill).
 - **Scope.** Include one whenever the change has a clear area. A project can list its usual scopes in its `CLAUDE.md`.
 - **Description.** Write it as an instruction, starting with a capital letter: "Add a timestamp to log messages", "Fix typo in readme". Don't end it with a full stop.
 - **Ending.** `[skip ci]` and the issue reference are part of the description as far as Conventional Commits is concerned. When a header has both, put `[skip ci]` first: `chore(docs): Fix typo in readme [skip ci] (#123)`. That's the order GitHub produces when it adds a PR number (observed).
