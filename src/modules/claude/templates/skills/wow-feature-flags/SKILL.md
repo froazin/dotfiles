@@ -36,16 +36,18 @@ Flags let a large change land as several small pull requests (PRs) that are each
 
 ## How flags affect the version
 
-New code behind a flag that's off is a patch, even when the commit type is `feat`. The commit that turns the flag on decides the bump for the hidden work:
+The version comes from the commit types, which commitizen reads (load the wow-versioning skill). Type a commit that adds flagged code by whether users can reach it:
 
-| Hidden code | While the flag is off | Commit that turns it on |
+- **Users can reach it** by turning the flag on, even though it's off by default: commit it as `feat`, a minor bump. A user who turns the flag on gets the new behaviour, so it's a feature.
+- **Users can never reach it,** even with the flag on, such as groundwork that a later PR wires in: commit it as `refactor`, a patch. The commit that makes it reachable is the `feat`.
+
+| Hidden code | Commit while the flag is off | Commit that turns it on by default |
 | --- | --- | --- |
-| A new feature | Patch | Minor |
-| A non-breaking fix | Patch | Patch |
-| A breaking change, before `v1.0.0` | Patch | Minor |
+| A new feature users can turn on | `feat`: minor | `feat`: minor |
+| Code users can never reach | `refactor`: patch | The commit that makes it reachable is `feat`: minor |
+| A non-breaking fix | `fix`: patch | `fix`: patch |
+| A breaking change, before `v1.0.0` | `feat`, without `!`: minor. Users only opt in to it | `feat!`: minor |
 | A breaking change, from `v1.0.0` | Not allowed | Not allowed |
-
-Load the wow-versioning skill for the full rules.
 
 ## Checklist
 
@@ -54,4 +56,4 @@ Before you open a PR that adds or turns on a flag, check that:
 - The flag is read from an environment variable and is off by default.
 - Its name follows the project's convention, or the user agreed it.
 - The PR doesn't hide a breaking change behind a flag from `v1.0.0`.
-- The version effect matches the table above.
+- Each commit's type matches the table above: `feat` for code users can reach by turning the flag on, and `refactor` for code they can never reach.

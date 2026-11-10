@@ -27,9 +27,9 @@ What a commit changes decides the bump. Choose the commit's type to match it, be
 | --- | --- | --- |
 | Nothing in the source code, whatever it is. For example docs, CI or tests | None | `v1.4.2` stays `v1.4.2` |
 | The source code, in a way that isn't backward compatible, from `v1.0.0` | Major | `v1.4.2` to `v2.0.0` |
-| The source code, in a way that isn't backward compatible, before `v1.0.0` (beta), and not behind a flag that's off. Includes turning on a breaking change that was behind a flag | Minor | `v0.3.1` to `v0.4.0` |
-| The source code, adding a feature or capability users can use (not behind a flag that's off). Includes turning on a feature that was behind a flag | Minor | `v1.4.2` to `v1.5.0` |
-| The source code in any other way: a fix, a refactoring, a performance change, a dependency update that changes the build artifact, new code behind a flag that's off (even a breaking change in beta), or turning on a non-breaking fix that was behind a flag | Patch | `v1.4.2` to `v1.4.3` |
+| The source code, in a way that isn't backward compatible, before `v1.0.0` (beta), and not behind a flag that's off. Includes turning on, by default, a breaking change that was behind a flag | Minor | `v0.3.1` to `v0.4.0` |
+| The source code, adding a feature or capability users can use, even one behind a flag that's off by default that they can turn on (including a breaking change in beta). Includes turning on a feature that was behind a flag | Minor | `v1.4.2` to `v1.5.0` |
+| The source code in any other way: a fix, a refactoring, a performance change, a dependency update that changes the build artifact, code users can never reach, even with a flag on, or turning on a non-breaking fix that was behind a flag | Patch | `v1.4.2` to `v1.4.3` |
 
 - **Source code** is code that's reflected in the final build artifact. CI configuration, tests and docs aren't source code.
 - Choose the type by the content. A commit that doesn't touch the source code is `docs`, `ci`, `test` or `chore`, never `feat` or `fix`, even when it adds a doc page.
@@ -47,7 +47,7 @@ Every project's first release is `v0.1.0`. Before `v1.0.0`, the project is in be
 
 - There's no `0.0.x` stage. Don't release a version below `v0.1.0`.
 - A breaking change to the source code bumps the minor version, whatever its type. A `fix(ipc)!:` commit at `v0.3.1` gives `v0.4.0`.
-- A breaking change hidden behind a flag that's off is a patch while it's hidden. The commit that turns the flag on is a minor bump.
+- A breaking change hidden behind a flag that's off is a `feat`, without `!`, while users can only opt in to it: a minor bump. The commit that turns it on by default is `feat!`: also a minor bump.
 - The project moves to `v1.0.0` when the maintainer decides it's ready.
 
 ## From `v1.0.0`
@@ -85,7 +85,7 @@ commitizen bumps by the headers alone:
 | Any other type, such as `docs`, `ci`, `test` or `chore` | None | None |
 
 - With no tags, it counts from `0.0.0`, so a history with a `feat` gives `0.1.0` (observed). When it gives a `0.0.x` version for the first release, release `v0.1.0` instead.
-- It can't see what a commit changes, so the types have to say it. Where the table above gives a different bump from the type, such as new code behind a flag that's off, raise it with the user before the release.
+- It can't see what a commit changes, so the types have to say it. For code behind a flag, the type depends on whether users can reach it, as the wow-feature-flags skill says.
 
 ## Tags and releases
 
