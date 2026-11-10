@@ -1,6 +1,6 @@
 ---
 name: wow-pull-requests
-description: "House rules for squash-merged pull requests: the title written as a commit header without the PR number, the description written as a commit body with no footers, closing issues, marking breaking changes, [skip ci], keeping PRs small, PRs from forks or tools and the checklist before review. Use when ways of working is on and a task opens, creates, drafts or edits a pull request, writes or changes its title or description, adds attribution to a PR or decides how it credits a co-author, closes an issue through a PR or gets a PR ready for review."
+description: "House rules for squash-merged pull requests: the title written as a commit header without the PR number, the description written as a commit body with no footers, closing issues, marking breaking changes, [skip ci], keeping PRs small, PRs from forks or tools, merging from the command line with the co-author trailers and the checklist before review. Use when ways of working is on and a task opens, creates, drafts or edits a pull request, writes or changes its title or description, adds attribution to a PR or decides how it credits a co-author, closes an issue through a PR, gets a PR ready for review or merges a PR, such as with gh pr merge."
 ---
 
 # Pull requests
@@ -58,7 +58,7 @@ Everything in the description becomes part of the history on the default branch.
 
 Don't put a `Co-Authored-By:` footer in the description. When GitHub squash-merges a PR, it collects the co-authors from the trailers of the branch's commits and adds a `Co-authored-by:` line for each one at the end of the message, after a `---------` line. A footer in the description would appear twice, and it would no longer be in the final paragraph, where Git and GitHub read trailers.
 
-So credit a co-author on the commits instead: every commit with AI-generated code ends with the `Co-Authored-By:` footer (load the wow-commits skill). Leave the lines GitHub adds in the merge box as they are.
+So credit a co-author on the commits instead: every commit with AI-generated code ends with the `Co-Authored-By:` footer (load the wow-commits skill). Leave the lines GitHub adds in the merge box as they are. A merge from the command line doesn't add them, so add them yourself (see [Merge from the command line](#merge-from-the-command-line)).
 
 ### When Claude writes the description
 
@@ -103,6 +103,23 @@ Load the wow-versioning skill for the version bump, and for the Go module path r
 
 - External contributors open PRs from a fork (the wow-branching skill covers forks). The title and description rules in this skill still apply.
 - Tools such as Dependabot open their own PRs. Don't rewrite their titles.
+
+## Merge from the command line
+
+Only GitHub's merge box adds the `---------` line and the co-author trailers. `gh pr merge --squash` with `--body` or `--body-file` uses the body exactly as given, so the squashed commit has no trailers and credits no co-author (observed). Without a body, the message depends on the repository's settings. The squashed commit lands on the default branch, which is never rewritten, so a missing trailer can't be added afterwards.
+
+So when you merge with `gh`, always pass the title and the full message yourself, and end the message as the merge box would:
+
+1. Write the PR's description to a file in the scratchpad.
+1. Collect the co-authors from the branch's commits, one line each, without repeats:
+
+   ```bash
+   git log --format='%(trailers:key=Co-Authored-By,valueonly,unfold)' origin/main..HEAD | sed '/^$/d' | sort -u | sed 's/^/Co-authored-by: /'
+   ```
+
+1. If there are any, add a paragraph that holds only `---------`, then a final paragraph with those lines.
+1. Merge with `gh pr merge <number> --squash --subject "<title> (#<number>)" --body-file <file>`. With `--subject`, add the PR number yourself, as the merge box would.
+1. Check the result with `git log -1 --format=%B origin/main` after a fetch.
 
 ## After the merge
 

@@ -138,7 +138,7 @@ What a breaking change does to the version depends on whether the project has re
 - Put the co-author lines in the final paragraph, with nothing after them. Git and GitHub only read trailers from the last paragraph.
 - Before that final paragraph, add a paragraph that holds only `---------`, with a blank line on each side. GitHub's merge box adds the same line before the co-author trailers when it squash-merges a PR (observed), so commits made directly and through PRs end the same way.
 - Use exactly nine hyphens. Git takes a line that is `---` followed by a space or the end of the line as the start of a patch: it finds no trailers after it, and `git am` (and `git rebase --apply`, which calls it) cuts the message there. So no line anywhere in a commit message or PR description may be `---` on its own or start with `--- `, such as a Markdown horizontal rule.
-- In a squash-merged PR, the footer goes on each commit on the branch, not in the PR description: GitHub's merge box adds the separator and the footer from the commits (load the wow-pull-requests skill). Leave them as they are.
+- In a squash-merged PR, the footer goes on each commit on the branch, not in the PR description: GitHub's merge box adds the separator and the footer from the commits (load the wow-pull-requests skill). Leave them as they are. A merge with `gh pr merge` adds neither, so add them to the message yourself, as the wow-pull-requests skill says.
 
 ## Commits made by tools
 
