@@ -61,7 +61,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 
 | Module | Requires | Soft | Optional |
 | ------ | -------- | ---- | -------- |
-| `claude` | `claude` | `jq`, `python3` | — |
+| `claude` | `claude` | `jq`, `python3` | `cz` (commitizen) |
 | `git`  | `git` | — | — |
 | `podman` | `podman` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open`, `gh` |

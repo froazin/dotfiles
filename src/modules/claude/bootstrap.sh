@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 
 CLAUDE_SOFT_DEPS="jq python3"
+# Optional: the versioning skill works out the next version with cz (commitizen).
+CLAUDE_OPTIONAL_DEPS="cz"
 CLAUDE_SUBDIRS="agents commands skills rules output-styles hooks"
 
 # Deep merge of a template ($tpl) into the existing file ($cur), used for both
@@ -68,6 +70,28 @@ claude_check_soft_deps()
     if [ "$failed" = "true" ]; then
         return 1
     fi
+
+    return 0
+}
+
+claude_report_optional_deps()
+{
+    # Like the zsh module, report optional dependencies only for a normal user.
+    skipped="warning"
+    if is_root; then
+        skipped="debug"
+    fi
+
+    for cmd in $CLAUDE_OPTIONAL_DEPS; do
+        if command -v "$cmd" > /dev/null 2>&1; then
+            log debug "Found optional dependency: $cmd"
+        else
+            case "$cmd" in
+                cz) log "$skipped" "Optional dependency missing: cz is not installed (Ubuntu package commitizen). The versioning skill works out bumps by hand without it." ;;
+                *) log "$skipped" "Optional dependency missing: $cmd is not installed." ;;
+            esac
+        fi
+    done
 
     return 0
 }
@@ -226,6 +250,7 @@ bootstrap()
     log info "Bootstrapping Claude Code configuration."
 
     claude_check_soft_deps || errors="true"
+    claude_report_optional_deps
 
     claude_install_config || {
         log error "Failed to install Claude Code configuration."

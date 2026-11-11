@@ -48,9 +48,10 @@ This flowchart shows the functions in [`bootstrap.sh`](../../src/modules/claude/
 ```mermaid
 flowchart TD
     accTitle: How the claude module installs its configuration
-    accDescr: install.sh calls bootstrap, which checks the soft dependencies and then runs claude_install_config. That creates the config directory, copies every template except the two JSON files, including the hooks, rules and skills, and merges settings.json and keybindings.json with jq.
+    accDescr: install.sh calls bootstrap, which checks the soft dependencies, reports the optional ones and then runs claude_install_config. That creates the config directory, copies every template except the two JSON files, including the hooks, rules and skills, and merges settings.json and keybindings.json with jq.
     install["src/install.sh"] -->|"claude is on PATH, so it calls"| bootstrap["bootstrap()"]
     bootstrap -->|"checks jq and python3"| deps["claude_check_soft_deps()"]
+    bootstrap -->|"reports cz"| optional["claude_report_optional_deps()"]
     bootstrap -->|"then calls"| config["claude_install_config()"]
     config -->|"creates the directory, mode 0700"| dirs["claude_create_dirs()"]
     config -->|"copies hooks, rules and skills"| tpl["claude_install_templates()"]
@@ -127,6 +128,7 @@ The files in [`rules/`](../../src/modules/claude/templates/rules/) have no `path
 The module logs with `log` from [`logging.sh`](../../src/internal/logging.sh) and follows the installer's dependency grading:
 
 - `claude_check_soft_deps` logs an error for a missing `jq` or `python3`, and `bootstrap` returns 1, but the configuration is still installed. Without `python3`, both Python hooks are installed and do nothing. `wow_marker.sh` needs only `sh` and basic utilities, so it works without either.
+- `claude_report_optional_deps` logs a warning for a missing `cz` (commitizen), which the versioning skill uses to work out the next version, and a debug line instead when installing for root. It never fails the module.
 - Each step sets a failure flag rather than stopping, so one failed file doesn't stop the rest.
 - A `jq` error is reduced to its first line, with `"` and `\` removed, so it fits in the JSON log line.
 - A failed merge removes its temporary file and leaves the destination unchanged.
