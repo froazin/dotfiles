@@ -12,7 +12,8 @@ The optional `## Contributing` section of a project's `CLAUDE.md`, where the pro
 
 - **Commit scopes:** `<scope>`, `<scope>`.
 - **Feature flags:** environment variables named `<PREFIX>_<NAME>`. None exist yet.
-- **Releases:** none yet. The first will be `v0.1.0`. Continuous delivery from `main` is planned.
+- **Releases:** none yet. CI will tag each release from `main`, with the version commitizen works out. Continuous delivery from `main` is planned.
+- **Pre-release tags:** alpha, beta and release candidate versions are tagged `v<version>-alpha.<n>`, `-beta.<n>` and `-rc.<n>`.
 - **CI:** none yet.
 - **Build and test:** `<command>`.
 - <A practice this project follows where it differs from the defaults, and why.>

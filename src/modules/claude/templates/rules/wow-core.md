@@ -47,7 +47,7 @@ skills. Unless the user asks:
 - Every repository is a code repository: trunk-based, with pull requests
   squash-merged into `main`. A GitHub wiki takes direct commits on `master`.
 - Treat a repository as public until you know. Don't tag anything unless the
-  user asks.
+  user asks, and never a release: the project's CI tags releases.
 - Don't invent build, test or lint commands. Use the ones the project
   documents, or ask. If a default clearly doesn't fit, ask the user.
 
@@ -59,10 +59,10 @@ Load each skill once per session, before the first task it covers.
 | --- | --- |
 | commit, branch or push for the first time in a session | `wow-contributing` |
 | write a commit message, or commit | `wow-commits` |
-| open a pull request, or write its title or description | `wow-pull-requests` |
+| open or merge a pull request, or write its title or description | `wow-pull-requests` |
 | create, name or rebase a branch, or work with a fork | `wow-branching` |
 | add a feature flag, or turn one on | `wow-feature-flags` |
-| decide whether a change bumps the version, or tag a release | `wow-versioning` |
+| decide whether a change bumps the version, or prepare or tag a release | `wow-versioning` |
 | change anything in a GitHub wiki clone, or publish it | `wow-github-wiki` |
 | write or edit docs, READMEs, `CLAUDE.md`, rules, skills, wiki pages or pull request descriptions | `wow-writing-style` |
 | write or edit Markdown, including alerts, collapsed sections, task lists or footnotes | `wow-markdown` |

@@ -102,28 +102,32 @@ Load the wow-versioning skill for the version bump, and for the Go module path r
 ## PRs from forks and tools
 
 - External contributors open PRs from a fork (the wow-branching skill covers forks). The title and description rules in this skill still apply.
-- Tools such as Dependabot open their own PRs. Don't rewrite their titles.
+- Tools such as Dependabot open their own PRs. Don't rewrite their titles, except to release a dependency update urgently, as the wow-versioning skill says.
 
 ## Merge from the command line
 
-Only GitHub's merge box adds the `---------` line and the co-author trailers. `gh pr merge --squash` with `--body` or `--body-file` uses the body exactly as given, so the squashed commit has no trailers and credits no co-author (observed). Without a body, the message depends on the repository's settings. The squashed commit lands on the default branch, which is never rewritten, so a missing trailer can't be added afterwards.
+Merge a PR only when the user asks.
+
+Only GitHub's merge box adds the `---------` line and the co-author trailers. `gh pr merge --squash` with `--body` or `--body-file` uses the body exactly as given, so the squashed commit has no trailers and credits no co-author (observed). Without a body, the message depends on the repository's settings. The squashed commit lands on the default branch, so a missing trailer can't be added afterwards.
 
 So when you merge with `gh`, always pass the title and the full message yourself, and end the message as the merge box would:
 
 1. Write the PR's description to a file in the scratchpad.
-1. Collect the co-authors from the branch's commits, one line each, without repeats:
+1. Collect the co-authors from the PR's commits, one line each, without repeats. This reads the PR on GitHub, so it works whichever branch is checked out:
 
    ```bash
-   git log --format='%(trailers:key=Co-Authored-By,valueonly,unfold)' origin/main..HEAD | sed '/^$/d' | sort -u | sed 's/^/Co-authored-by: /'
+   gh pr view <number> --json commits --jq '.commits[].messageBody' |
+     grep -i '^co-authored-by:' | sed 's/^[^:]*: *//' |
+     sort -u | sed 's/^/Co-authored-by: /'
    ```
 
 1. If there are any, add a paragraph that holds only `---------`, then a final paragraph with those lines.
 1. Merge with `gh pr merge <number> --squash --subject "<title> (#<number>)" --body-file <file>`. With `--subject`, add the PR number yourself, as the merge box would.
-1. Check the result with `git log -1 --format=%B origin/main` after a fetch.
+1. Fetch, then check the result with `git log -1 --format=%B origin/<default-branch>`.
 
 ## After the merge
 
-- The squashed commit decides the next version (load the wow-versioning skill). Don't tag a release unless the user asks.
+- The squashed commit decides the next version, and the project's CI makes the release (load the wow-versioning skill). Don't tag a release yourself.
 
 ## Checklist
 
@@ -132,7 +136,8 @@ Before you ask for a review, check that:
 - The title is a valid commit header, without the PR number or any issue reference.
 - The description reads as a commit body, wrapped at 72 characters, with no footers.
 - Any issue the PR closes is referenced in the description with a closing keyword, such as `Closes #123`.
-- A breaking change has `!` in the title and a description that starts with what breaks, why, who is affected and what to do instead.
+- A breaking change, as the wow-versioning skill defines it, has `!` in the title and a description that starts with what breaks, why, who is affected and what to do instead.
+- No line of the description starts like a commit header, such as `feat(cli):`.
 - A Go module PR that moves to `v2` or later adds the major version suffix to the module path.
 - The title doesn't contain `[skip ci]` if the PR should bump the version, unless the reviewers agree to an exception.
 - The description has no `Co-Authored-By:` footer. Each commit on the branch with AI-generated code has one instead.
