@@ -44,7 +44,7 @@ flowchart TD
 - **Optional dependencies** (`ZSH_OPTIONAL_DEPS`, `ZSH_OPTIONAL_SOURCED`): `op`, `uv`, `pulumi`, `direnv`, `ant`, `podman`, `xdg-open` and `gh`. nvm is listed as `name:file` (`nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh`). A missing one logs a warning, or a debug message when `is_root`.
 - **Templates** are found from `$(dirname "$0")`, which is `src/` because the installer evaluates the module into its own shell. Every `templates/.zshrc.d/*.zsh` is installed, so a new drop-in needs no change to `bootstrap.sh`.
 
-When a template starts depending on a new tool, update the lists in `bootstrap.sh`, the README dependency table and, for an apt package, `packages` in the [WSL user-data](https://github.com/froazin/wsl/blob/main/src/Ubuntu-26.04.user-data).
+When a template starts depending on a new tool, update the lists in `bootstrap.sh`, the README dependency table and, for an apt package, `packages` in the WSL user-data's [`99-dotfiles.user-data`](https://github.com/froazin/wsl/blob/main/src/99-dotfiles.user-data). It installs packages without their recommends, so list any recommend the tool needs as well.
 
 ## How it loads
 
@@ -59,7 +59,7 @@ Interactive shells then read [.zshrc](../../src/modules/zsh/templates/.zshrc), w
 | [00-options.zsh](../../src/modules/zsh/templates/.zshrc.d/00-options.zsh) | Shell options, `zsh_have_function`, an `add-zsh-hook` fallback, in-memory history |
 | [05-keybindings.zsh](../../src/modules/zsh/templates/.zshrc.d/05-keybindings.zsh) | Emacs keymap, Windows-style word editing, <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>Ctrl</kbd>+<kbd>E</kbd>, <kbd>Alt</kbd>+<kbd>H</kbd> for `run-help` |
 | [10-completion.zsh](../../src/modules/zsh/templates/.zshrc.d/10-completion.zsh) | `fpath`, the [completion registry](#completion-registry), `compinit`, completion styles |
-| [20-tools.zsh](../../src/modules/zsh/templates/.zshrc.d/20-tools.zsh) | The `direnv` hook, fzf key bindings and completion, nvm |
+| [20-tools.zsh](../../src/modules/zsh/templates/.zshrc.d/20-tools.zsh) | The `direnv` hook, fzf key bindings and completion, nvm, which puts nvm's default Node.js on `PATH`. The WSL user-data installs the current LTS as the default |
 | [30-prompt.zsh](../../src/modules/zsh/templates/.zshrc.d/30-prompt.zsh) | The prompt, its `vcs_info` git segment and the window title |
 | [40-aliases.zsh](../../src/modules/zsh/templates/.zshrc.d/40-aliases.zsh) | Colour aliases for `ls` and `grep`, `browse` and `alert` |
 | [50-functions.zsh](../../src/modules/zsh/templates/.zshrc.d/50-functions.zsh) | The `workspaces` picker, its aliases `ws` and `workspace`, `wsc` and `_ws` |
