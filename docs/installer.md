@@ -25,7 +25,7 @@ flowchart LR
     accTitle: Where the installer sits
     accDescr: A person or the WSL user-data runs install.sh. It sources logging.sh and common.sh, then evaluates each module's bootstrap.sh, which calls the shared helpers. install.sh doesn't source github.sh.
     readme["Manual run from README.md"] -->|"./src/install.sh"| install["install.sh"]
-    userdata["Ubuntu-26.04.user-data runcmd"] -->|"runuser -l, as the user and root"| install
+    userdata["WSL user-data runcmd"] -->|"runuser -l, as the user and root"| install
     install -->|"sources"| logging["logging.sh"]
     install -->|"sources"| common["common.sh"]
     install -->|"evals, then calls bootstrap"| modules["modules/name/bootstrap.sh"]
@@ -34,7 +34,7 @@ flowchart LR
     install -.->|"does not source"| github["github.sh"]
 ```
 
-People run it by hand as the [README](../README.md#usage) describes, and again with `sudo -H` to give root its own copy. The WSL user-data runs it for the new user and then for root, or only for root from a temporary clone when no username is given (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
+People run it by hand as the [README](../README.md#usage) describes, and again with `sudo -H` to give root its own copy. The WSL user-data runs it for the user it creates and then for root (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 
 ## How it works
 

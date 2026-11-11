@@ -158,10 +158,12 @@ generated on demand like the other optional tools.
 
 With `podman` installed and its user API socket listening
 (`systemctl --user enable --now podman.socket`), zsh points `DOCKER_HOST` at
-that socket, so Docker clients such as `docker compose` or VS Code Dev
-Containers use rootless podman. Root uses the system socket instead
+that socket, so Docker clients such as VS Code Dev Containers use rootless
+podman. Root uses the system socket instead
 (`/run/podman/podman.sock`, from `sudo systemctl enable --now podman.socket`).
-A `DOCKER_HOST` you set yourself wins.
+A `DOCKER_HOST` you set yourself wins. The WSL user-data makes podman-compose
+the provider for `podman compose`, and for `docker compose` through
+`podman-docker`.
 
 `podman login` saves credentials in `$XDG_RUNTIME_DIR/containers/auth.json`
 by default, which lasts for the session. The `podman` module creates

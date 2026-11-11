@@ -44,7 +44,9 @@ are touched.
   guards every tool at runtime.
 - **Keep the three dependency lists in sync** when adding a tool:
   `src/modules/*/bootstrap.sh`, the README dependency table, and `packages` in
-  froazin/wsl's `src/Ubuntu-26.04.user-data`, which needs its own pull request.
+  froazin/wsl's `src/99-dotfiles.user-data`, which needs its own pull request.
+  That user-data installs apt packages without their recommends, so list any
+  recommend a module needs too.
 - **Prefer native mechanisms** (zsh builtins, official
   installers run as the user so they can self-update) over custom glue.
 - **Don't write outside the repo to test.** Use throwaway `HOME`s
