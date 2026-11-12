@@ -1,21 +1,15 @@
 ---
 name: Release
 
-# Releases main. A change only to the docs or agent settings changes nothing that's installed, so it can't make a
-# release. The skills under src/ are Markdown, so the filter skips Markdown only at the root. The same list as the CI
-# workflow's.
+# Releases main when a push changes src/, which holds everything the installer installs. A change anywhere else, such
+# as to the docs, the workflows or the dev tools, changes nothing that's installed, so it starts no run. Its commits are
+# still counted in the next release, as they're since the latest tag.
 on:
   push:
     branches:
       - main
     paths:
-      - "**"
-      - "!*.md"
-      - "!.claude/**"
-      - "!.github/dependabot.yml"
-      - "!.vscode/**"
-      - "!docs/**"
-      - "!LICENSE"
+      - "src/**"
 
 permissions:
   contents: read

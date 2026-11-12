@@ -28,7 +28,7 @@ change that makes them out of date.
 | `docs/` | Design docs for engineers changing the code. | — |
 | `.github/workflows/ci.yml` | Runs the checks below on each pull request, and when the release workflow calls it. On a pull request only, then Claude's code review. | [docs/ci.md](docs/ci.md) |
 | `REVIEW.md` | Instructions for CI's Claude code review: what counts as Important, the Nit cap, what to skip, what to always check and the evidence a finding needs. | [docs/ci.md](docs/ci.md#code-review) |
-| `.github/workflows/release.yml`, `.cz.toml` | On a push to `main`, calls CI, then releases each change that bumps the version, tagged `vX.Y.Z`, with the version commitizen works out. | [docs/releases.md](docs/releases.md) |
+| `.github/workflows/release.yml`, `.cz.toml` | On a push to `main` that changes `src/`, calls CI, then releases each change that bumps the version, tagged `vX.Y.Z`, with the version commitizen works out. | [docs/releases.md](docs/releases.md) |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. | — |
 | `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. | — |
 

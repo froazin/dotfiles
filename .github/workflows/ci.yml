@@ -3,8 +3,8 @@ name: CI
 
 # Runs the checks in CLAUDE.md on each pull request, and for the release workflow, which calls it before it releases.
 # Only a pull request gets Claude's code review. A change only to the docs or agent settings changes nothing that's
-# installed, so it runs nothing. The skills under src/ are Markdown, so the filter skips Markdown only at the root. The
-# same list as the release workflow's.
+# installed or how it's checked, so it runs nothing. The skills under src/ are Markdown, so the filter skips Markdown
+# only at the root. The release workflow runs only for changes to src/.
 on:
   pull_request:
     branches:
