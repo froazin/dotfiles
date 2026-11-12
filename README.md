@@ -206,6 +206,10 @@ code:
   [commit-signing guard](docs/claude/commit-signing-guard.md),
   [no session links](docs/claude/no-session-links.md) and the
   [ways of working](docs/claude/ways-of-working.md).
+- [CI](docs/ci.md): the checks each pull request and release runs, and
+  the code review on each pull request.
+- [Releases](docs/releases.md): how `main` is released, with a version
+  commitizen works out.
 
 ---
 Happy coding! :rocket:
