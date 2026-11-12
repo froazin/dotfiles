@@ -45,7 +45,7 @@ The `checks` and `windows` jobs run in parallel. The `checks` job runs the Linux
 
 The `windows` job runs on Windows Server 2025 with pwsh as its shell, in this order:
 
-1. It installs pinned versions of PSScriptAnalyzer and Pester 5, Pester for Windows PowerShell 5.1 as well, whose built-in Pester 3 can't run the tests. It installs fzf, the pwsh module's soft dependency, from Chocolatey.
+1. It saves pinned versions of PSScriptAnalyzer and Pester 5 with PSResourceGet into `C:\Program Files\WindowsPowerShell\Modules`, which pwsh and Windows PowerShell 5.1 both load from, so 5.1 gets Pester 5 in place of its built-in Pester 3. PowerShellGet's `Install-Module` took about three minutes for the same (observed). It installs fzf, the pwsh module's soft dependency, from Chocolatey.
 1. PSScriptAnalyzer over the whole repository with [`PSScriptAnalyzerSettings.psd1`](../PSScriptAnalyzerSettings.psd1). Any finding fails the job.
 1. Windows PowerShell 5.1's own parser over every `.ps1` under `src/`, which catches syntax that PowerShell 7 accepts and 5.1 doesn't.
 1. `Invoke-Pester -Path src -CI` under pwsh, then under Windows PowerShell 5.1: the tests for the Windows hooks and the claude module's `bootstrap.ps1`.

@@ -100,17 +100,20 @@ jobs:
         with:
           persist-credentials: false
 
-      # Pinned, so a new rule or Pester release can't fail a run on its own. Pester goes in for Windows PowerShell 5.1
-      # as well, whose built-in Pester 3 can't run the tests. fzf is the pwsh module's soft dependency.
+      # Pinned, so a new rule or Pester release can't fail a run on its own. PSResourceGet saves each module once, into
+      # the folder both pwsh and Windows PowerShell 5.1 load from, so 5.1 gets Pester 5 in place of its built-in Pester 3
+      # without PowerShellGet's slow Install-Module and NuGet bootstrap, which took about three minutes. fzf is the pwsh
+      # module's soft dependency.
       - name: Install the tools
         run: |
-          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
-          Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
-          powershell -NoProfile -Command 'Install-PackageProvider NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null; Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck'
+          $modules = Join-Path $env:ProgramFiles 'WindowsPowerShell\Modules'
+          Save-PSResource -Name PSScriptAnalyzer -Version 1.25.0 -Repository PSGallery -Path $modules -TrustRepository -Quiet
+          Save-PSResource -Name Pester -Version 5.7.1 -Repository PSGallery -Path $modules -TrustRepository -Quiet
           choco install fzf --yes --no-progress
 
       - name: Lint the PowerShell scripts
         run: |
+          Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
           $findings = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
           $findings | Format-Table -AutoSize -Wrap
           if ($findings) { exit 1 }
