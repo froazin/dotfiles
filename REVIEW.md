@@ -17,7 +17,7 @@ Mark a finding Important only when the change would do one of these:
 - Put identifying data into the repository, such as a real name, email, username, signing key, hostname or `/mnt/c/Users/<name>/` path. The repository is public.
 - Add a tool a module or template depends on without keeping the three dependency lists in step, as `CLAUDE.md` says.
 - Make the README's install steps wrong, or make a design doc, the README, `CLAUDE.md` or this file say something about the code that's false after the change, so that someone following it would do the wrong thing.
-- Make CI or the release workflow skip a check that the change needs, such as a `!` pattern added to `paths` in `.github/workflows/ci.yml` or `.github/workflows/release.yml` that skips a path the checks read or that gets installed. Drop or narrow a check the `checks` job runs, or let a job run when one it needs failed. `docs/ci.md` and `docs/releases.md` describe how they should work.
+- Make CI or the release workflow skip a check that the change needs, such as a `!` pattern added to `paths` in `.github/workflows/ci.yml` that skips a path the checks read or that gets installed, or a `paths` filter in `.github/workflows/release.yml` that skips part of `src/`. Drop or narrow a check the `checks` job runs, or let a job run when one it needs failed. `docs/ci.md` and `docs/releases.md` describe how they should work.
 - Give a job other than `release` in `release.yml` a token that can write, other than the permissions its `ci` job allows for CI's code review, or let the `release` job check out or run the repository's code. `docs/releases.md` describes why.
 - Widen what the Claude run in CI can do, such as its `permissions`, its `github_token`, its `--allowedTools` or its `--disallowedTools`, past what the "Security" section of `docs/ci.md` allows, even when the change updates that doc too. Give `CLAUDE_CODE_OAUTH_TOKEN`, or a token that can write, to a step that runs the PR's code, or pass secrets to `ci.yml` from the release workflow.
 - Use an action without pinning it to a full commit SHA with its version in a comment, pin one to a release less than 7 days old, or shorten the 7-day Dependabot cooldown.
@@ -62,7 +62,7 @@ These are the rules that no tool, test or check enforces.
 ### CI
 
 - A new job in `ci.yml` or `release.yml` needs the jobs whose results it depends on, so it doesn't run after one of them failed.
-- A new path that the checks read, or that gets installed, isn't skipped by a `!` pattern in `paths` in `ci.yml` or `release.yml`, and the two lists stay the same.
+- A new path that the checks read, or that gets installed, isn't skipped by a `!` pattern in `paths` in `ci.yml`. Anything that gets installed lives under `src/`, which is all that starts `release.yml`.
 - A change to this file's severities, its Nit cap or what it says about pre-existing issues also changes the code review's prompt in `.github/workflows/ci.yml`, and the other way round.
 
 ## Evidence

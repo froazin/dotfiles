@@ -15,7 +15,7 @@ How [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) checks and reviews
 
 ## Overview
 
-The workflow runs when a PR to `main` is opened, pushed to, reopened or marked ready for review, and when the [release workflow](releases.md) calls it with `workflow_call` on a push to `main`. On a PR, the `paths` filter skips a change only to the docs or agent settings: root Markdown files, `docs/`, `.claude/`, `.vscode/`, `.github/dependabot.yml` and `LICENSE`. The skills under `src/` are Markdown too, but they're installed, so they still run it. The release workflow has the same filter. This flowchart shows the jobs:
+The workflow runs when a PR to `main` is opened, pushed to, reopened or marked ready for review, and when the [release workflow](releases.md) calls it with `workflow_call` on a push to `main`. On a PR, the `paths` filter skips a change only to the docs or agent settings: root Markdown files, `docs/`, `.claude/`, `.vscode/`, `.github/dependabot.yml` and `LICENSE`. The skills under `src/` are Markdown too, but they're installed, so they still run it. The release workflow runs only for a change to `src/`, so a change to the workflows or the dev tools is checked on its PR, but not again on `main`. This flowchart shows the jobs:
 
 ```mermaid
 flowchart LR

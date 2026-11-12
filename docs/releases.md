@@ -14,13 +14,13 @@ How [`.github/workflows/release.yml`](../.github/workflows/release.yml) releases
 
 ## Overview
 
-The workflow runs on every push to `main`, except a change only to the docs or agent settings, with the same `paths` filter as [CI](ci.md#overview). This flowchart shows the jobs:
+The workflow runs on every push to `main` that changes `src/`, which holds everything the installer installs. A push that changes nothing there, such as a Dependabot update to a pinned action or a dev tool, starts no run. Its commits are still counted in the next release, because commitizen reads every commit since the latest tag. This flowchart shows the jobs:
 
 ```mermaid
 flowchart LR
     accTitle: The jobs that release the dotfiles
-    accDescr: A push to main that changes more than docs starts the release workflow. Its ci job calls the CI workflow. When the checks pass, the version job asks commitizen for the next version. When there is one, the release job creates a GitHub release and its tag.
-    push["Push to main"] -->|"not only docs"| ci["ci: calls ci.yml"]
+    accDescr: A push to main that changes src/ starts the release workflow. Its ci job calls the CI workflow. When the checks pass, the version job asks commitizen for the next version. When there is one, the release job creates a GitHub release and its tag.
+    push["Push to main"] -->|"changes src/"| ci["ci: calls ci.yml"]
     ci -->|passed| version["version: cz bump --get-next"]
     version -->|"exit 21 or 3"| stop["Nothing to release"]
     version -->|"X.Y.Z"| release["release: gh release create vX.Y.Z"]
