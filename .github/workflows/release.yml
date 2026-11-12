@@ -29,9 +29,16 @@ concurrency:
 jobs:
   # The same checks as on a pull request, so a push straight to main is checked too, and a failed check releases
   # nothing.
+  # GitHub checks a called workflow's permissions before the run starts, even for a job that's skipped, so this allows
+  # what CI's code review asks for. The review only runs on a pull request, so it's skipped here, and CI's checks job
+  # still only gets contents: read. No secrets are passed.
   ci:
     name: CI
     uses: ./.github/workflows/ci.yml
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
 
   version:
     name: Work out the version

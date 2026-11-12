@@ -26,7 +26,7 @@ flowchart LR
     version -->|"X.Y.Z"| release["release: gh release create vX.Y.Z"]
 ```
 
-- **`ci`** calls [`ci.yml`](../.github/workflows/ci.yml), so a push straight to `main` is checked as a pull request is, and a failed check releases nothing.
+- **`ci`** calls [`ci.yml`](../.github/workflows/ci.yml), so a push straight to `main` is checked as a pull request is, and a failed check releases nothing. CI's code review runs only on a pull request, so it's skipped here.
 - **`version`** checks out the whole history, installs commitizen and works out the version, as [How the version is decided](#how-the-version-is-decided) describes. It outputs the tag, or no tag when there's nothing to release.
 - **`release`** runs only when there's a tag. It checks it's the newest run of the workflow with `gh run list`, then runs `gh release create "$TAG" --target "$GITHUB_SHA" --generate-notes`.
 
@@ -59,6 +59,7 @@ The `version` job runs `cz bump --get-next --yes` with [commitizen](https://comm
 ## Security
 
 - The workflow's token can only read the repository, except in the `release` job, which has `contents: write` to create the release and its tag, and `actions: read` to list the workflow's runs. That job has no checkout and runs no repository code.
+- The `ci` job also allows `pull-requests: write` and `actions: read`, because GitHub checks a called workflow's permissions before it starts, and CI's code review asks for them. The review is skipped on a push, CI's `checks` job still gets only `contents: read`, and no secrets are passed (see [CI](ci.md#security)).
 - The `version` job's checkout doesn't keep the token (`persist-credentials: false`).
 - Every action is pinned to a full commit SHA, with its version in a comment. Dependabot updates them.
 
