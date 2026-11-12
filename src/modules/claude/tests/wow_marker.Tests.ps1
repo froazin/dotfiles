@@ -4,26 +4,19 @@ Pester 5 tests for the ways-of-working marker hook's PowerShell twin
 
 Most tests dot-source the hook and call Invoke-WowMarker, with a throwaway
 HOME, WORKSPACE_DIR and XDG_RUNTIME_DIR under TestDrive. The end-to-end tests
-pipe JSON into the hook with pwsh and, where it exists, powershell.exe.
+pipe JSON into the hook with the PowerShell running the tests, as Claude Code
+would: CI runs the suite under pwsh and under Windows PowerShell 5.1, so each
+is covered once, in-process and spawned.
 #>
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseCompatibleCommands', '', Justification = 'The target profiles know only the Pester 3 that ships with Windows; these tests need Pester 5.')]
 param()
 
 BeforeDiscovery {
-    $script:Shells = @()
-    if ($PSVersionTable.PSEdition -eq 'Core') {
-        $script:Shells += @{ Shell = 'pwsh'; Exe = (Get-Process -Id $PID).Path }
-    } else {
-        $found = Get-Command -Name pwsh -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) {
-            $script:Shells += @{ Shell = 'pwsh'; Exe = $found.Source }
-        }
-    }
-    $found = Get-Command -Name powershell.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($found) {
-        $script:Shells += @{ Shell = 'powershell'; Exe = $found.Source }
-    }
+    $script:Shells = @(@{
+            Shell = $(if ($PSVersionTable.PSEdition -eq 'Core') { 'pwsh' } else { 'powershell' })
+            Exe = (Get-Process -Id $PID).Path
+        })
 }
 
 BeforeAll {
@@ -388,7 +381,12 @@ Describe 'wow_marker.ps1' {
                 Set-ItResult -Skipped -Because 'this account cannot create symbolic links'
                 return
             }
-            New-Link -Path (Join-Path $dangling '.wow') -Target (Join-Path $fx.Tmp 'no-such-file')
+            # Windows PowerShell's New-Item won't link to a missing target, so
+            # link to a file and then delete it.
+            $gone = Join-Path $fx.Tmp 'no-such-file'
+            [IO.File]::WriteAllText($gone, '')
+            New-Link -Path (Join-Path $dangling '.wow') -Target $gone
+            [IO.File]::Delete($gone)
             New-Link -Path (Join-Path $toDir '.wow') -Target $fx.Home
             New-Link -Path (Join-Path $chain '.wow') -Target (Join-Path $toFile '.wow')
             Get-HookStatus -Fixture $fx -Cwd $toFile | Should -BeExactly ('0|' + (Get-OnLine 'github.com/o/to-file'))
