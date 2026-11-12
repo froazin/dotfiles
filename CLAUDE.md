@@ -26,6 +26,8 @@ change that makes them out of date.
 | `src/modules/podman/` | Persistent `~/.config/containers/auth.json`, linked from `~/.docker/config.json`. | [docs/podman-module.md](docs/podman-module.md) |
 | `src/modules/zsh/` | `~/.zshenv`, `~/.zshrc` and numbered `~/.zshrc.d/` drop-ins. | [docs/zsh/overview.md](docs/zsh/overview.md) |
 | `docs/` | Design docs for engineers changing the code. | — |
+| `.github/workflows/ci.yml` | Runs the checks below on each pull request, and when the release workflow calls it. | [docs/ci.md](docs/ci.md) |
+| `.github/workflows/release.yml`, `.cz.toml` | On a push to `main`, calls CI, then releases each change that bumps the version, tagged `vX.Y.Z`, with the version commitizen works out. | [docs/releases.md](docs/releases.md) |
 | `.shellcheckrc`, `.editorconfig` | Lint and format settings for ShellCheck and shfmt. | — |
 | `pyproject.toml`, `.python-version`, `pyrightconfig.json` | Python dev tooling (uv, ruff, pytest, pyright), development only: nothing installed needs it. | — |
 
@@ -82,3 +84,8 @@ edited `.sh` files and `zsh -n` on zsh files, and reports failures back.
 
 Conventional commits with a scope, matching history: `feat(zsh): ...`,
 `fix(git): ...`, `feat(wsl): ...`, `chore: ...`; `!` marks breaking changes.
+
+A pull request's squash-merged title and description decide the next
+release's version, so choose its type by what it changes. Releases start at
+`v0.1.0`, and only the release workflow tags them. See
+[docs/releases.md](docs/releases.md#how-the-version-is-decided).

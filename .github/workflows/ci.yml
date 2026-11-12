@@ -1,0 +1,83 @@
+---
+name: CI
+
+# Runs the checks in CLAUDE.md on each pull request, and for the release workflow, which calls it before it releases.
+# A change only to the docs or agent settings changes nothing that's installed, so it runs nothing. The skills under
+# src/ are Markdown, so the filter skips Markdown only at the root. The same list as the release workflow's.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**"
+      - "!*.md"
+      - "!.claude/**"
+      - "!.github/dependabot.yml"
+      - "!.vscode/**"
+      - "!docs/**"
+      - "!LICENSE"
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A newer push to a pull request cancels its older run. When the release workflow calls this one, github is the
+# caller's context, so the event name keeps this group apart from the caller's and the two never wait on each other.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The linters and the soft dependencies the end-to-end install checks for. git and python3 are on the runner
+      # already.
+      - name: Install the tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends fzf jq shellcheck shfmt zsh zsh-autosuggestions \
+            zsh-syntax-highlighting
+
+      # uv uses the runner's python3, as pyproject.toml asks. No cache, so nothing a pull request saved can reach a
+      # run the release workflow makes.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+
+      - name: Lint the shell scripts
+        run: >-
+          shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh
+          src/modules/claude/templates/hooks/*.sh .claude/hooks/*.sh
+
+      - name: Check the shell formatting
+        run: shfmt -d .
+
+      - name: Check the zsh syntax
+        run: |
+          for f in src/modules/zsh/templates/.zshenv src/modules/zsh/templates/.zshrc \
+            src/modules/zsh/templates/.zshrc.d/*.zsh; do
+            zsh -n "$f"
+          done
+
+      - name: Install the Python tools
+        run: uv sync --locked
+
+      - name: Check the Python formatting and lint
+        run: uv run ruff format --check && uv run ruff check
+
+      - name: Check the Python types
+        run: uv run pyright
+
+      - name: Run the tests
+        run: uv run pytest
+
+      - name: Install into a scratch home
+        run: HOME="$(mktemp -d)" SHELL=/usr/bin/zsh sh src/install.sh

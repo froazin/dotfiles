@@ -1,0 +1,103 @@
+---
+name: Release
+
+# Releases main. A change only to the docs or agent settings changes nothing that's installed, so it can't make a
+# release. The skills under src/ are Markdown, so the filter skips Markdown only at the root. The same list as the CI
+# workflow's.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**"
+      - "!*.md"
+      - "!.claude/**"
+      - "!.github/dependabot.yml"
+      - "!.vscode/**"
+      - "!docs/**"
+      - "!LICENSE"
+
+permissions:
+  contents: read
+
+# A run waits for the one in progress, and a newer push replaces a run that's still waiting, so two releases never
+# race.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # The same checks as on a pull request, so a push straight to main is checked too, and a failed check releases
+  # nothing.
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  version:
+    name: Work out the version
+    needs: ci
+    runs-on: &runs-on ubuntu-26.04
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      # commitizen reads the commits and tags since the latest release, so it needs the whole history.
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install commitizen
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends commitizen
+
+      # commitizen prints the next version from the commits since the latest tag, with the settings in .cz.toml, and
+      # changes nothing. --yes answers its question when there's no tag yet. It exits with 21 when no commit calls for
+      # a bump, and with 3 when there are no new commits: either way there's nothing to release.
+      - name: Work out the version
+        id: version
+        run: |
+          code=0
+          version=$(cz bump --get-next --yes < /dev/null) || code=$?
+          tag=
+          case "$code" in
+            0)
+              tag="v$version"
+              echo "::notice title=Release::Releasing $tag."
+              ;;
+            3 | 21)
+              echo "::notice title=Release::No commit since the latest release calls for a bump, so there's nothing to release."
+              ;;
+            *)
+              echo "::error title=Release::commitizen failed with exit code $code."
+              exit "$code"
+              ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  # The only job that can write to the repository, so it runs no repository code: it has no checkout. gh release create
+  # tags the commit the run came from.
+  release:
+    name: Release
+    needs: version
+    if: needs.version.outputs.tag != ''
+    runs-on: *runs-on
+    # actions: read to find the newest run of this workflow.
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      # A newer run releases this commit's changes too, so only the newest run releases. That also stops a re-run of an
+      # older run tagging an older commit.
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          newest=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release.yml --branch main --event push --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ "$newest" != "$GITHUB_RUN_ID" ]; then
+            echo "::notice title=Release::Run $newest is newer, so it makes the release instead."
+            exit 0
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --generate-notes

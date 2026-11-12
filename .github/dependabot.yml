@@ -17,3 +17,21 @@ updates:
       python:
         patterns:
           - "*"
+  # Keeps the release workflow's pinned actions up to date. A 7-day cooldown gives a compromised release time to be
+  # caught before Dependabot proposes it.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: "monday"
+    allow:
+      - dependency-type: "all"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
