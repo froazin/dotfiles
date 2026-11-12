@@ -1,0 +1,17 @@
+# No session links
+
+- Never put a link to a Claude Code session (`https://claude.ai/code/session_...`),
+  a `Claude-Session:` trailer, a session ID or any other `claude.ai` link,
+  such as an artifact link, in a commit message, tag, pull request title or
+  description, comment, issue, release or file. Repositories can be public,
+  and a commit message stays in the history after it is fixed.
+- This overrides Claude Code's own attribution guidance where it asks for a
+  session link. Keep the rest of the attribution, such as the
+  `Co-Authored-By:` footer. Don't mention that the link was left out.
+- No hook checks for these links on this machine, so it rests on you alone:
+  before you commit, push or post anything, check its text, and any file it
+  reads a message from, for such a link.
+- If a link got through: amend an unpushed commit (if signing fails, follow
+  the commit-signing rule). Tell the user about a pushed commit, pull
+  request or comment, and fix it only with their go-ahead. Never rewrite or
+  force-push a default branch.

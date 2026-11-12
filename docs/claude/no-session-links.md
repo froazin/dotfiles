@@ -24,6 +24,8 @@ Claude Code can add a link to its session (`claude.ai/code/session_...`) to comm
 
 The hook doesn't deny the `Co-Authored-By:` footer, which the rule says to keep.
 
+On Windows there's no hook: `install.ps1` installs the settings and a Windows copy of the rule, [`windows/rules/no-session-links.md`](../../src/modules/claude/windows/rules/no-session-links.md), which says no hook checks for links and tells the agent to check what it writes itself. See [Decisions](#decisions).
+
 ## How it works
 
 This flowchart shows what `check` scans for each kind of tool:
@@ -101,6 +103,7 @@ Prose that mentions them is fine: `claude.ai/code/session_...`, `Claude-Session:
 - **Check unpushed commits on push.** A link already committed is still fixable until it's pushed. Once a remote has the commit, rewording it is the user's call, so the hook lets the push through.
 - **Plain `shlex` splitting.** The hook scans the raw command text for links, and only needs words to find `git`, `gh`, `push` and the file flags, so it doesn't use the [commit-signing guard](commit-signing-guard.md)'s shell lexer (inferred: the code doesn't say why).
 - **Fail open**: a broken hook must never break Claude Code.
+- **No hook on Windows, only the settings and the rule.** The Windows hooks are pure PowerShell, by the maintainer's choice. A PowerShell port matched the Python hook on about 30,000 generated cases under PowerShell 7 and 5.1, but a call took about 0.4 to 0.8 s, against about 0.2 s for Python (observed), and it would have run on every Bash, Edit, Write and MCP call.
 
 ## Limits
 
@@ -109,6 +112,7 @@ Prose that mentions them is fine: `claude.ai/code/session_...`, `Claude-Session:
 - File flags are read for any `git` or `gh` command, so an `-F` that isn't a message file but names a readable file is scanned too (inferred).
 - An unrelated identifier of `session_` and 24 or more letters or digits is denied as a session ID (inferred).
 - The hook doesn't protect itself. The commit-signing guard denies shell writes to the user's `settings.json`, `"disableAllHooks": true` and removing the whole `hooks` directory, but an `Edit` that removes this hook's entry from `settings.json`, an `Edit` of `no_session_links.py` and an `rm` of it are allowed (observed).
+- On Windows nothing checks for links: only `attribution.sessionUrl: false` and the rule keep them out.
 
 ## Tests
 

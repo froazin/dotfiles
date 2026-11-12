@@ -14,6 +14,29 @@ chmod +x ./src/install.sh
 ./src/install.sh
 ```
 
+### Windows
+
+On Windows, `src/install.ps1` is the installer, for PowerShell 7 (and Windows
+PowerShell 5.1, which it also runs on). It sets up the `claude`, `git` and
+`pwsh` modules, and skips the others:
+
+```powershell
+git clone https://github.com/froazin/dotfiles.git
+cd dotfiles
+pwsh -NoProfile -File .\src\install.ps1
+```
+
+From Windows PowerShell, whose default execution policy runs no scripts, use
+`powershell -NoProfile -ExecutionPolicy Bypass -File .\src\install.ps1`. Like
+`install.sh`, it logs to `~\.local\var\log\dotfiles.log`, and exits 1 when
+anything needs your attention.
+
+The PowerShell profile goes in `Documents\PowerShell`. If Windows Security's
+Controlled folder access is on, it blocks that ("Protected folder access
+blocked"). Rather than allowing PowerShell through for good, turn Controlled
+folder access off (Windows Security > Virus & threat protection > Ransomware
+protection), run the installer again, then turn it back on.
+
 ### Root
 
 The installer configures whoever runs it. To keep `sudo su` and `sudo -i` in
@@ -36,13 +59,15 @@ If zsh is ever removed, set root back to bash first
 ## Modules
 
 Each directory under `src/modules/` is a module with a `bootstrap.sh` that
-defines a `bootstrap()` function. A module is skipped entirely unless a command
-matching its directory name is on `PATH`.
+defines a `bootstrap()` function, a `bootstrap.ps1` that defines
+`Invoke-Bootstrap` for Windows, or both. A module is skipped entirely unless a
+command matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. |
-| `git`  | Global gitignore (`core.excludesfile`). |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. On Windows, a PowerShell version of the ways-of-working hook, the commit-signing and no-session-links rules without their hooks, and no `jq`. |
+| `git`  | Global gitignore (`core.excludesfile`). Linux and Windows. |
+| `pwsh` | Windows only: the PowerShell 7 profile (`Documents\PowerShell\profile.ps1`) and its numbered `profile.d\` drop-ins: a port of the zsh prompt, PSReadLine keys, in-memory history and suggestions, completion for uv and op, the direnv hook, `alert` and the `ws` workspace picker. Loaded in interactive sessions only. |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
@@ -66,6 +91,18 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | `podman` | `podman` | — | — |
 | `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open`, `gh` |
 
+On Windows:
+
+| Module | Requires | Soft | Optional |
+| ------ | -------- | ---- | -------- |
+| `claude` | `claude` | — | `cz` (commitizen) |
+| `git`  | `git` | — | — |
+| `pwsh` | `pwsh` | `fzf` | `git`, `code`, `uv`, `op`, `direnv` |
+
+The Windows `claude` module needs neither `jq` nor `python3`: it merges the
+JSON in PowerShell, and its hooks are PowerShell scripts that Claude Code
+runs with `pwsh`, or Windows PowerShell when `pwsh` is missing.
+
 The `claude` module never overwrites `~/.claude/settings.json` or
 `~/.claude/keybindings.json`, because Claude Code writes to the first
 (`/model`, `/config`, `/permissions`, plugins) and you edit the second. Each
@@ -73,7 +110,8 @@ template is deep-merged in with `jq`: its values win, nested objects merge
 key by key, lists are unioned, and every other key is kept. Keybinding
 blocks merge by `context`, so the template's bindings go into your block for
 the same context rather than a second one. Without `jq` a template is only
-written where no file exists yet.
+written where no file exists yet. On Windows, `install.ps1` does the same
+merge in PowerShell, so it needs no `jq`.
 
 ### Ways of working
 
@@ -126,6 +164,10 @@ against an agent's habits, not a security boundary: a script on disk, another
 interpreter or another git client can still get past it. Its tests are in
 `src/modules/claude/tests/`.
 
+On Windows only the rule is installed, with a last line saying nothing
+enforces it: a PowerShell version of the hook took about a second per tool
+call.
+
 ### No session links
 
 Claude Code can add a link to its session (`claude.ai/code/session_...`) to
@@ -145,7 +187,9 @@ that denies any tool call that would publish one another way.
 
 The `Co-Authored-By:` footer and the "Generated with Claude Code" line are
 fine. Like the guard, it needs `python3`, does nothing without it, and is a
-guard rail rather than a security boundary.
+guard rail rather than a security boundary. On Windows, as with the guard,
+only the rule is installed, saying no hook checks for links: a PowerShell
+version of the hook was too slow.
 
 The module also sets `attribution.pr` to `""`, so Claude Code adds no
 "Generated with Claude Code" line to pull request descriptions. When GitHub
@@ -183,8 +227,9 @@ installer.
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
 check works on any distribution.
 
-> The install scripts are POSIX `sh` so they run anywhere. Only the files they
-> seed are zsh-specific.
+> The Linux install scripts are POSIX `sh` so they run anywhere. Only the files
+> they seed are zsh-specific. Their Windows twins are PowerShell, and run on
+> PowerShell 7 and Windows PowerShell 5.1.
 
 ## WSL provisioning
 
@@ -198,9 +243,11 @@ and for root. Its README has the install steps.
 How each part works, and why it's built that way, for anyone changing the
 code:
 
-- [Installer](docs/installer.md): `install.sh`, module discovery and the
-  shared helpers.
+- [Installer](docs/installer.md): `install.sh` and `install.ps1`, module
+  discovery and the shared helpers.
 - [git module](docs/git-module.md) and [podman module](docs/podman-module.md).
+- [pwsh module](docs/pwsh-module.md), the PowerShell profile and `ws` on
+  Windows.
 - [zsh module](docs/zsh/overview.md).
 - [claude module](docs/claude/overview.md), the
   [commit-signing guard](docs/claude/commit-signing-guard.md),

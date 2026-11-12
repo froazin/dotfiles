@@ -58,7 +58,7 @@ flowchart TD
 ### `podman_create_auth_file`
 
 1. If the path exists, or is a symbolic link (even a broken one), it returns 0 and leaves it alone.
-1. Otherwise it creates the directory with `ensure_dir` from [`common.sh`](../src/internal/common.sh).
+1. Otherwise it creates the directory with `ensure_dir` from [`install.sh`](../src/install.sh).
 1. It writes `{"auths": {}}`, tab-indented, in a subshell with `umask 077`, so the file is created with mode `0600` (observed).
 
 ### `podman_link_docker_config`
@@ -91,7 +91,7 @@ On a rerun with nothing changed, both functions log at debug level only, and the
 
 ## Errors and logging
 
-The module logs with `log` from [`logging.sh`](../src/internal/logging.sh), with paths wrapped as `<path>`.
+The module logs with `log` from [`install.sh`](../src/install.sh), with paths wrapped as `<path>`.
 
 | Situation | Log | Module result |
 | --- | --- | --- |

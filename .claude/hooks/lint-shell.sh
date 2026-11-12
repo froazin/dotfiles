@@ -3,6 +3,7 @@
 # PostToolUse hook; exit 2 surfaces stderr to Claude. Options live in
 # .shellcheckrc and .editorconfig; any shfmt formatting flag makes it ignore
 # the latter. Neither tool parses zsh, so zsh files only get zsh -n.
+# PowerShell files go to lint-powershell.ps1 beside this file.
 
 file="$(python3 -I -c 'import json, sys; print(json.load(sys.stdin).get("tool_input", {}).get("file_path", ""))' 2> /dev/null)"
 
@@ -24,6 +25,10 @@ case "$file" in
     *.zsh | */.zshrc | */.zshenv | */.zprofile)
         command -v zsh > /dev/null 2>&1 || exit 0
         out="$(zsh -n "$file" 2>&1)"
+        ;;
+    *.ps1 | *.psd1)
+        command -v pwsh > /dev/null 2>&1 || exit 0
+        out="$(pwsh -NoProfile -NonInteractive -File "$(dirname "$0")/lint-powershell.ps1" "$file" 2>&1)"
         ;;
     *)
         exit 0

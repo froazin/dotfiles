@@ -23,6 +23,8 @@ When signing needs the user in person, such as 1Password with Windows Hello, an 
 
 The [`claude` module](overview.md) installs three files: the wrapper [`commit_signing_guard.sh`](../../src/modules/claude/templates/hooks/commit_signing_guard.sh), the Python logic beside it and the rule [`commit-signing.md`](../../src/modules/claude/templates/rules/commit-signing.md), which tells the agent the same policy in words. [`settings.json`](../../src/modules/claude/templates/settings.json) registers the wrapper (see [What the templates configure](overview.md#what-the-templates-configure)).
 
+On Windows there's no guard hook: `install.ps1` installs only the rule, in a Windows copy, [`windows/rules/commit-signing.md`](../../src/modules/claude/windows/rules/commit-signing.md), whose last bullet says that no hook enforces it. See [Decisions](#decisions).
+
 This sequence diagram shows a signing failure locking the session and the user's return unlocking it:
 
 ```mermaid
@@ -132,6 +134,7 @@ After a `Bash` call, the guard joins the event's `error`, the response's `stdout
 - **Deny signing in the background and in `Monitor`**, so a signing failure is always seen by the post hooks.
 - **Fail open**: a broken guard must never break Claude Code.
 - **Standard library only**, so it runs on the system `python3` without installing anything.
+- **No guard on Windows, only the rule.** The Windows hooks are pure PowerShell, by the maintainer's choice, and a PowerShell port of the guard matched the Python one on about 75,000 events but took about a second a call, against about 0.2 s for Python (observed). Every Bash, Edit and Write call would have waited for it, so the Windows install keeps the rule, which is guidance only, and drops the hook.
 
 ## Limits
 
@@ -141,6 +144,7 @@ After a `Bash` call, the guard joins the event's `error`, the response's `stdout
 - Failure detection matches known messages from 1Password, `op-ssh-sign`, SSH agents and gpg. Another signer's wording may not match (inferred).
 - The fallback lock directory under the config directory isn't cleared at logout, unlike `$XDG_RUNTIME_DIR` (inferred).
 - Whether subagents share the parent's `session_id`, and so its lock, isn't tested here.
+- On Windows nothing enforces the policy: an agent that ignores the rule can bypass signing, and nothing locks the session after a failure.
 
 ## Tests
 

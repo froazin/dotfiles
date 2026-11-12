@@ -12,7 +12,7 @@ Mark a finding Important only when the change would do one of these:
 - Overwrite or lose a user's own config, such as replacing `~/.claude/settings.json` or `keybindings.json` instead of merging into them, following a symbolic link the installer leaves alone, or writing outside the home it's installing into. `docs/installer.md` and `docs/claude/overview.md` describe what each module may touch.
 - Make a zsh template print, fail or hang on shell startup, such as a tool used without a runtime guard, or do something as root that `.claude/rules/zsh-module.md` says must not run as root.
 - Let the commit-signing guard allow a way round signing that it denies today, let the no-session-links hook let a session link through, or make either block a call it shouldn't. A hook that errors must still exit 0 with no output, and exit 2 only for what it exists to block. `docs/claude/commit-signing-guard.md` and `docs/claude/no-session-links.md` describe them.
-- Make an installed hook depend on something a fresh install may lack, such as `jq`, `python3` or a PyPI package, other than through a wrapper that exits 0 when it's missing, or source `logging.sh` or `common.sh`. `.claude/rules/posix-sh.md` and `.claude/rules/python.md` have the rules.
+- Make an installed hook depend on something a fresh install may lack, such as `jq`, `python3` or a PyPI package, other than through a wrapper that exits 0 when it's missing, or call the installer's helpers. A PowerShell hook in `src/modules/claude/windows/hooks/` that runs anything but PowerShell, or decides differently from its POSIX twin, is Important too. `.claude/rules/posix-sh.md`, `.claude/rules/python.md` and `.claude/rules/powershell.md` have the rules.
 - Make a `wow-*` skill or rule contradict another, tell an agent to do something unsafe, such as pushing, tagging, merging or force-pushing without the user asking, or tell it to mention the skills or a `.wow` marker in a project's files. `.claude/rules/wow-content.md` has the rules.
 - Put identifying data into the repository, such as a real name, email, username, signing key, hostname or `/mnt/c/Users/<name>/` path. The repository is public.
 - Add a tool a module or template depends on without keeping the three dependency lists in step, as `CLAUDE.md` says.
@@ -34,7 +34,7 @@ Every comment must be resolved before the PR can merge, so report Nits sparingly
 
 ## Don't report
 
-- Anything ShellCheck, shfmt, `zsh -n`, ruff, pyright or pytest reports, or a failure of the scratch install. CI runs them before the review.
+- Anything ShellCheck, shfmt, `zsh -n`, ruff, pyright, pytest, PSScriptAnalyzer, the Windows PowerShell 5.1 parser or Pester reports, or a failure of either scratch install. CI runs them before the review.
 - The PR's title and description.
 - A limit that a design doc's Limits section records, unless the change makes it worse.
 - An issue that a resolved review thread on the PR already raises, whatever its replies say. Resolving a thread settles it.
@@ -46,7 +46,9 @@ These are the rules that no tool, test or check enforces.
 ### The installer and modules
 
 - Installer scripts are POSIX `sh`, log with `log` and collect errors in a flag rather than stopping, as `.claude/rules/posix-sh.md` says. ShellCheck catches only some of this.
-- A new file a module installs is written with `install_file`, so a symbolic link or an unchanged file is left alone.
+- A new file a module installs is written with `install_file` (`Install-File` in PowerShell), so a symbolic link or an unchanged file is left alone.
+- A change to `install.sh` or a `bootstrap.sh` makes the same change to its PowerShell twin, where there is one, or the design doc says why they differ. The same goes for a POSIX hook and its twin in `src/modules/claude/windows/hooks/`.
+- PowerShell runs on Windows PowerShell 5.1 as well as PowerShell 7, as `.claude/rules/powershell.md` says. PSScriptAnalyzer and the 5.1 parser catch only some of this.
 - A change to what a module installs, or to how, updates its design doc in the same PR.
 
 ### The zsh config
