@@ -12,10 +12,10 @@ Load this skill first, then the skill for the task:
 | Before you ... | Load |
 | --- | --- |
 | write a commit message, or commit | the wow-commits skill |
-| open a pull request (PR), or write its title or description | the wow-pull-requests skill |
+| open or merge a pull request (PR), or write its title or description | the wow-pull-requests skill |
 | create, name or rebase a branch, or work with a fork | the wow-branching skill |
 | add a feature flag, or turn one on | the wow-feature-flags skill |
-| decide whether a change bumps the version, or tag a release | the wow-versioning skill |
+| decide whether a change bumps the version, or prepare or tag a release | the wow-versioning skill |
 
 ## Principles
 
@@ -61,10 +61,10 @@ The rules in this skill and the other contributing skills are house defaults. A 
 ## Git safety
 
 - Ask the user before every push, and say what it changes. A push to a public branch is visible straight away, and a push to a wiki's `master` publishes it.
-- Never force-push the default branch, and never use plain `--force`. After a rebase, use `--force-with-lease`, and only on your own branch.
+- Never force-push the default branch, and never use plain `--force`. After a rebase, use `--force-with-lease`, and only on your own branch. The one exception is the last resort for an urgent dependency update in the wow-versioning skill, and only when the user asks.
 - Stage files by name rather than with `git add -A`, so you don't commit an untracked file by accident.
 - Commits and tags are signed. If signing fails, stop and tell the user, as the user's commit-signing rule says. Don't retry it or work around it.
-- Don't create or push a release tag unless the user asks.
+- Don't create or push a release tag: the project's CI makes releases (load the wow-versioning skill).
 - Don't invent build, test or lint commands. Use only the ones the project documents.
 
 ## Checklist

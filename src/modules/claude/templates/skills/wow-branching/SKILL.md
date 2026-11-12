@@ -86,7 +86,7 @@ git rebase origin/main
 - Rebasing rewrites the branch's commits, so push it with `git push --force-with-lease`. That refuses to overwrite commits on the remote that you haven't fetched.
 
 > [!WARNING]
-> Only rebase and force-push your own branch. Never force-push the default branch, and never use plain `--force`.
+> Only rebase and force-push your own branch. Never force-push the default branch, except as the wow-versioning skill allows for an urgent dependency update, and never use plain `--force`.
 
 ## Working from a fork
 

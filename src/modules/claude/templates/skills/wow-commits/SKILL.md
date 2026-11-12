@@ -39,14 +39,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 | Part | Required | What it is | Example |
 | --- | --- | --- | --- |
-| `type` | Yes | The kind of change. Lowercase only | `feat`, `fix`, `refactor`, `chore` |
+| `type` | Yes | The kind of change. Lowercase only | `feat`, `fix`, `perf`, `refactor`, `chore` |
 | `(scope)` | No, but recommended | The area of the project the change affects. Lowercase only | `(logging)`, `(docs)`, `(claude)` |
 | `!` | Only for breaking changes | Marks a breaking change. Goes straight before the colon | `feat(sdk)!:` |
 | `: Description` | Yes | A colon, one space, then a short summary written as an instruction | `: Add a timestamp to log messages` |
 | ` [skip ci]` | No | Skips CI for the commit. See [Skipping CI](#skipping-ci) | `: Fix typo in readme [skip ci]` |
 | ` (#123)` | No | The issue the commit relates to. See [Issue references](#issue-references) | `: Add a version flag (#123)` |
 
-- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. The type doesn't decide the version bump: what the commit changes does (load the wow-versioning skill).
+- **Type.** Conventional Commits defines `feat` (a new feature) and `fix` (a bug fix). Also use `perf` (a change that improves performance), `refactor`, `chore`, `test`, `ci` and other conventional types where they fit. Choose the type by what the commit changes: commitizen works out the version bump from the types (load the wow-versioning skill).
 - **Scope.** Include one whenever the change has a clear area. A project can list its usual scopes in its `CLAUDE.md`.
 - **Description.** Write it as an instruction, starting with a capital letter: "Add a timestamp to log messages", "Fix typo in readme". Don't end it with a full stop.
 - **Ending.** `[skip ci]` and the issue reference are part of the description as far as Conventional Commits is concerned. When a header has both, put `[skip ci]` first: `chore(docs): Fix typo in readme [skip ci] (#123)`. That's the order GitHub produces when it adds a PR number (observed).
@@ -62,6 +62,7 @@ The body is optional, except for a breaking change (see [Breaking changes](#brea
 
 - Wrap the body at 72 characters: break each line at the last space that keeps it within 72, and leave a blank line between paragraphs. GitHub breaks any longer line at 72 when it squash-merges a PR, without reflowing the rest of the paragraph, which leaves ragged line breaks (observed).
 - Never break a URL, a path, a trailer, a Markdown link, a table row or a line in a code block. Put one that's too long on a line of its own, and leave it long.
+- Never start a body line like a header, with a word and a colon such as `feat(cli):` or `fix:`. commitizen reads every line of the message, so the line would change the version bump. Reword it, or put it in a bulleted list.
 
 ```text
 fix(ipc): Bounds check the piped input string (#123)
@@ -106,9 +107,9 @@ chore(docs): Fix typo in readme [skip ci]
 
 ## Breaking changes
 
-Mark a change that isn't backward compatible with a `!` straight before the colon in the header, and nothing else: never a `BREAKING CHANGE:` footer.
+Mark a breaking change with a `!` straight before the colon in the header, and nothing else: never a `BREAKING CHANGE:` footer. The wow-versioning skill says what counts as a breaking change.
 
-- The `!` sits in the header, which no merge rewrites. Conventional Commits 1.0.0 allows it on its own, and tools that follow that spec read it as a breaking change, such as commitlint, release-please, git-cliff and semantic-release with the `conventionalcommits` preset. semantic-release's default `angular` preset doesn't read `!`.
+- The `!` sits in the header, which no merge rewrites. Conventional Commits 1.0.0 allows it on its own, and tools that follow that spec read it as a breaking change, such as commitizen, commitlint, release-please, git-cliff and semantic-release with the `conventionalcommits` preset. semantic-release's default `angular` preset doesn't read `!`.
 - A footer stops being a Git trailer once GitHub adds its `---------` line and co-author trailers after a PR description. One marker in the header avoids two that can disagree.
 - Don't start any body line with `BREAKING CHANGE:` either: release tools would still read it as a footer.
 - Write the header's description as the change users will notice. With `!`, the spec makes the description describe the breaking change.
@@ -138,11 +139,11 @@ What a breaking change does to the version depends on whether the project has re
 - Put the co-author lines in the final paragraph, with nothing after them. Git and GitHub only read trailers from the last paragraph.
 - Before that final paragraph, add a paragraph that holds only `---------`, with a blank line on each side. GitHub's merge box adds the same line before the co-author trailers when it squash-merges a PR (observed), so commits made directly and through PRs end the same way.
 - Use exactly nine hyphens. Git takes a line that is `---` followed by a space or the end of the line as the start of a patch: it finds no trailers after it, and `git am` (and `git rebase --apply`, which calls it) cuts the message there. So no line anywhere in a commit message or PR description may be `---` on its own or start with `--- `, such as a Markdown horizontal rule.
-- In a squash-merged PR, the footer goes on each commit on the branch, not in the PR description: GitHub's merge box adds the separator and the footer from the commits (load the wow-pull-requests skill). Leave them as they are.
+- In a squash-merged PR, the footer goes on each commit on the branch, not in the PR description: GitHub's merge box adds the separator and the footer from the commits (load the wow-pull-requests skill). Leave them as they are. To merge with `gh pr merge` instead, follow the wow-pull-requests skill, so the squashed commit still ends this way.
 
 ## Commits made by tools
 
-Some commits are made by tools, such as Dependabot's dependency updates, which arrive with headers like `chore(deps): bump the gomod group with 2 updates`. Don't write these by hand, and don't reword them. The wow-versioning skill says how dependency updates affect the version.
+Some commits are made by tools, such as Dependabot's dependency updates, which arrive with headers like `chore(deps): bump the gomod group with 2 updates`. Don't write these by hand, and don't reword them. The wow-versioning skill says how dependency updates affect the version, and gives the one exception: releasing a dependency update urgently.
 
 ## Checklist
 
@@ -150,9 +151,10 @@ Before you commit, check that:
 
 - The header follows `type(scope)!: Description`, with the type and scope in lowercase. Any `[skip ci]` and `(#123)` end the description, in that order.
 - Body lines are at most 72 characters, except a URL, path, trailer, Markdown link, table row or code line that can't be broken.
+- No body line starts like a header, such as `feat(cli):`.
 - A `Closes #123` line goes in the body, only when the commit fully resolves the issue, and never as the last paragraph.
 - `[skip ci]` is used only in a special case, and not on a commit that bumps the version.
-- A breaking change has a `!` in the header and a body that starts with what breaks, why, who is affected and what to do instead.
+- A breaking change, as the wow-versioning skill defines it, has a `!` in the header and a body that starts with what breaks, why, who is affected and what to do instead.
 - The only footer is the co-author footer: no `BREAKING CHANGE:` or other footers.
 - A commit with AI-generated code ends with the session's `Co-Authored-By` footer, in the last paragraph, with the email address in angle brackets.
 - A `---------` paragraph of exactly nine hyphens comes straight before the co-author trailers.

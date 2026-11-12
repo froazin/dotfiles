@@ -36,16 +36,18 @@ Flags let a large change land as several small pull requests (PRs) that are each
 
 ## How flags affect the version
 
-New code behind a flag that's off is a patch, even when the commit type is `feat`. The commit that turns the flag on decides the bump for the hidden work:
+The version comes from the commit types, which commitizen reads (load the wow-versioning skill). Type each commit by what it does for users who turn the flag on:
 
-| Hidden code | While the flag is off | Commit that turns it on |
+- **It adds behaviour they can reach,** even though the flag is off by default: `feat`, a minor bump.
+- **It fixes, refactors or speeds up behaviour they can reach:** `fix`, `refactor` or `perf`, a patch. Building a feature up over several PRs doesn't make every PR a `feat`.
+- **They can never reach it,** even with the flag on, such as groundwork that a later PR wires in: `refactor`, a patch. The commit that makes it reachable is typed by what it adds.
+
+| Hidden code | Commit while the flag is off | Commit that turns it on by default |
 | --- | --- | --- |
-| A new feature | Patch | Minor |
-| A non-breaking fix | Patch | Patch |
-| A breaking change, before `v1.0.0` | Patch | Minor |
+| A new feature users can turn on | `feat`: minor | `feat`: minor |
+| A non-breaking fix | `fix`: patch | `fix`: patch |
+| A breaking change, before `v1.0.0` | `feat`, without `!`: minor. Users only opt in to it, so it isn't a breaking change yet. Say in the body what will break when it's turned on | `feat!`, with the breaking change body: minor |
 | A breaking change, from `v1.0.0` | Not allowed | Not allowed |
-
-In alpha (`0.0.x`), every commit is a patch, including the one that turns a flag on. Load the wow-versioning skill for the full rules.
 
 ## Checklist
 
@@ -54,4 +56,4 @@ Before you open a PR that adds or turns on a flag, check that:
 - The flag is read from an environment variable and is off by default.
 - Its name follows the project's convention, or the user agreed it.
 - The PR doesn't hide a breaking change behind a flag from `v1.0.0`.
-- The version effect matches the table above.
+- Each commit's type matches what it does for users who turn the flag on, and code they can never reach is a `refactor`.
