@@ -35,7 +35,7 @@ flowchart TD
     bootstrap -->|"2: commands and sourced tools"| optional["zsh_report_optional_deps"]
     bootstrap -->|"3: copies the templates"| config["zsh_install_config"]
     bootstrap -->|"4: compares $SHELL"| login["zsh_report_login_shell"]
-    config -->|"install_file per template"| helper["install_file in common.sh"]
+    config -->|"install_file per template"| helper["install_file in install.sh"]
     helper -->|copies| home["~/.zshenv, ~/.zshrc, ~/.zshrc.d/*.zsh"]
 ```
 
@@ -121,7 +121,7 @@ Root gets its own copy of these files when the installer runs as root, as the WS
 
 ## Errors and logging
 
-- `bootstrap.sh` logs through `log` from [logging.sh](../../src/internal/logging.sh) (see [Installer](../installer.md)). A missing soft dependency is an error and an optional one a warning (a debug message for root). The messages say the shell still works, or that the tool's integration stays dormant until it's installed.
+- `bootstrap.sh` logs through `log` from [install.sh](../../src/install.sh) (see [Installer](../installer.md)). A missing soft dependency is an error and an optional one a warning (a debug message for root). The messages say the shell still works, or that the tool's integration stays dormant until it's installed.
 - `install_file` warns before it overwrites a file that differs, and fails, leaving the file alone, when the destination is a symbolic link. A failed copy or a link makes `zsh_install_config` fail, after it has tried every template.
 - At runtime the templates skip a missing tool without a message. Commands the user runs, such as `ws`, print their errors to standard error and return non-zero.
 

@@ -16,3 +16,11 @@ ignore = true
 
 [.venv/**]
 ignore = true
+
+[*.{ps1,psd1}]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+# ASCII only in practice: Windows PowerShell 5.1 reads a file without a BOM
+# as ANSI.
+charset = utf-8

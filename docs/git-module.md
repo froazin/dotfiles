@@ -1,6 +1,6 @@
 # Git module
 
-How the `git` module installs a global gitignore and points git at it. It's for engineers who change [`src/modules/git/`](../src/modules/git/) or the patterns in its template.
+How the `git` module installs a global gitignore and points git at it. It's for engineers who change [`src/modules/git/`](../src/modules/git/) or the patterns in its template. It covers both versions: [`bootstrap.sh`](../src/modules/git/bootstrap.sh) for Linux and [`bootstrap.ps1`](../src/modules/git/bootstrap.ps1), its PowerShell twin, for Windows.
 
 ## Contents
 
@@ -17,7 +17,7 @@ How the `git` module installs a global gitignore and points git at it. It's for 
 
 The module does one thing: it makes sure git's `core.excludesfile` names a file, and that the file holds the repository's template, [`templates/.gitignore`](../src/modules/git/templates/.gitignore). Git then ignores those patterns in every repository on the machine.
 
-- [`src/install.sh`](../src/install.sh) runs the module only when `git` is on `PATH`, like every other module (see [Installer](installer.md)). It has no soft or optional dependencies.
+- [`src/install.sh`](../src/install.sh) and [`src/install.ps1`](../src/install.ps1) run the module only when `git` is on `PATH`, like every other module (see [Installer](installer.md)). It has no soft or optional dependencies.
 - It doesn't set any other git config. The WSL user-data writes the user's `~/.gitconfig`, with settings such as the identity, signing key and default branch, and leaves `core.excludesfile` to this module (see [WSL provisioning](https://github.com/froazin/wsl/blob/main/docs/provisioning.md)).
 - It runs for whoever runs the installer, so `sudo -H sh ./src/install.sh` gives root its own copy.
 
@@ -44,9 +44,17 @@ flowchart TD
 
 1. It reads the current value with `git config --global --type=path --get core.excludesfile`. `--type=path` makes git expand `~` itself, so `~/my-ignore` becomes an absolute path (observed).
 1. Exit status 1 means the key is unset. The module then sets it to `$HOME/.gitignore`, as an absolute path. Any other non-zero status, such as a malformed `~/.gitconfig`, is an error, and the module changes nothing (observed).
-1. It hands the template and the path to `install_file` from [`common.sh`](../src/internal/common.sh). That helper leaves a symbolic link alone and skips a file that already matches. Otherwise it creates the directory and copies the template over the file.
+1. It hands the template and the path to `install_file` from [`install.sh`](../src/install.sh). That helper leaves a symbolic link alone and skips a file that already matches. Otherwise it creates the directory and copies the template over the file.
 
 On a rerun with nothing changed, `install_file` logs at debug level that the file is up to date, and the module writes nothing (observed).
+
+### On Windows
+
+[`bootstrap.ps1`](../src/modules/git/bootstrap.ps1) takes the same steps, in `New-GitExcludesFile` with `Install-File`, and logs the same messages. The differences:
+
+- The default is `.gitignore` in PowerShell's `$HOME`, the user profile, written to the config with forward slashes, such as `C:/Users/jdoe/.gitignore`. Git for Windows and Git Bash both read that form as it is (observed).
+- Git for Windows finds the global config from `HOME` when it's set, and from `USERPROFILE` otherwise, so a scratch install sets both.
+- It finds the template from `$PSScriptRoot`, the module's own directory.
 
 ### The template
 
@@ -67,14 +75,14 @@ On a rerun with nothing changed, `install_file` logs at debug level that the fil
 | `core.excludesfile` in the global git config | Reads it, and sets it only when it's unset |
 | `$HOME` | Default location of the gitignore, `$HOME/.gitignore` |
 | The file `core.excludesfile` names | Created from the template when missing, overwritten when it differs |
-| `$0` | The module is `eval`ed by `install.sh`, so it finds the template at `$(dirname "$0")/modules/git/templates/.gitignore` |
-| Return value of `bootstrap` | 0 on success, 1 when anything failed |
+| `$0` | The module is `eval`ed by `install.sh`, so it finds the template at `$(dirname "$0")/modules/git/templates/.gitignore`. `bootstrap.ps1` uses `$PSScriptRoot/templates/.gitignore` |
+| Return value of `bootstrap` | 0 on success, 1 when anything failed. `Invoke-Bootstrap` returns `$true` or `$false` |
 
 `git config --global` writes to whichever global config file git picks. The module doesn't choose between `~/.gitconfig` and `$XDG_CONFIG_HOME/git/config` itself.
 
 ## Errors and logging
 
-The module logs with `log` from [`logging.sh`](../src/internal/logging.sh), with paths wrapped as `<path>`.
+The module logs with `log` from [`install.sh`](../src/install.sh), or `Write-DotfilesLog` from [`install.ps1`](../src/install.ps1), with paths wrapped as `<path>`. Both versions log the same messages.
 
 | Situation | Log | Module result |
 | --- | --- | --- |

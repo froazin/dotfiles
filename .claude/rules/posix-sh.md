@@ -13,16 +13,15 @@ paths:
   formatting flag makes it ignore `.editorconfig`. Fix formatting with
   `shfmt -w <file>`: function braces on their own line, indented `case`
   arms, `> /dev/null` with a space.
-- Log with `log <trace|debug|info|warning|error|fatal> "message"` from
-  `src/internal/logging.sh`; paths in messages are wrapped as `<path>`.
-  `fatal` exits.
+- Log with `log <trace|debug|info|warning|error|fatal> "message"`, defined in
+  `src/install.sh` with the other helpers (`ensure_dir`, `install_file`,
+  `is_root`); paths in messages are wrapped as `<path>`. `fatal` exits. A
+  helper no module uses is deleted, not kept for later.
 - Functions report failure by returning non-zero, using the
   `cmd || { log error "..."; return 1; }` pattern, and collect errors in an
   `errors`/`failed` flag rather than stopping at the first one.
 - Resolve repo files relative to `$(dirname "$0")`; module code is `eval`ed by
   `src/install.sh`, so `$0` is `install.sh`.
-- Do not depend on `src/internal/github.sh` (jq, curl): `install.sh` does not
-  source it.
 
 ## Installed Claude Code hooks
 
@@ -31,7 +30,7 @@ the Claude Code config directory and run there on their own, under Claude
 Code, never under `install.sh`. The rules above for installer scripts don't
 apply to them; these do.
 
-- Don't source `logging.sh` or `common.sh`, and don't call `log`: neither is
+- Don't source `install.sh` or call its helpers, such as `log`: it isn't
   installed. A hook's stdout and stderr go to Claude, so print only what the
   hook contract asks for.
 - `$0` is the installed hook, not `install.sh`. Resolve only files installed

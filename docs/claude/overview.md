@@ -64,7 +64,7 @@ flowchart TD
 ### Directories and templates
 
 - `claude_create_dirs` creates the config directory, sets it to mode `0700` and creates `agents`, `commands`, `skills`, `rules`, `output-styles` and `hooks` in it (`CLAUDE_SUBDIRS`).
-- `claude_install_templates` lists every file under `templates/` with `find`, leaving out `settings.json`, `keybindings.json`, `__pycache__/` and `*.pyc`. It copies each one with `install_file` from [`common.sh`](../../src/internal/common.sh), which overwrites a changed file, skips an identical one and leaves a symbolic link alone.
+- `claude_install_templates` lists every file under `templates/` with `find`, leaving out `settings.json`, `keybindings.json`, `__pycache__/` and `*.pyc`. It copies each one with `install_file` from [`install.sh`](../../src/install.sh), which overwrites a changed file, skips an identical one and leaves a symbolic link alone.
 - A template that's executable in the repository is set to mode `755` once it's copied. That's how the `.sh` hooks stay runnable.
 - Templates are copied, not linked, so a change in the repository takes effect when the installer runs again.
 
@@ -125,7 +125,7 @@ The files in [`rules/`](../../src/modules/claude/templates/rules/) have no `path
 
 ## Errors and logging
 
-The module logs with `log` from [`logging.sh`](../../src/internal/logging.sh) and follows the installer's dependency grading:
+The module logs with `log` from [`install.sh`](../../src/install.sh) and follows the installer's dependency grading:
 
 - `claude_check_soft_deps` logs an error for a missing `jq` or `python3`, and `bootstrap` returns 1, but the configuration is still installed. Without `python3`, both Python hooks are installed and do nothing. `wow_marker.sh` needs only `sh` and basic utilities, so it works without either.
 - `claude_report_optional_deps` logs a warning for a missing `cz` (commitizen), which the versioning skill uses to work out the next version, and a debug line instead when installing for root. It never fails the module.

@@ -20,25 +20,36 @@ The workflow runs when a PR to `main` is opened, pushed to, reopened or marked r
 ```mermaid
 flowchart LR
     accTitle: The jobs in the CI workflow
-    accDescr: A pull request to main that changes more than docs starts the CI workflow directly. A push to main that changes src/ starts the release workflow, which calls the CI workflow. The checks job runs the checks from CLAUDE.md and a scratch install. On a pull request only, when the checks pass, the code-review job runs Claude, which comments on the pull request.
+    accDescr: A pull request to main that changes more than docs starts the CI workflow directly. A push to main that changes src/ starts the release workflow, which calls the CI workflow. The checks job runs the Linux checks from CLAUDE.md and a scratch install, and the windows job runs the PowerShell checks and scratch installs on Windows. On a pull request only, when both pass, the code-review job runs Claude, which comments on the pull request.
     pr["Pull request to main"] -->|"not only docs"| checks["checks: ShellCheck, shfmt, zsh -n, ruff, pyright, pytest, scratch install"]
+    pr -->|"not only docs"| windows["windows: PSScriptAnalyzer, 5.1 parser, Pester, scratch installs"]
     push["Push to main"] -->|"changes src/"| release["release.yml"]
     release -->|"workflow_call"| checks
+    release -->|"workflow_call"| windows
     checks -->|"passed, pull request only"| review["code-review: Claude"]
+    windows -->|"passed, pull request only"| review
     review -->|comments| pr
 ```
 
-- `code-review` needs `checks`, so a failure skips the review, and it runs only when the event is a PR. A called workflow sees its caller's `github` context, so when the release workflow calls it, the event is a push and the review is skipped.
+- `code-review` needs `checks` and `windows`, so a failure in either skips the review, and it runs only when the event is a PR. A called workflow sees its caller's `github` context, so when the release workflow calls it, the event is a push and the review is skipped.
 - Runs share a concurrency group per event and branch, so a newer push to a PR cancels its older run. The event name in the group keeps a called run apart from the release workflow's own `release` group, so neither waits for the other.
 
 ## The checks
 
-The `checks` job runs the checks listed in [`CLAUDE.md`](../CLAUDE.md#checks), in this order, and any failure fails the run:
+The `checks` and `windows` jobs run in parallel. The `checks` job runs the Linux checks listed in [`CLAUDE.md`](../CLAUDE.md#checks), in this order, and any failure fails the run:
 
 1. ShellCheck and shfmt, which read `.shellcheckrc` and `.editorconfig`.
 1. `zsh -n` on each zsh template.
 1. `uv sync`, then ruff, pyright and pytest. [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) installs uv, which uses the runner's `python3`, as `pyproject.toml` asks. The project isn't a package, so it keeps no `uv.lock`, and each run resolves the dev tools afresh.
 1. `HOME="$(mktemp -d)" SHELL=/usr/bin/zsh sh src/install.sh`, an end-to-end install into a scratch home. The job installs the zsh module's soft dependencies first, so a missing one doesn't fail the install. The `claude` module is skipped, because the runner has no `claude` command.
+
+The `windows` job runs on Windows Server 2025 with pwsh as its shell, in this order:
+
+1. It installs pinned versions of PSScriptAnalyzer and Pester 5, Pester for Windows PowerShell 5.1 as well, whose built-in Pester 3 can't run the tests. It installs fzf, the pwsh module's soft dependency, from Chocolatey.
+1. PSScriptAnalyzer over the whole repository with [`PSScriptAnalyzerSettings.psd1`](../PSScriptAnalyzerSettings.psd1). Any finding fails the job.
+1. Windows PowerShell 5.1's own parser over every `.ps1` under `src/`, which catches syntax that PowerShell 7 accepts and 5.1 doesn't.
+1. `Invoke-Pester -Path src -CI` under pwsh, then under Windows PowerShell 5.1: the tests for the Windows hooks and the claude module's `bootstrap.ps1`.
+1. `install.ps1` into a scratch home, with `USERPROFILE` and `HOME` pointing at it, twice under pwsh and twice under Windows PowerShell, and the second run of each must succeed too. A stub `claude.cmd` on `PATH` makes the claude module run, so its merge and its PowerShell hooks are installed end to end.
 
 ## Code review
 
@@ -69,14 +80,17 @@ The `code-review` job asks Claude Sonnet 5.5 to review the lines the PR adds or 
 
 - **One workflow for PRs and releases.** The release workflow calls this one rather than copying its steps, so a push to `main` is checked exactly as a PR is.
 - **The code review after the checks.** No tokens go on code that doesn't pass its checks.
+- **A Windows job beside the Linux one, not a matrix.** The two platforms run different installers and different tools, so a matrix would be all conditions.
+- **A stub `claude` on Windows.** The claude module's gate is only that `claude` is on `PATH`, so a stub covers the module without installing Claude Code.
 - **A paths filter rather than a check of the change.** A docs-only change can't break the install, so it doesn't run the checks or the review.
 - **Resolved threads, not a failing check.** A wrong finding is resolved with a reply rather than a re-run. That's why Nits are capped.
 - **The same review as the WSL user-data's CI.** The job is the one froazin/wsl runs, with a prompt and `REVIEW.md` for this repository.
 
 ## Limits
 
-- The checks run only on Ubuntu 26.04. Nothing tests the install on the WSL instance the dotfiles are made for, or for root.
-- The scratch install skips the `claude` module, so only the claude module's tests cover it.
+- The Linux checks run only on Ubuntu 26.04. Nothing tests the install on the WSL instance the dotfiles are made for, or for root.
+- The Ubuntu scratch install skips the `claude` module, so only the claude module's tests cover it there. The Windows install runs it with a stub `claude`, but nothing starts Claude Code to run the installed hooks.
+- Nothing runs the Windows hooks' Pester tests on Linux, or the PowerShell profile's `ws` picker with a real fzf.
 - The review is Claude's judgement, so it can be wrong. The Nit limits are in the prompt, so nothing enforces them.
 - A docs-only PR isn't reviewed, so nothing checks that its docs still match the code. That includes a change to `REVIEW.md` on its own.
 - A PR whose checks are skipped has no workflow run at all, so its checks list is empty rather than skipped.
@@ -86,4 +100,6 @@ The `code-review` job asks Claude Sonnet 5.5 to review the lines the PR adds or 
 - https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions
 - https://docs.github.com/en/actions/sharing-automations/reusing-workflows
 - https://github.com/astral-sh/setup-uv
+- https://github.com/PowerShell/PSScriptAnalyzer
+- https://pester.dev
 - https://github.com/anthropics/claude-code-action

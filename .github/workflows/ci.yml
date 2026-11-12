@@ -60,7 +60,7 @@ jobs:
 
       - name: Lint the shell scripts
         run: >-
-          shellcheck src/install.sh src/internal/*.sh src/modules/*/bootstrap.sh
+          shellcheck src/install.sh src/modules/*/bootstrap.sh
           src/modules/claude/templates/hooks/*.sh .claude/hooks/*.sh
 
       - name: Check the shell formatting
@@ -88,13 +88,85 @@ jobs:
       - name: Install into a scratch home
         run: HOME="$(mktemp -d)" SHELL=/usr/bin/zsh sh src/install.sh
 
+  windows:
+    name: Windows checks
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Pinned, so a new rule or Pester release can't fail a run on its own. Pester goes in for Windows PowerShell 5.1
+      # as well, whose built-in Pester 3 can't run the tests. fzf is the pwsh module's soft dependency.
+      - name: Install the tools
+        run: |
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
+          Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
+          powershell -NoProfile -Command 'Install-PackageProvider NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null; Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck'
+          choco install fzf --yes --no-progress
+
+      - name: Lint the PowerShell scripts
+        run: |
+          $findings = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $findings | Format-Table -AutoSize -Wrap
+          if ($findings) { exit 1 }
+
+      # PSUseCompatibleSyntax catches most of this. Windows PowerShell's own parser catches the rest.
+      - name: Check the scripts parse in Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $failed = $false
+          foreach ($file in Get-ChildItem -Path src -Recurse -Include *.ps1) {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$errors)
+            foreach ($e in $errors) { Write-Output "$($file.FullName):$($e.Extent.StartLineNumber): $($e.Message)"; $failed = $true }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Run the PowerShell tests
+        run: |
+          Import-Module Pester -RequiredVersion 5.7.1
+          Invoke-Pester -Path src -CI
+
+      - name: Run the PowerShell tests in Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          Import-Module Pester -RequiredVersion 5.7.1
+          Invoke-Pester -Path src -CI
+
+      # The runner has no Claude Code, so a stub claude.cmd on PATH makes the claude module run too. Each install runs
+      # twice, and the second must succeed as well.
+      - name: Install into a scratch home
+        run: |
+          $stub = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP 'stub')
+          Set-Content -Path (Join-Path $stub 'claude.cmd') -Value '@exit /b 0'
+          $env:PATH = "$stub;$env:PATH"
+          foreach ($exe in 'pwsh', 'powershell') {
+            $scratch = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP "home-$exe")
+            $env:USERPROFILE = $scratch.FullName
+            $env:HOME = $scratch.FullName
+            foreach ($run in 1, 2) {
+              & $exe -NoProfile -ExecutionPolicy Bypass -File src/install.ps1
+              if ($LASTEXITCODE -ne 0) {
+                Get-Content (Join-Path $scratch '.local/var/log/dotfiles.log')
+                exit 1
+              }
+            }
+          }
+
   code-review:
     name: Code review
     # Only a pull request is reviewed, never a run the release workflow calls: there, github is the caller's context, so
     # the event is a push. Only code that passed the checks is reviewed, so no tokens go on code that's known to be
     # broken. Drafts aren't reviewed until they're ready. A Dependabot PR only bumps dev tools or pinned actions, which
     # the checks cover.
-    needs: checks
+    needs:
+      - checks
+      - windows
     if: >-
       ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft
       && github.event.pull_request.user.login != 'dependabot[bot]' }}
@@ -291,7 +363,7 @@ jobs:
             3. Check each finding against the code before you post it. Drop any you can't back with evidence.
             4. Post each finding with `mcp__github_inline_comment__create_inline_comment`.
 
-            CI has already run ShellCheck, shfmt, `zsh -n`, ruff, pyright, pytest and an install into a scratch home on Ubuntu 26.04, and they passed. That install ran as a normal user, without a `claude` command, so it skipped the claude module, and nothing has installed the change for root or on a WSL instance, or started a zsh with it. Check those by reading. Don't report on the pull request's title and description.
+            CI has already run ShellCheck, shfmt, `zsh -n`, ruff, pyright, pytest and an install into a scratch home on Ubuntu 26.04, and PSScriptAnalyzer, the Windows PowerShell 5.1 parser, Pester under PowerShell 7 and 5.1 and installs into scratch homes on Windows Server 2025, and they passed. The Ubuntu install ran as a normal user, without a `claude` command, so it skipped the claude module there, and nothing has installed the change for root or on a WSL instance, or started a zsh with it. Check those by reading. Don't report on the pull request's title and description.
 
             ## What to report
 
