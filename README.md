@@ -65,7 +65,7 @@ command matching its directory name is on `PATH`.
 
 | Module | Installs |
 | ------ | -------- |
-| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. On Windows, PowerShell versions of the no-session-links and ways-of-working hooks, the commit-signing rule without its guard hook, and no `jq`. |
+| `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. On Windows, a PowerShell version of the ways-of-working hook, the commit-signing and no-session-links rules without their hooks, and no `jq`. |
 | `git`  | Global gitignore (`core.excludesfile`). Linux and Windows. |
 | `pwsh` | Windows only: the PowerShell 7 profile (`Documents\PowerShell\profile.ps1`) and its numbered `profile.d\` drop-ins: a port of the zsh prompt, PSReadLine keys, in-memory history and suggestions, completion for uv and op, the direnv hook, `alert` and the `ws` workspace picker. Loaded in interactive sessions only. |
 | `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
@@ -187,7 +187,9 @@ that denies any tool call that would publish one another way.
 
 The `Co-Authored-By:` footer and the "Generated with Claude Code" line are
 fine. Like the guard, it needs `python3`, does nothing without it, and is a
-guard rail rather than a security boundary.
+guard rail rather than a security boundary. On Windows, as with the guard,
+only the rule is installed, saying no hook checks for links: a PowerShell
+version of the hook was too slow.
 
 The module also sets `attribution.pr` to `""`, so Claude Code adds no
 "Generated with Claude Code" line to pull request descriptions. When GitHub

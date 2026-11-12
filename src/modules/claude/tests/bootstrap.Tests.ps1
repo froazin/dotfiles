@@ -675,9 +675,10 @@ Describe 'claude bootstrap.ps1' {
             $posix = ConvertFrom-ClaudeJson (Get-TestFileText -Path (Join-Path $templatesDir 'settings.json'))
             $windows = ConvertFrom-ClaudeJson (Get-TestFileText -Path (Join-Path $windowsDir 'settings.json'))
 
-            # Windows has no commit-signing guard: a PowerShell port took about
-            # a second a call. Its rule stays. Every other POSIX hook has a twin.
-            $omittedHooks = @('commit_signing_guard')
+            # Windows has no commit-signing guard or no-session-links hook: their
+            # PowerShell ports took about a second a call. Their rules stay.
+            # Every other POSIX hook has a twin.
+            $omittedHooks = @('commit_signing_guard', 'no_session_links')
             $expectedEvents = [ordered]@{}
             foreach ($hookEvent in $posix.hooks.PSObject.Properties) {
                 $entries = @(foreach ($entry in $hookEvent.Value) {
@@ -699,14 +700,16 @@ Describe 'claude bootstrap.ps1' {
             $windowsHooks = Get-TestHookRecord -Settings $windows
             $windowsHookDir = Join-Path $windowsDir 'hooks'
             # The hooks this module ships on Windows: the twins of templates/hooks/*.sh.
-            $knownHooks = @('no_session_links', 'wow_marker')
+            $knownHooks = @('wow_marker')
         }
 
-        It 'registers no commit-signing guard, and ships none' {
-            foreach ($record in $windowsHooks) {
-                $record.Hook.command | Should -Not -BeLike '*commit_signing_guard*'
+        It 'registers and ships none of the omitted hooks' {
+            foreach ($name in $omittedHooks) {
+                foreach ($record in $windowsHooks) {
+                    ($record.Hook.command -like "*$name*") | Should -BeFalse -Because $record.Hook.command
+                }
+                Test-Path -LiteralPath (Join-Path $windowsHookDir "$name.ps1") | Should -BeFalse -Because $name
             }
-            Test-Path -LiteralPath (Join-Path $windowsHookDir 'commit_signing_guard.ps1') | Should -BeFalse
         }
 
         It 'has the same keys, in the same order, as templates/settings.json' {
@@ -730,11 +733,11 @@ Describe 'claude bootstrap.ps1' {
             (@($windows.PSObject.Properties.Name) -join ',') | Should -BeExactly 'hooks'
         }
 
-        It 'has the POSIX template''s events, less the guard''s, in the same order' {
+        It 'has the POSIX template''s events, less the omitted ones, in the same order' {
             (@($windows.hooks.PSObject.Properties.Name) -join ',') | Should -BeExactly (@($posixExpected.hooks.PSObject.Properties.Name) -join ',')
         }
 
-        It 'has the POSIX template''s entries, matchers, types and timeouts, less the guard''s' {
+        It 'has the POSIX template''s entries, matchers, types and timeouts, less the omitted ones' {
             $windowsHooks | Should -HaveCount $posixHooks.Count
             for ($i = 0; $i -lt $posixHooks.Count; $i++) {
                 $p = $posixHooks[$i]
@@ -874,6 +877,12 @@ Describe 'claude bootstrap.ps1' {
             $rule = Get-TestFileText -Path (Join-Path $configDir 'rules/commit-signing.md')
             $rule | Should -Match 'No hook enforces this'
             $rule | Should -Not -Match 'guard hook enforces'
+        }
+
+        It 'installs a no-session-links rule that names no hook' {
+            $rule = Get-TestFileText -Path (Join-Path $configDir 'rules/no-session-links.md')
+            $rule | Should -Match 'No hook checks for these links'
+            $rule | Should -Not -Match 'hook denies'
         }
 
         It 'installs none of the sh and Python hooks' {

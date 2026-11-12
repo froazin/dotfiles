@@ -50,7 +50,12 @@ the pwsh module's profile templates and the claude module's Windows hooks.
 ## Installed hooks (`src/modules/claude/windows/hooks/`)
 
 - Each is the twin of a POSIX hook in `templates/hooks/` and must decide the
-  same way: a fix to one is a fix to both, each with a test case.
+  same way: a fix to one is a fix to both, each with a test case. Only
+  `wow_marker` has a twin: ports of the commit-signing guard and the
+  no-session-links hook took up to about a second a call, so Windows gets
+  only their rules, from `windows/rules/`.
+- Files in `windows/` replace the shared template at the same path, so
+  keep only what differs there.
 - Self-contained, and they never call the installer's helpers. Read stdin as
   UTF-8 bytes, write only the reply, as UTF-8 without a BOM, and fail open:
   any error exits 0 with no output.
