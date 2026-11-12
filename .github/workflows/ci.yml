@@ -68,7 +68,7 @@ jobs:
           done
 
       - name: Install the Python tools
-        run: uv sync --locked
+        run: uv sync
 
       - name: Check the Python formatting and lint
         run: uv run ruff format --check && uv run ruff check

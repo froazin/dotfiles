@@ -33,7 +33,7 @@ The `checks` job runs the checks listed in [`CLAUDE.md`](../CLAUDE.md#checks), i
 
 1. ShellCheck and shfmt, which read `.shellcheckrc` and `.editorconfig`.
 1. `zsh -n` on each zsh template.
-1. `uv sync --locked`, then ruff, pyright and pytest. [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) installs uv, which uses the runner's `python3`, as `pyproject.toml` asks. `--locked` fails when `uv.lock` is out of date.
+1. `uv sync`, then ruff, pyright and pytest. [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) installs uv, which uses the runner's `python3`, as `pyproject.toml` asks. The project isn't a package, so it keeps no `uv.lock`, and each run resolves the dev tools afresh.
 1. `HOME="$(mktemp -d)" SHELL=/usr/bin/zsh sh src/install.sh`, an end-to-end install into a scratch home. The job installs the zsh module's soft dependencies first, so a missing one doesn't fail the install. The `claude` module is skipped, because the runner has no `claude` command.
 
 ## Security
