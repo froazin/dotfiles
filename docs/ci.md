@@ -20,9 +20,9 @@ The workflow runs when a PR to `main` is opened, pushed to, reopened or marked r
 ```mermaid
 flowchart LR
     accTitle: The jobs in the CI workflow
-    accDescr: A pull request to main that changes more than docs starts the CI workflow directly. A push to main that changes more than docs starts the release workflow, which calls the CI workflow. The checks job runs the checks from CLAUDE.md and a scratch install. On a pull request only, when the checks pass, the code-review job runs Claude, which comments on the pull request.
+    accDescr: A pull request to main that changes more than docs starts the CI workflow directly. A push to main that changes src/ starts the release workflow, which calls the CI workflow. The checks job runs the checks from CLAUDE.md and a scratch install. On a pull request only, when the checks pass, the code-review job runs Claude, which comments on the pull request.
     pr["Pull request to main"] -->|"not only docs"| checks["checks: ShellCheck, shfmt, zsh -n, ruff, pyright, pytest, scratch install"]
-    push["Push to main"] -->|"not only docs"| release["release.yml"]
+    push["Push to main"] -->|"changes src/"| release["release.yml"]
     release -->|"workflow_call"| checks
     checks -->|"passed, pull request only"| review["code-review: Claude"]
     review -->|comments| pr
