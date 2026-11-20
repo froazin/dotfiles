@@ -125,10 +125,10 @@ Observed in a throwaway home: an existing `"model"` was replaced by the template
 | --- | --- | --- |
 | `PreToolUse` | `Bash\|Monitor\|Edit\|Write\|MultiEdit\|NotebookEdit` | `commit_signing_guard.sh` |
 | `PreToolUse` | `Bash\|Monitor\|Edit\|Write\|MultiEdit\|NotebookEdit\|mcp__.*` | `no_session_links.sh` |
-| `PreToolUse` | `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|Monitor` | `wow_marker.sh pre-tool` |
+| `PreToolUse` | `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|PowerShell\|Monitor` | `wow_marker.sh pre-tool` |
 | `PreToolUse` | `Skill` | `wow_marker.sh pre-skill` |
 | `PostToolUse` | `Bash` | `commit_signing_guard.sh` |
-| `PostToolUse` | `Bash` | `wow_marker.sh post-bash` |
+| `PostToolUse` | `Bash\|PowerShell` | `wow_marker.sh post-bash` |
 | `PostToolUseFailure` | `Bash` | `commit_signing_guard.sh` |
 | `UserPromptSubmit` | none | `commit_signing_guard.sh` |
 | `SessionStart` | none | `wow_marker.sh session-start` |

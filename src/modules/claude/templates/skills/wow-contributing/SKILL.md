@@ -15,6 +15,7 @@ Load this skill first, then the skill for the task:
 | open or merge a pull request (PR), or write its title or description | the wow-pull-requests skill |
 | create, name or rebase a branch, or work with a fork | the wow-branching skill |
 | add a feature flag, or turn one on | the wow-feature-flags skill |
+| choose or set up how a project is versioned or released, with any tool | the wow-versioning skill |
 | decide whether a change bumps the version, or prepare or tag a release | the wow-versioning skill |
 
 ## Principles

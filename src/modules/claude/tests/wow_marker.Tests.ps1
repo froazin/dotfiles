@@ -604,6 +604,7 @@ Describe 'wow_marker.ps1' {
             @{ Tool = 'Grep'; ToolInput = @{ pattern = 'x'; path = '{repo}/src/a.txt' }; Cwd = 'other' }
             @{ Tool = 'Grep'; ToolInput = @{ pattern = 'x' }; Cwd = 'repo' }
             @{ Tool = 'Bash'; ToolInput = @{ command = 'ls' }; Cwd = 'repo' }
+            @{ Tool = 'PowerShell'; ToolInput = @{ command = 'Get-ChildItem' }; Cwd = 'repo' }
             @{ Tool = 'Monitor'; ToolInput = @{ command = 'tail -f log' }; Cwd = 'repo' }
             # Windows paths as Claude Code sends them, and the forms Git Bash uses.
             @{ Tool = 'Read'; ToolInput = @{ file_path = '{repo\}\src\a.txt' }; Cwd = 'other' }
@@ -680,14 +681,17 @@ Describe 'wow_marker.ps1' {
             Invoke-Read -Fixture $fx -Cwd $repo -Target $repo -Agent 'a3' | Should -BeExactly ''
         }
 
-        It 'post-bash uses the current directory' {
+        It 'post-bash uses the current directory after <Tool>' -ForEach @(
+            @{ Tool = 'Bash' }
+            @{ Tool = 'PowerShell' }
+        ) {
             $fx = $script:Fx
             $repo = New-WsDir -Fixture $fx -Relative 'github.com/o/r' -Marker
             $other = New-WsDir -Fixture $fx -Relative 'github.com/o/other'
             $null = Invoke-SessionStart -Fixture $fx -Cwd $other
             $payload = @{
                 session_id = 's1'
-                tool_name = 'Bash'
+                tool_name = $Tool
                 tool_input = @{ command = "cd $other" }
                 tool_response = @{ stdout = "$other/x"; stderr = '' }
             }
@@ -1268,8 +1272,8 @@ Describe 'wow_marker.ps1' {
                 }
             }
             ($found | Sort-Object) -join "`n" | Should -BeExactly ((@(
-                        'PostToolUse|Bash|post-bash'
-                        'PreToolUse|Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|Monitor|pre-tool'
+                        'PostToolUse|Bash|PowerShell|post-bash'
+                        'PreToolUse|Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|PowerShell|Monitor|pre-tool'
                         'PreToolUse|Skill|pre-skill'
                         'SessionEnd||session-end'
                         'SessionStart||session-start'

@@ -68,7 +68,7 @@ flowchart TD
 | `pre-tool` for `Read`, `Edit`, `Write`, `MultiEdit` | The directory part of `file_path` |
 | `pre-tool` for `NotebookEdit` | The directory part of `notebook_path` |
 | `pre-tool` for `Glob` and `Grep` | `path`, relative to Claude's current directory, or that directory when `path` is missing |
-| `pre-tool` for `Bash` and `Monitor`, and `post-bash` | Claude's current directory (`post-bash` catches a `cd`) |
+| `pre-tool` for `Bash`, `PowerShell` and `Monitor`, and `post-bash` | Claude's current directory (`post-bash` catches a `cd`, or a `Set-Location` in the `PowerShell` tool (inferred)) |
 | `session-start`, `subagent-start` and `status` with no argument | Claude's current directory |
 
 ### Telling Claude only when it changes
@@ -92,7 +92,8 @@ Each session keeps its last state key in a file, and each subagent keeps its own
 - **Network paths:** a UNC path on a share other than the workspace root's counts as outside, and is never opened. Opening one made the hook contact that host and stall about 22 s, past its 10 s timeout (observed before the fix). Device paths such as `\\.\pipe\...` are never opened.
 - **State:** the directory is `$XDG_RUNTIME_DIR\claude-wow` when that exists, else `claude-wow` in the user's temp directory, which other users can't read. The lock is a file. A state directory the hook can't write makes it stateless at once, as `sh`'s `[ -w ]` check does.
 - **Skill deny:** exits 2 through `$Host.SetShouldExit(2)`, because PowerShell's `-Command` turns a script's `exit 2` into 1, and `[Environment]::Exit(2)` took about 2.3 s longer under 5.1 (observed).
-- **Speed:** a call took about 0.5 to 0.65 s under either PowerShell, most of it starting PowerShell (observed), against milliseconds for `wow_marker.sh`.
+- **Speed:** a call took about 0.5 to 0.65 s under either PowerShell, most of it starting PowerShell (observed), against milliseconds for `wow_marker.sh`. In live sessions, `pre-tool` took 0.4 to 1 s and `session-start` up to 1.7 s, or 4.2 s on a cold start, all inside the 10 s timeout (observed).
+- **The `PowerShell` tool:** it's Claude Code's main shell on Windows, so `pre-tool` and `post-bash` match it as well as `Bash`. Its input has only a `command`, so it counts as Claude's current directory, as `Bash` does.
 
 Its Pester tests, [`wow_marker.Tests.ps1`](../../src/modules/claude/tests/wow_marker.Tests.ps1), port `test_wow_marker.py`'s cases and add Windows ones: UNC and device paths, junctions and links, forbidden names, an unwritable state directory and the slow exit.
 
@@ -104,8 +105,8 @@ Each registration in [`settings.json`](../../src/modules/claude/templates/settin
 | --- | --- | --- | --- |
 | `session-start` | `SessionStart`, no matcher | The line as plain text, only when on | 0 |
 | `subagent-start` | `SubagentStart`, no matcher | `SubagentStart` JSON, only when on | 0 |
-| `pre-tool` | `PreToolUse`, `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|Monitor` | `PreToolUse` JSON when the key changes | 0 |
-| `post-bash` | `PostToolUse`, `Bash` | `PostToolUse` JSON when the key changes | 0 |
+| `pre-tool` | `PreToolUse`, `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|PowerShell\|Monitor` | `PreToolUse` JSON when the key changes | 0 |
+| `post-bash` | `PostToolUse`, `Bash\|PowerShell` | `PostToolUse` JSON when the key changes | 0 |
 | `pre-skill` | `PreToolUse`, `Skill` | The deny message on stderr | 2 to deny, otherwise 0 |
 | `expand` | `UserPromptExpansion`, no matcher | `UserPromptExpansion` JSON when a typed `wow-*` command is off | 0 |
 | `session-end` | `SessionEnd`, no matcher | Nothing | 0 |
@@ -153,7 +154,7 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 
 ## Content
 
-- **[`wow-core.md`](../../src/modules/claude/templates/rules/wow-core.md)** has no `paths` frontmatter, so it loads in every session. It covers when the ways of working apply (the most recent line is the state, no line means off and a denied skill means off), the order in which guidance wins, working quietly, the defaults when a project says nothing and a "Before you ... | Load" table with a row for every skill.
+- **[`wow-core.md`](../../src/modules/claude/templates/rules/wow-core.md)** has no `paths` frontmatter, so it loads in every session. It covers when the ways of working apply (the most recent line for the directory a task works in is its state, an off line for a file elsewhere doesn't change that, no line means off and a denied skill means off), the order in which guidance wins, working quietly, the defaults when a project says nothing and when to load the skills: before a task that changes a repository starts, planning included, in every subagent too. A "Before you ... | Load" table has a row for every skill.
 - **The skills** are `wow-contributing`, `wow-commits`, `wow-pull-requests`, `wow-branching`, `wow-feature-flags`, `wow-versioning`, `wow-writing-style`, `wow-markdown`, `wow-diagrams`, `wow-repo-docs` and `wow-github-wiki`. Each is `skills/<name>/SKILL.md` with only `name` and `description` in its frontmatter. `wow-repo-docs` and `wow-github-wiki` keep longer material in `references/`.
 - Every skill frames its rules as house defaults that a project's `CLAUDE.md` can override, under any heading. `wow-repo-docs` keeps a template for an optional `## Contributing` section that records a project's repositories, commit scopes, releases and CI. Skills name each other ("load the wow-commits skill") and never link to each other.
 - [`.claude/rules/wow-content.md`](../../.claude/rules/wow-content.md) holds the rules for editing this content, and loads when an agent touches it.
@@ -178,7 +179,9 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 - **A marker file, by presence only.** It needs no configuration format or parser, and `[ -f ]` costs no process. The user turns the ways of working on with `touch` and off with `rm`.
 - **Walk through `.git`.** A submodule or a package in a monorepo inherits its parent's marker, and a nearer marker can still mark it on its own.
 - **Bounded by the workspace root.** A marker in the home directory, or anywhere above the root, never turns them on for the whole machine.
-- **Check on every directory Claude touches, not only at start.** A session can move into a submodule or another repository that's marked differently. Claude Code's `CwdChanged` event can't add context, so the hook watches the file tools and Bash instead.
+- **Check on every directory Claude touches, not only at start.** A session can move into a submodule or another repository that's marked differently. Claude Code's `CwdChanged` event can't add context, so the hook watches the file tools and the shells instead.
+- **Match the `PowerShell` tool on both platforms.** On Windows it's Claude Code's main shell: without it, an off line from a file outside the repository stayed the latest line through every later `PowerShell` call (observed). Linux registers it too, so the two `settings.json` files keep the same matchers.
+- **Load skills before the task, planning included.** In sessions where the line said on, Claude still skipped the skills while it planned or researched a change, and some workflow subagents skipped them entirely (observed). The routing table is keyed to actions such as committing, so `wow-core.md` also says to load the skills before a change starts and in every subagent.
 - **Tell Claude only on a change.** A line on every tool call would fill the context. Subagents keep their own key because each has its own context (inferred reason).
 - **Anything touched is on.** Once any directory touched in the session is marked, `wow-*` skills stay allowed. A session that works in a marked repository can still run a command elsewhere.
 - **Never block a typed command.** The user's own request comes first, so `expand` only adds a note.
@@ -190,7 +193,10 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 
 ## Limits
 
-- Only the tools in the `pre-tool` matcher are seen. A Bash command that works in another directory, such as `git -C <dir>`, counts as Claude's current directory, and MCP tools aren't seen at all.
+- Only the tools in the `pre-tool` matcher are seen. A shell command that works in another directory, such as `git -C <dir>`, counts as Claude's current directory, and MCP tools aren't seen at all.
+- Touching Claude Code's own files, such as tool results and memory under `~/.claude`, or a temporary directory, adds an off line, because they're outside the workspace root. The next call in the repository turns it back on, and `wow-core.md` says such a line doesn't turn the ways of working off for the task.
+- A session that was open during the install got no hook lines until it was resumed (observed), so restart open sessions after installing. Claude Code picks up skills added under `~/.claude/skills` within the session, without a restart (per its skills docs).
+- A session through VS Code's agent host (entrypoint `sdk-ts`, Claude Code 2.1.304) ran no hooks at all, so it saw no line (observed, cause unknown).
 - A path with a character JSON escapes, such as `"` or `\`, counts as absent, so `pre-tool` uses Claude's current directory instead (inferred from the code).
 - The on-flag lasts until the session ends or restarts, so a session that leaves a marked repository can still load the skills.
 - A symbolic link into the workspace root that points outside it resolves outside, so it's off.
