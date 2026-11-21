@@ -313,6 +313,7 @@ def test_state_falls_back_to_the_cache_directory(wow: Wow) -> None:
         ("Grep", {"pattern": "x", "path": "{repo}/src/a.txt"}, "{other}"),
         ("Grep", {"pattern": "x"}, "{repo}"),
         ("Bash", {"command": "ls"}, "{repo}"),
+        ("PowerShell", {"command": "Get-ChildItem"}, "{repo}"),
         ("Monitor", {"command": "tail -f log"}, "{repo}"),
     ],
 )
@@ -361,7 +362,8 @@ def test_subagent_state_is_separate(wow: Wow) -> None:
     assert wow.read(repo, repo, agent="a3") == ""
 
 
-def test_post_bash_uses_the_current_directory(wow: Wow) -> None:
+@pytest.mark.parametrize("tool", ["Bash", "PowerShell"])
+def test_post_bash_uses_the_current_directory(wow: Wow, tool: str) -> None:
     repo = wow.dir("github.com/o/r", marker=True)
     other = wow.dir("github.com/o/other")
     wow.session_start(other)
@@ -369,7 +371,7 @@ def test_post_bash_uses_the_current_directory(wow: Wow) -> None:
     def post(cwd: Path) -> str:
         payload: dict[str, object] = {
             "session_id": "s1",
-            "tool_name": "Bash",
+            "tool_name": tool,
             "tool_input": {"command": f"cd {other}"},
             "tool_response": {"stdout": f"{other}/x", "stderr": ""},
         }
@@ -576,8 +578,8 @@ def test_needs_only_sh_and_basic_utilities(wow: Wow, tmp_path: Path) -> None:
 EXPECTED_REGISTRATIONS = {
     ("SessionStart", None, "session-start"),
     ("SubagentStart", None, "subagent-start"),
-    ("PreToolUse", "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|Monitor", "pre-tool"),
-    ("PostToolUse", "Bash", "post-bash"),
+    ("PreToolUse", "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|PowerShell|Monitor", "pre-tool"),
+    ("PostToolUse", "Bash|PowerShell", "post-bash"),
     ("PreToolUse", "Skill", "pre-skill"),
     ("UserPromptExpansion", None, "expand"),
     ("SessionEnd", None, "session-end"),
@@ -649,6 +651,6 @@ def test_registered_command_strings_resolve(wow: Wow, event: str, matcher: str |
     assert (done.returncode, done.stderr) == (0, "")
     if (
         event in ("SessionStart", "SubagentStart", "PostToolUse")
-        or matcher == "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|Monitor"
+        or matcher == "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|PowerShell|Monitor"
     ):
         assert "Ways of working: on for <workspaces>/github.com/o/r" in done.stdout

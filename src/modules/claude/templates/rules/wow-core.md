@@ -10,7 +10,11 @@ House defaults for contributing and writing, held in this rule and the
   (`$WORKSPACE_DIR`, by default `~/workspaces`). Paths outside it are off.
 - A hook adds a `Ways of working: on ...` or `Ways of working: off ...` line
   when a session starts and whenever the state changes for a directory you
-  work in. The most recent line is the current state. With no line, it's off.
+  work in. The most recent line for the directory a task works in is the
+  state for that task. With no line, it's off.
+- Touching a file outside that directory, such as Claude Code's own files
+  or a temporary directory, adds an off line for that file only. It doesn't
+  turn the ways of working off for the task.
 - When it's on, follow this rule and the `wow-*` skills for work on paths
   under the marker. When it's off, follow the project's own guidance.
 - If a `wow-*` skill is denied, it's off: don't retry the skill or read its
@@ -53,7 +57,13 @@ skills. Unless the user asks:
 
 ## Load the skill for the task
 
-Load each skill once per session, before the first task it covers.
+- When it's on and a task will change a repository, load `wow-contributing`
+  and every skill below that the task needs before you start it, including
+  any planning, research or design for it.
+- Load each skill once per session. A subagent is a session of its own, and
+  small edits and corrections count as tasks.
+- If the user says one part of the ways of working doesn't fit, still load
+  the skill and follow the rest of it.
 
 | Before you ... | Load |
 | --- | --- |
@@ -62,6 +72,7 @@ Load each skill once per session, before the first task it covers.
 | open or merge a pull request, or write its title or description | `wow-pull-requests` |
 | create, name or rebase a branch, or work with a fork | `wow-branching` |
 | add a feature flag, or turn one on | `wow-feature-flags` |
+| choose or set up how a project is versioned or released, with any tool | `wow-versioning` |
 | decide whether a change bumps the version, or prepare or tag a release | `wow-versioning` |
 | change anything in a GitHub wiki clone, or publish it | `wow-github-wiki` |
 | write or edit docs, READMEs, `CLAUDE.md`, rules, skills, wiki pages or pull request descriptions | `wow-writing-style` |

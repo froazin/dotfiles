@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|Monitor",
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|Bash|PowerShell|Monitor",
         "hooks": [
           {
             "type": "command",
@@ -26,7 +26,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|PowerShell",
         "hooks": [
           {
             "type": "command",
