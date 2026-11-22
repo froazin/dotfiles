@@ -45,36 +45,6 @@ fi
 # system VMs or the default NAT network.
 export LIBVIRT_DEFAULT_URI='qemu:///system'
 
-# Like podman-docker's /etc/profile.d script (zsh never reads it), but only
-# while the socket listens and we own it. Root takes the system socket, never a
-# user podman.socket from the user manager `sudo su` starts for it.
-if [[ -z $DOCKER_HOST ]] && (( $+commands[podman] )); then
-  if (( EUID == 0 )); then
-    _podman_sock=/run/podman/podman.sock
-  else
-    _podman_sock="${XDG_RUNTIME_DIR:-/run/user/$UID}/podman/podman.sock"
-  fi
-  if [[ -S $_podman_sock && -O $_podman_sock ]]; then
-    export DOCKER_HOST="unix://$_podman_sock"
-  fi
-  unset _podman_sock
-fi
-
-# podman login defaults to $XDG_RUNTIME_DIR/containers/auth.json, which is lost
-# at logout; make the podman module's persistent file the default instead.
-# Only once it exists (buildah refuses a missing REGISTRY_AUTH_FILE), and only
-# while Docker's config is absent or links to it: setting it stops podman
-# reading any other auth file. Resolved, so podman's atomic writes keep a link.
-if [[ -z $REGISTRY_AUTH_FILE ]] && (( $+commands[podman] )); then
-  _podman_auth="${XDG_CONFIG_HOME:-$HOME/.config}/containers/auth.json"
-  _docker_config="${DOCKER_CONFIG:-$HOME/.docker}/config.json"
-  if [[ -f $_podman_auth && -O $_podman_auth ]] &&
-    [[ ! -e $_docker_config || $_docker_config -ef $_podman_auth ]]; then
-    export REGISTRY_AUTH_FILE="${_podman_auth:A}"
-  fi
-  unset _podman_auth _docker_config
-fi
-
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # The prompt renders the virtualenv name itself.

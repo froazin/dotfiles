@@ -68,7 +68,6 @@ command matching its directory name is on `PATH`.
 | `claude` | `~/.claude` (mode 0700) with `agents/`, `commands/`, `skills/`, `rules/`, `output-styles/` and `hooks/`, the commit-signing guard, the no-session-links hook, the [ways of working](#ways-of-working) rule, skills and hook, and a `keybindings.json` (Enter adds a new line, Ctrl+Enter or Shift+Enter sends) and `settings.json` merged into whatever is already there. Honours `CLAUDE_CONFIG_DIR`. On Windows, a PowerShell version of the ways-of-working hook, the commit-signing and no-session-links rules without their hooks, and no `jq`. |
 | `git`  | Global gitignore (`core.excludesfile`). Linux and Windows. |
 | `pwsh` | Windows only: the PowerShell 7 profile (`Documents\PowerShell\profile.ps1`) and its numbered `profile.d\` drop-ins: a port of the zsh prompt, PSReadLine keys, in-memory history and suggestions, completion for uv and op, the direnv hook, `alert` and the `ws` workspace picker. Loaded in interactive sessions only. |
-| `podman` | A persistent registry credentials file, `~/.config/containers/auth.json` (mode 0600), and `~/.docker/config.json` as a link to it. |
 | `zsh`  | `~/.zshenv`, `~/.zshrc` and the numbered `~/.zshrc.d/` drop-ins: prompt, completions, keybindings, aliases and the `ws` workspace picker. |
 
 ### Dependencies
@@ -88,8 +87,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | ------ | -------- | ---- | -------- |
 | `claude` | `claude` | `jq`, `python3` | `cz` (commitizen) |
 | `git`  | `git` | — | — |
-| `podman` | `podman` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `podman`, `xdg-open`, `gh` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `xdg-open`, `gh` |
 
 On Windows:
 
@@ -200,29 +198,6 @@ footer on the branch's commits.
 not the `ant` package from apt, which is Apache Ant. Its zsh completion is
 generated on demand like the other optional tools.
 
-With `podman` installed and its user API socket listening
-(`systemctl --user enable --now podman.socket`), zsh points `DOCKER_HOST` at
-that socket, so Docker clients such as VS Code Dev Containers use rootless
-podman. Root uses the system socket instead
-(`/run/podman/podman.sock`, from `sudo systemctl enable --now podman.socket`).
-A `DOCKER_HOST` you set yourself wins. The WSL user-data makes podman-compose
-the provider for `podman compose`, and for `docker compose` through
-`podman-docker`.
-
-`podman login` saves credentials in `$XDG_RUNTIME_DIR/containers/auth.json`
-by default, which lasts for the session. The `podman` module creates
-`~/.config/containers/auth.json`, which persists, and links
-`~/.docker/config.json` to it, so Docker tooling such as VS Code Dev
-Containers (pulling private features) sees the same persistent credentials.
-With `podman` installed and that file present, zsh exports
-`REGISTRY_AUTH_FILE` pointing at it, so `podman login`, `buildah` and
-`skopeo` read and write the persistent file instead. A `REGISTRY_AUTH_FILE`
-you set yourself wins. An existing `~/.docker/config.json` is never replaced,
-and while it is a separate file zsh leaves `REGISTRY_AUTH_FILE` unset, since
-setting it would stop podman reading that file's credentials: move its
-`auths` (and any `credHelpers`) into podman's file, delete it, and rerun the
-installer.
-
 `zsh-common` is detected by probing zsh's own `$fpath` for `vcs_info`,
 `compinit` and `add-zsh-hook` rather than by asking a package manager, so the
 check works on any distribution.
@@ -245,7 +220,7 @@ code:
 
 - [Installer](docs/installer.md): `install.sh` and `install.ps1`, module
   discovery and the shared helpers.
-- [git module](docs/git-module.md) and [podman module](docs/podman-module.md).
+- [git module](docs/git-module.md).
 - [pwsh module](docs/pwsh-module.md), the PowerShell profile and `ws` on
   Windows.
 - [zsh module](docs/zsh/overview.md).
