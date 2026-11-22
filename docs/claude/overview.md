@@ -118,7 +118,7 @@ Observed in a throwaway home: an existing `"model"` was replaced by the template
 - `env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD` to `"1"`, so Claude Code loads `CLAUDE.md` from directories added with `--add-dir`.
 - `permissions.deny` for `Read` of `*.env`, `*.env.*`, `*.pem`, `*.crt`, `*.key` and `~/.ssh/**`.
 - `attribution.sessionUrl` to `false` and `attribution.pr` to `""` (see [No-session-links hook](no-session-links.md#decisions)).
-- `model`, `theme`, `modelSettings` and the two notification settings.
+- `model`, `advisorModel`, `theme`, `modelSettings` and the two notification settings. `advisorModel` is `fable`, the alias for Claude Code's current Fable model.
 - The hooks, each with a `timeout` of 10 seconds:
 
 | Event | Matcher | Hook |
