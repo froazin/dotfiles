@@ -41,14 +41,14 @@ flowchart TD
 
 - **Soft dependencies** (`ZSH_SOFT_DEPS`, `ZSH_SOFT_FUNCTIONS`, `ZSH_SOFT_PLUGINS`): the commands `fzf` and `git`, the two plugin files under `/usr/share` and the zsh functions `vcs_info`, `compinit` and `add-zsh-hook`. Each missing one logs an error and makes the module fail, but the files are still installed.
 - **Functions** are found by `zsh_have_function`, which runs `zsh -f` and globs each `$fpath` entry for the name. That's how it detects the `zsh-common` package without asking a package manager.
-- **Optional dependencies** (`ZSH_OPTIONAL_DEPS`, `ZSH_OPTIONAL_SOURCED`): `op`, `uv`, `pulumi`, `direnv`, `ant`, `xdg-open` and `gh`. nvm is listed as `name:file` (`nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh`). A missing one logs a warning, or a debug message when `is_root`.
+- **Optional dependencies** (`ZSH_OPTIONAL_DEPS`, `ZSH_OPTIONAL_SOURCED`): `op`, `uv`, `terraform`, `packer`, `direnv`, `ant`, `xdg-open` and `gh`. nvm is listed as `name:file` (`nvm:${NVM_DIR:-$HOME/.nvm}/nvm.sh`). A missing one logs a warning, or a debug message when `is_root`.
 - **Templates** are found from `$(dirname "$0")`, which is `src/` because the installer evaluates the module into its own shell. Every `templates/.zshrc.d/*.zsh` is installed, so a new drop-in needs no change to `bootstrap.sh`.
 
 When a template starts depending on a new tool, update the lists in `bootstrap.sh`, the README dependency table and, for an apt package, `packages` in the WSL user-data's [`99-dotfiles.user-data`](https://github.com/froazin/wsl/blob/main/src/99-dotfiles.user-data). It installs packages without their recommends, so list any recommend the tool needs as well.
 
 ## How it loads
 
-zsh reads [.zshenv](../../src/modules/zsh/templates/.zshenv) in every shell, including scripts. It sets `skip_global_compinit`, `WORKSPACE_DIR`, `path` (with `~/.local/bin`, `~/bin` and `~/.pulumi/bin` first and `/snap/bin` last), `XDG_DATA_DIRS` for snap desktop files, `EDITOR` and `VISUAL`, `BROWSER` (when a Windows bridge exists), `LIBVIRT_DEFAULT_URI`, `GCC_COLORS` and `VIRTUAL_ENV_DISABLE_PROMPT`.
+zsh reads [.zshenv](../../src/modules/zsh/templates/.zshenv) in every shell, including scripts. It sets `skip_global_compinit`, `WORKSPACE_DIR`, `path` (with `~/.local/bin` and `~/bin` first and `/snap/bin` last), `XDG_DATA_DIRS` for snap desktop files, `EDITOR` and `VISUAL`, `BROWSER` (when a Windows bridge exists), `LIBVIRT_DEFAULT_URI`, `GCC_COLORS` and `VIRTUAL_ENV_DISABLE_PROMPT`.
 
 `.zshenv` exports `WORKSPACE_DIR` as `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`, the root of the `<host>/<owner>/<repo>` clones. A value already in the environment wins, and a root shell under `sudo` gets the invoking user's `~/workspaces`. The `ws` picker reads it, and so do Claude Code hooks, because Claude Code started from zsh inherits it (see [Claude Code module](../claude/overview.md)).
 
@@ -92,7 +92,9 @@ flowchart LR
 
 ## Completion registry
 
-`ZSH_OPTIONAL_COMPLETIONS` in `10-completion.zsh` maps a tool to the command that prints its zsh completion: `uv`, `uvx`, `op`, `pulumi` and `ant`. Add a tool there, and both startup and `zshup` pick it up.
+`ZSH_OPTIONAL_COMPLETIONS` in `10-completion.zsh` maps a tool to the command that prints its zsh completion: `uv`, `uvx`, `op` and `ant`. Add a tool there, and both startup and `zshup` pick it up.
+
+`terraform` and `packer` print no zsh completion. Each binary completes its own command line when bash's `complete -C` calls it, so after `compinit` the drop-in loads `bashcompinit` and registers them that way, with nothing to cache. Their `-install-autocomplete` flag would append the same lines to `~/.zshrc`, so it's never used.
 
 Tools that ship their own completion file need nothing here: the Docker CLI's package installs `_docker` into `/usr/share/zsh/vendor-completions`, which is on zsh's default `fpath`.
 

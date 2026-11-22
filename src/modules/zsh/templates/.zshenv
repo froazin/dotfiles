@@ -10,7 +10,6 @@ export WORKSPACE_DIR=${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}
 path=(
   "$HOME/.local/bin"
   "$HOME/bin"
-  "$HOME/.pulumi/bin"
   $path
   "/snap/bin" # normally added by /etc/profile.d/apps-bin-path.sh
 )

@@ -84,7 +84,6 @@ typeset -gA ZSH_OPTIONAL_COMPLETIONS=(
   uv     'uv generate-shell-completion zsh'
   uvx    'uvx --generate-shell-completion zsh'
   op     'op completion zsh'
-  pulumi 'pulumi gen-completion zsh'
   ant    'ant @completion zsh'
 )
 
@@ -111,6 +110,18 @@ if zsh_have_function compinit; then
   ZSH_COMPINIT_OK=1
 else
   ZSH_COMPINIT_OK=0
+fi
+
+# terraform and packer print no zsh completion to cache: each binary completes
+# its own command line as a bash `complete -C` handler, through bashcompinit.
+# Never run their -install-autocomplete, which appends this to ~/.zshrc.
+if (( ZSH_COMPINIT_OK && ($+commands[terraform] || $+commands[packer]) )) &&
+  autoload -Uz +X bashcompinit 2>/dev/null; then
+  bashcompinit
+  for _zc_tool in terraform packer; do
+    (( $+commands[$_zc_tool] )) && complete -o nospace -C "${commands[$_zc_tool]}" "$_zc_tool"
+  done
+  unset _zc_tool
 fi
 
 zmodload zsh/complist # provides the menuselect keymap
