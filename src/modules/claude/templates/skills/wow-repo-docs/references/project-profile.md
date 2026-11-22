@@ -15,7 +15,7 @@ The optional `## Contributing` section of a project's `CLAUDE.md`, where the pro
 - **Releases:** none yet. CI will tag each release from `main`, with the version commitizen works out. Continuous delivery from `main` is planned.
 - **Pre-release tags:** alpha, beta and release candidate versions are tagged `v<version>-alpha.<n>`, `-beta.<n>` and `-rc.<n>`.
 - **CI:** none yet.
-- **Build and test:** `<command>`.
+- **Build and test:** see `CONTRIBUTING.md`.
 - <A practice this project follows where it differs from the defaults, and why.>
 ````
 

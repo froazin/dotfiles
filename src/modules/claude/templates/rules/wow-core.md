@@ -78,5 +78,5 @@ skills. Unless the user asks:
 | write or edit docs, READMEs, `CLAUDE.md`, rules, skills, wiki pages or pull request descriptions | `wow-writing-style` |
 | write or edit Markdown, including alerts, collapsed sections, task lists or footnotes | `wow-markdown` |
 | add or change a diagram | `wow-diagrams` |
-| write a design doc, a `README.md`, `CLAUDE.md` or `CONTRIBUTING.md`, or decide where a doc belongs | `wow-repo-docs` |
+| write, change or trim a design doc in `docs/`, a `README.md`, `CLAUDE.md` or `CONTRIBUTING.md`, or decide where a doc belongs | `wow-repo-docs` |
 | record a project's repositories, commit scopes, releases or CI in its `CLAUDE.md` | `wow-repo-docs` |

@@ -24,14 +24,15 @@ The house style for everything written in a project: docs, READMEs, `CONTRIBUTIN
 
 ## Structure
 
+- Say only what readers need and can't work out for themselves. People and agents are capable readers: in docs for engineers, don't explain common practice or repeat what the code already says.
 - Cover one topic per document. Name the file after the topic, in lowercase with hyphens, such as `commit-messages.md`.
-- Start with a `#` title in sentence case, then one or two sentences that say what the doc covers and who it's for. GitHub wiki pages are the exception: they have no `#` title (load the wow-github-wiki skill).
+- Start with a `#` title in sentence case, then one or two sentences that say what the doc covers, and who it's for when that isn't obvious. GitHub wiki pages are the exception: they have no `#` title (load the wow-github-wiki skill).
 - Use sentence case for every heading: "Branch names", not "Branch Names".
 - Use `##` for sections and `###` for subsections. Don't skip a level.
-- Keep each document under 200 lines, so agents don't truncate it when they read it. If one has to be longer, add a `## Contents` list of its sections straight after the intro. In a code repository, every doc in `docs/` and every `CLAUDE.md` has one, whatever its length (load the wow-repo-docs skill).
-- Put the most-used material first: a quick reference before the detail, and a checklist at the end.
+- Keep each document under 200 lines, so agents don't truncate it when they read it. If one has to be longer, add a `## Contents` list of its sections straight after the intro. A design doc should never get that long (load the wow-repo-docs skill).
+- In a skill, rule or other reference, put the most-used material first: a quick reference before the detail, and a checklist at the end. Design docs follow the shape in the wow-repo-docs skill.
 - State each fact in one place, and link to it from everywhere else that needs it. A rule copied into several docs drifts apart.
-- End with a `## Sources` list of URLs when the doc relies on outside documentation or on observation.
+- End with a `## Sources` list of URLs when the doc relies on outside documentation or on observation that a reader may need to check. Don't cite sources for common knowledge. Design docs follow the wow-repo-docs skill.
 
 ## Markdown and diagrams
 
@@ -42,13 +43,13 @@ The house style for everything written in a project: docs, READMEs, `CONTRIBUTIN
 
 - Describe only what exists. Describe anything planned as planned, such as "Releases will be made from `main`", never as though it's already there.
 - Don't invent commands, flags, settings or file names. If a project has no build, test or lint command yet, say so.
-- Say where a fact comes from when it isn't the official documentation. Mark it "observed" when you saw it happen, and "inferred" or "untested" when you didn't check. Quote the official docs when the exact words matter.
-- Give exact values: versions, branch names, paths and environment variable names.
+- When a claim about an outside tool or platform doesn't come from its official documentation, say where it comes from. Mark it "observed" when you saw it happen, and "inferred" or "untested" when you didn't check. Quote the official docs when the exact words matter. Facts about the project's own code need no label: the code is the source.
+- When a value matters, give it exactly, such as a version, branch name, path or environment variable name.
 - Use placeholders for anything private or variable: `<vault>`, `<your-username>`, `OWNER/REPO`, `registry.example.com`. Never put real tokens, credentials, internal hostnames, account URLs or personal paths in anything public.
 
 ## Writing for agents
 
-Claude agents read `CLAUDE.md` files, rules, skills and docs, as well as people.
+Claude agents read `CLAUDE.md` files, rules and skills, as well as people. These are instructions, so write them this way. Design docs explain a design rather than give instructions.
 
 - Say when to read or load something, as a trigger an agent can match: "**Load before you open a pull request.**"
 - Say what to do when something is missing or fails, such as "If the skill isn't listed, read its `SKILL.md`."
@@ -67,4 +68,5 @@ Before you finish a document, check that:
 - It passes the checklist in the wow-markdown skill, and every diagram the one in the wow-diagrams skill.
 - Nothing planned is described as existing, and no command is invented.
 - No private value appears in anything public.
-- It's under 200 lines, or has a `## Contents` list. A doc in a code repository's `docs/`, or its `CLAUDE.md`, always has one.
+- It says nothing readers could work out for themselves.
+- It's under 200 lines, or has a `## Contents` list. A design doc that long gets cut instead.

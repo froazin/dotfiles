@@ -12,7 +12,7 @@ How to draw diagrams in a project: always in Mermaid, with the diagram type that
 - Draw every diagram as a ```` ```mermaid ```` fenced code block. GitHub renders Mermaid in files, issues, PRs, discussions and wikis.
 - Don't use images of diagrams, ASCII art or another diagram language such as PlantUML or Graphviz. GitHub doesn't render them as diagrams, and an image can't be reviewed in a diff.
 - A directory tree is the exception: write it as a `text` code block.
-- Add a diagram wherever something is easier to see than to read, such as how services and networks fit together, a flow, a sequence, a lifecycle, a data model or a timeline. Every design doc has at least one (load the wow-repo-docs skill).
+- Add a diagram wherever something is easier to see than to read, such as how services and networks fit together, a flow, a sequence, a lifecycle, a data model or a timeline. Draw it at the level the doc is written at: a design doc's diagram shows components, not functions (load the wow-repo-docs skill).
 
 ## Pick the type
 
@@ -50,7 +50,7 @@ Use any diagram type Mermaid documents, and pick the most specific one for what 
 
 ## Keep diagrams readable
 
-- Show one idea per diagram. Split a diagram that needs more than about 15 nodes.
+- Show one idea per diagram. A diagram that needs more than about 15 nodes is usually too detailed: drop detail first, then split it.
 - Use the real names of packages, types, files and services as labels, so a reader can find them in the code.
 - Label every edge with what passes along it or why.
 - Give every diagram an `accTitle` and an `accDescr`, and introduce it with a sentence that says what it shows. Screen readers and the raw Markdown view then still carry its meaning.
