@@ -2,12 +2,5 @@
   "files.associations": {
     "**/wsl/*.*-data": "jinja-yaml",
     "**/.wslconfig": "toml"
-  },
-  "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
-  "powershell.codeFormatting.preset": "OTBS",
-  "[powershell]": {
-    "files.encoding": "utf8",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true
   }
 }

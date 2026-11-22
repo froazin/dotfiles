@@ -6,7 +6,6 @@ How the `.wow` marker turns the `claude` module's ways of working on for a direc
 
 1. [Overview](#overview)
 1. [How it works](#how-it-works)
-1. [On Windows](#on-windows)
 1. [Interfaces](#interfaces)
 1. [Content](#content)
 1. [Errors and logging](#errors-and-logging)
@@ -20,11 +19,11 @@ How the `.wow` marker turns the `claude` module's ways of working on for a direc
 
 The ways of working are house defaults for contributing and writing: commit messages, pull requests, branching, versioning, docs, Markdown, diagrams and GitHub wikis. The module installs them everywhere, but they apply only where the user opts in. A `.wow` file turns them on for the directory that holds it and everything below it, inside the workspace root `${WORKSPACE_DIR:-${SUDO_HOME:-$HOME}/workspaces}`. Only the file's presence counts: its contents are never read.
 
-- **Hook:** `wow_marker.sh` finds the marker for each directory Claude works in and tells Claude when the state changes. It also denies a `wow-*` skill when nothing touched in the session is marked. On Windows its PowerShell twin, [`wow_marker.ps1`](../../src/modules/claude/windows/hooks/wow_marker.ps1), does the same (see [On Windows](#on-windows)).
+- **Hook:** `wow_marker.sh` finds the marker for each directory Claude works in and tells Claude when the state changes. It also denies a `wow-*` skill when nothing touched in the session is marked.
 - **Rule:** `wow-core.md` loads in every session. It says how to read the hook's lines, which guidance wins and which skill to load for each task.
 - **Skills:** eleven skills in [`templates/skills/`](../../src/modules/claude/templates/skills/), loaded on demand.
 
-The zsh module exports `WORKSPACE_DIR` (see [zsh module](../zsh/overview.md#how-it-loads)), as the pwsh module does on Windows (see [pwsh module](../pwsh-module.md#options-and-line-editing)), and the git module ignores `**/.wow` in every repository (see [git module](../git-module.md)). This flowchart shows how the parts fit together:
+The zsh module exports `WORKSPACE_DIR` (see [zsh module](../zsh/overview.md#how-it-loads)), and the git module ignores `**/.wow` in every repository (see [git module](../git-module.md)). This flowchart shows how the parts fit together:
 
 ```mermaid
 flowchart TD
@@ -68,7 +67,7 @@ flowchart TD
 | `pre-tool` for `Read`, `Edit`, `Write`, `MultiEdit` | The directory part of `file_path` |
 | `pre-tool` for `NotebookEdit` | The directory part of `notebook_path` |
 | `pre-tool` for `Glob` and `Grep` | `path`, relative to Claude's current directory, or that directory when `path` is missing |
-| `pre-tool` for `Bash`, `PowerShell` and `Monitor`, and `post-bash` | Claude's current directory (`post-bash` catches a `cd`, or a `Set-Location` in the `PowerShell` tool (inferred)) |
+| `pre-tool` for `Bash` and `Monitor`, and `post-bash` | Claude's current directory (`post-bash` catches a `cd`) |
 | `session-start`, `subagent-start` and `status` with no argument | Claude's current directory |
 
 ### Telling Claude only when it changes
@@ -83,20 +82,6 @@ Each session keeps its last state key in a file, and each subagent keeps its own
 
 `pre-skill` checks the `skill` name, without a leading `/`. A name that matches `wow-*` or `<plugin>:wow-*` is allowed when the on-flag is set or Claude's current directory is on. Otherwise it exits 2, which blocks the call and shows the deny message to Claude. `expand` applies the same test to a command the user typed, such as `/wow-commits`, but never blocks it: it adds a note that the ways of working are off here.
 
-## On Windows
-
-[`wow_marker.ps1`](../../src/modules/claude/windows/hooks/wow_marker.ps1) is the PowerShell twin of `wow_marker.sh`, which `install.ps1` installs and registers for the same events, matchers and modes (see [Claude module](overview.md#on-windows)). It runs on PowerShell 7 and Windows PowerShell 5.1, gives the same context lines, state keys and exit codes, and fails off and silent the same way. Random differential runs against `wow_marker.sh`, 360 steps under pwsh and 300 under 5.1, gave identical output, exit codes and state files (observed). Where it differs, it's deliberate:
-
-- **Input:** the event is parsed as JSON, so escaped values, such as Windows paths with backslashes, are read rather than counted as absent. Only `session_id`, `agent_id` and `command_name` at the top level, and `file_path`, `notebook_path`, `path` and `skill` in `tool_input`, are read, with case-sensitive keys. Input that isn't one JSON object counts as no fields. A duplicate key keeps its last value, where `sed` keeps the first.
-- **Paths:** Git Bash forms (`/c/...`), `\\?\` and `\\.\C:` are read as plain Windows paths. Paths resolve through links and junctions, with each name in its on-disk case, and compare case-insensitively under the root. Home is `HOME`, else `USERPROFILE`. A name Windows forbids (wildcards, `"`, `|`, `:`, control characters, or a trailing dot or space) never matches a directory.
-- **Network paths:** a UNC path on a share other than the workspace root's counts as outside, and is never opened. Opening one made the hook contact that host and stall about 22 s, past its 10 s timeout (observed before the fix). Device paths such as `\\.\pipe\...` are never opened.
-- **State:** the directory is `$XDG_RUNTIME_DIR\claude-wow` when that exists, else `claude-wow` in the user's temp directory, which other users can't read. The lock is a file. A state directory the hook can't write makes it stateless at once, as `sh`'s `[ -w ]` check does.
-- **Skill deny:** exits 2 through `$Host.SetShouldExit(2)`, because PowerShell's `-Command` turns a script's `exit 2` into 1, and `[Environment]::Exit(2)` took about 2.3 s longer under 5.1 (observed).
-- **Speed:** a call took about 0.5 to 0.65 s under either PowerShell, most of it starting PowerShell (observed), against milliseconds for `wow_marker.sh`. In live sessions, `pre-tool` took 0.4 to 1 s and `session-start` up to 1.7 s, or 4.2 s on a cold start, all inside the 10 s timeout (observed).
-- **The `PowerShell` tool:** it's Claude Code's main shell on Windows, so `pre-tool` and `post-bash` match it as well as `Bash`. Its input has only a `command`, so it counts as Claude's current directory, as `Bash` does.
-
-Its Pester tests, [`wow_marker.Tests.ps1`](../../src/modules/claude/tests/wow_marker.Tests.ps1), port `test_wow_marker.py`'s cases and add Windows ones: UNC and device paths, junctions and links, forbidden names, an unwritable state directory and the slow exit.
-
 ## Interfaces
 
 Each registration in [`settings.json`](../../src/modules/claude/templates/settings.json) runs `"${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/hooks/wow_marker.sh <mode>` with a `timeout` of 10 seconds:
@@ -105,8 +90,8 @@ Each registration in [`settings.json`](../../src/modules/claude/templates/settin
 | --- | --- | --- | --- |
 | `session-start` | `SessionStart`, no matcher | The line as plain text, only when on | 0 |
 | `subagent-start` | `SubagentStart`, no matcher | `SubagentStart` JSON, only when on | 0 |
-| `pre-tool` | `PreToolUse`, `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|PowerShell\|Monitor` | `PreToolUse` JSON when the key changes | 0 |
-| `post-bash` | `PostToolUse`, `Bash\|PowerShell` | `PostToolUse` JSON when the key changes | 0 |
+| `pre-tool` | `PreToolUse`, `Read\|Edit\|Write\|MultiEdit\|NotebookEdit\|Glob\|Grep\|Bash\|Monitor` | `PreToolUse` JSON when the key changes | 0 |
+| `post-bash` | `PostToolUse`, `Bash` | `PostToolUse` JSON when the key changes | 0 |
 | `pre-skill` | `PreToolUse`, `Skill` | The deny message on stderr | 2 to deny, otherwise 0 |
 | `expand` | `UserPromptExpansion`, no matcher | `UserPromptExpansion` JSON when a typed `wow-*` command is off | 0 |
 | `session-end` | `SessionEnd`, no matcher | Nothing | 0 |
@@ -180,7 +165,6 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 - **Walk through `.git`.** A submodule or a package in a monorepo inherits its parent's marker, and a nearer marker can still mark it on its own.
 - **Bounded by the workspace root.** A marker in the home directory, or anywhere above the root, never turns them on for the whole machine.
 - **Check on every directory Claude touches, not only at start.** A session can move into a submodule or another repository that's marked differently. Claude Code's `CwdChanged` event can't add context, so the hook watches the file tools and the shells instead.
-- **Match the `PowerShell` tool on both platforms.** On Windows it's Claude Code's main shell: without it, an off line from a file outside the repository stayed the latest line through every later `PowerShell` call (observed). Linux registers it too, so the two `settings.json` files keep the same matchers.
 - **Load skills before the task, planning included.** In sessions where the line said on, Claude still skipped the skills while it planned or researched a change, and some workflow subagents skipped them entirely (observed). The routing table is keyed to actions such as committing, so `wow-core.md` also says to load the skills before a change starts and in every subagent.
 - **Tell Claude only on a change.** A line on every tool call would fill the context. Subagents keep their own key because each has its own context (inferred reason).
 - **Anything touched is on.** Once any directory touched in the session is marked, `wow-*` skills stay allowed. A session that works in a marked repository can still run a command elsewhere.
@@ -201,8 +185,7 @@ The state directory is `$XDG_RUNTIME_DIR/claude-wow` when `XDG_RUNTIME_DIR` is a
 - The on-flag lasts until the session ends or restarts, so a session that leaves a marked repository can still load the skills.
 - A symbolic link into the workspace root that points outside it resolves outside, so it's off.
 - Without `session-end`, such as after a crash, the files stay in the state directory. Under `XDG_RUNTIME_DIR`, the system clears them at logout (inferred).
-- `wow_marker.sh` is Linux only: the `sed` program uses GNU extensions, and `sleep 0.05` needs a fractional `sleep`. Windows uses `wow_marker.ps1` instead.
-- On Windows each call takes about half a second, because PowerShell has to start (see [On Windows](#on-windows)).
+- `wow_marker.sh` is Linux only: the `sed` program uses GNU extensions, and `sleep 0.05` needs a fractional `sleep`.
 - With hooks turned off, Claude sees no line, so `wow-core.md` treats the ways of working as off, but no skill is denied.
 
 ## Tests
