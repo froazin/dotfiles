@@ -16,7 +16,7 @@ Where each kind of documentation lives in a project, and how to write the docs i
 | Design docs | Source's `docs/` | Engineers and agents who change the code | High-level design: how the parts fit together and why |
 | `CONTRIBUTING.md` | Source's root | Contributors | Reporting a problem, proposing a change, building, testing and what CI runs |
 | `CLAUDE.md` | Source's root | Claude agents | The index: layout, conventions and which design doc to read before changing each part |
-| Code comments | The code | Engineers reading that code | What one function, type or package doesn't make obvious |
+| Docstrings and comments | The code | Engineers reading that code | What one function, type or package is for, and what it doesn't make obvious. Load the wow-docstrings skill |
 
 - Put each fact in one of these, and link to it from the others.
 - Never put user docs in `docs/`, or design, build or test docs in the wiki. `docs/` is never a copy of the wiki.
