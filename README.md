@@ -87,7 +87,7 @@ that check is the only hard gate. Beyond it, dependencies fall into two tiers �
 | ------ | -------- | ---- | -------- |
 | `claude` | `claude` | `jq`, `python3` | `cz` (commitizen) |
 | `git`  | `git` | — | — |
-| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `pulumi`, `direnv`, `nvm`, `ant`, `xdg-open`, `gh` |
+| `zsh`  | `zsh` | `fzf`, `git`, `zsh-common`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | `op`, `uv`, `terraform`, `packer`, `direnv`, `nvm`, `ant`, `xdg-open`, `gh` |
 
 On Windows:
 
