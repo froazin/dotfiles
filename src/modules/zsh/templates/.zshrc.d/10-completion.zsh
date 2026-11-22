@@ -113,12 +113,6 @@ else
   ZSH_COMPINIT_OK=0
 fi
 
-# /usr/bin/docker here is the podman-docker shim, and `docker completion zsh`
-# emits a file that registers `podman`, not `docker`.
-if (( ZSH_COMPINIT_OK )) && [[ -e /usr/bin/docker ]] && (( $+functions[_podman] || $+_comps[podman] )); then
-  compdef _podman docker
-fi
-
 zmodload zsh/complist # provides the menuselect keymap
 
 zstyle ':completion:*' menu select

@@ -16,7 +16,7 @@ How the two installers find and run the modules, and the helpers the modules cal
 
 ## Overview
 
-The installers configure whoever runs them. They don't install packages or own any configuration themselves: each module under `src/modules/` does that, and the installer decides which modules run and reports whether they all succeeded. The modules are described in [Git module](git-module.md), [Podman module](podman-module.md), [zsh module](zsh/overview.md), [pwsh module](pwsh-module.md) and [Claude module](claude/overview.md).
+The installers configure whoever runs them. They don't install packages or own any configuration themselves: each module under `src/modules/` does that, and the installer decides which modules run and reports whether they all succeeded. The modules are described in [Git module](git-module.md), [zsh module](zsh/overview.md), [pwsh module](pwsh-module.md) and [Claude module](claude/overview.md).
 
 A module takes part on a platform by having a bootstrap file for it: `bootstrap.sh` for `install.sh` and `bootstrap.ps1` for `install.ps1`. Today that's:
 
@@ -24,7 +24,6 @@ A module takes part on a platform by having a bootstrap file for it: `bootstrap.
 | --- | --- | --- |
 | `claude` | Yes | Yes |
 | `git` | Yes | Yes |
-| `podman` | Yes | No |
 | `pwsh` | No | Yes |
 | `zsh` | Yes | No |
 
@@ -45,7 +44,7 @@ People run `install.sh` by hand as the [README](../README.md#usage) describes, a
 
 ## How it works
 
-[`install.sh`](../src/install.sh) defines the helpers, then `main` loops over `$(dirname "$0")/modules/*` in glob order, which today is `claude`, `git`, `podman`, `pwsh` and `zsh`.
+[`install.sh`](../src/install.sh) defines the helpers, then `main` loops over `$(dirname "$0")/modules/*` in glob order, which today is `claude`, `git`, `pwsh` and `zsh`.
 
 This flowchart shows what `main` does with each module directory:
 
@@ -83,7 +82,7 @@ A module with only a `bootstrap.ps1`, such as `pwsh`, is skipped with a debug me
 [`install.ps1`](../src/install.ps1) does the same in PowerShell, with the same log levels, log file and messages. Where the two differ, it's because PowerShell does something better natively:
 
 - **Gate:** `Get-Command <name> -CommandType Application`, so a function or alias of that name doesn't count, but a `.cmd` or `.bat` does.
-- **Skip:** a module without a `bootstrap.ps1`, such as `podman` and `zsh`, is skipped with a debug message, as `install.sh` skips one without a `bootstrap.sh`.
+- **Skip:** a module without a `bootstrap.ps1`, such as `zsh`, is skipped with a debug message, as `install.sh` skips one without a `bootstrap.sh`.
 - **Load and run:** `Invoke-Module` dot-sources the file inside a script block, `& { . $file; Invoke-Bootstrap }`, so the module gets a scope of its own. What a module defines is gone when it finishes, so nothing needs resetting and names can't clash between modules. The installer's helpers are in the script scope, so modules see them.
 - **Failures:** a parse error or an exception while loading is caught and logged as "Failed to load". A module that defines no `Invoke-Bootstrap` is a load failure too. An exception from `Invoke-Bootstrap` is "Failed to execute", with its message.
 - **Result:** `Invoke-Bootstrap` must return exactly `$true` or `$false`. Anything else, such as stray pipeline output added to the return value, fails the module with a message saying so, so a leak is found rather than hidden.
@@ -113,7 +112,7 @@ The modules call these functions, which each installer defines. Each fails (retu
 | `install.sh` | `install.ps1` | What it does | Used by |
 | --- | --- | --- | --- |
 | `log <level> <message>` | `Write-DotfilesLog <level> <message>` | Logs to the console and the log file. See [Errors and logging](#errors-and-logging) | Every module |
-| `ensure_dir <dir>` | `Initialize-Directory <dir>` | Creates the directory and its parents when it's missing. Logs an error if that fails | `claude`, `podman` (sh); `claude`, `pwsh` (ps1, through `Install-File`) |
+| `ensure_dir <dir>` | `Initialize-Directory <dir>` | Creates the directory and its parents when it's missing. Logs an error if that fails | `claude` (sh); `claude`, `pwsh` (ps1, through `Install-File`) |
 | `install_file <src> <dest>` | `Install-File <src> <dest>` | Copies a template into place. See below | `claude`, `git`, `zsh`; `claude`, `git`, `pwsh` |
 | `is_root` | — | True when `id -u` is 0 | `claude`, `zsh` |
 
@@ -137,7 +136,7 @@ Both copies of `install_file` are how modules stay safe to rerun:
 | `DOTFILES_LOG_LEVEL` | `info` | The lowest level logged, to the console and the file alike. Case doesn't matter |
 | `DOTFILES_LOG_FILE` | `$HOME/.local/var/log/dotfiles.log` | Where the log file goes. `install.ps1` uses `~\.local\var\log\dotfiles.log` the same way |
 
-Modules read their own variables, such as `CLAUDE_CONFIG_DIR` and `DOCKER_CONFIG`. Their docs list them.
+Modules read their own variables, such as `CLAUDE_CONFIG_DIR`. Their docs list them.
 
 ## Errors and logging
 
